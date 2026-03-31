@@ -46,10 +46,12 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       const role = response.data.user.role;
-      if (role === "donor") navigate("/donor/dashboard");
-      else if (role === "admin") navigate("/admin/dashboard");
-      else if (role === "hospital" || role === "ngo") navigate("/hospital/dashboard");
-      else navigate("/");
+if (role === "donor") navigate("/donor/dashboard");
+else if (role === "admin") navigate("/admin/dashboard");
+else if (role === "hospital") navigate("/hospital/dashboard");
+else if (role === "ngo") navigate("/ngo/dashboard");
+else if (role === "requester") navigate("/patient/dashboard");
+else navigate("/");
 
     } catch (error) {
       setError(error.response?.data?.message || "Invalid email or password");

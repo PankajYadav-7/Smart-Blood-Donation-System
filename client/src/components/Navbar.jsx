@@ -37,12 +37,14 @@ const Navbar = () => {
     return routes[user.role] || "/";
   };
 
-  const navLinks = [
-    { label: "Find Blood", href: "/view-requests" },
-    { label: "Donate", href: "/donor/profile" },
-    { label: "Emergency", href: "/emergency", className: "text-red-600 font-bold" },
-    { label: "About", href: "/about" },
-  ];
+const navLinks = [
+  { label: "Find Blood", href: "/find-blood" },
+  { label: "Donate", href: "/donate" },
+  { label: "Hospitals", href: "/hospitals" },
+  { label: "Emergency", href: "/emergency", className: "text-red-600 font-bold" },
+  { label: "Help", href: "/help" },
+  { label: "About", href: "/about" },
+];
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
