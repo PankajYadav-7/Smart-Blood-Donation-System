@@ -1,16 +1,84 @@
-# React + Vite
+# Jeevan Saarthi — Smart Blood Donation & Emergency Finder System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack web application built for my Final Year Project at Herald College Kathmandu, University of Wolverhampton.
 
-Currently, two official plugins are available:
+## Project Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Jeevan Saarthi (meaning "Life Companion") is a platform that connects blood donors with patients in urgent need across Nepal. It enables real-time matching between donors, hospitals, NGOs, and patients.
 
-## React Compiler
+## Student Information
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Student:** Pankaj Yadav
+- **Student ID:** 2431153
+- **Course:** BSc Hons Computer Science
+- **Institution:** Herald College Kathmandu
+- **University:** University of Wolverhampton
+- **Supervisor:** Mr. Bishal Shrestha
+- **Module:** 6CS007 Project & Professionalism
 
-## Expanding the ESLint configuration
+## Technology Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Frontend:**
+- React.js with Vite
+- Tailwind CSS
+- React Router DOM
+- Axios
+
+**Backend:**
+- Node.js
+- Express.js
+- MongoDB (local)
+- JWT Authentication
+- bcryptjs
+
+## Key Features
+
+- User registration with multiple roles (Donor, Hospital, NGO, Patient, Admin)
+- Blood group compatibility matching
+- Real-time blood request management
+- Consent-based donor contact sharing
+- Admin panel for user management
+- Donor badges and certificates
+- Emergency request system (no account required)
+
+## How to Run
+
+**Backend:**
+```
+cd server
+npm install
+npm run dev
+```
+
+**Frontend:**
+```
+cd client
+npm install
+npm run dev
+```
+
+## Environment Variables
+
+Create a `.env` file inside the `server` folder:
+```
+MONGO_URI=mongodb://localhost:27017/blooddonation
+JWT_SECRET=your_secret_key
+```
+
+## System Architecture
+
+The system follows a standard MERN stack architecture with:
+- React frontend running on port 5173
+- Express backend running on port 5000
+- MongoDB database running on port 27017
+
+## FYP Subsystems
+
+| Subsystem | Description |
+|-----------|-------------|
+| URM | User & Role Management |
+| DMS | Donor Management System |
+| RMS | Request Management System |
+| MCS | Matching & Consent System |
+| NS | Notification System |
+| AVS | Admin & Verification System |

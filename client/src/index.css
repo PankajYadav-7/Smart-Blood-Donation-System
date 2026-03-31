@@ -1,3 +1,143 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Jeevan Saarthi — Premium Design System */
+
+@layer base {
+  :root {
+    --hero-highlight: 38 100% 70%;
+    --shadow-card: 0 4px 20px -4px rgba(30, 30, 50, 0.08);
+    --shadow-card-hover: 0 12px 32px -8px rgba(220, 38, 38, 0.18);
+    --shadow-emergency: 0 0 40px rgba(220, 38, 38, 0.45);
+    --transition-premium: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * {
+    border-color: #e5e7eb;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+
+  .premium-transition {
+    transition: var(--transition-premium);
+  }
+
+  .smooth-transition {
+    transition: var(--transition-smooth);
+  }
+
+  .stats-gradient {
+    background: linear-gradient(145deg, hsl(0 70% 45%) 0%, hsl(345 65% 52%) 100%);
+  }
+
+.hero-highlight {
+  color: #fbbf24;
+  text-shadow: 0 0 40px rgba(251, 191, 36, 0.5);
+}
+
+  .emergency-glow {
+    box-shadow: var(--shadow-emergency);
+    animation: emergencyPulse 2s infinite;
+  }
+
+  @keyframes emergencyPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(220, 38, 38, 0.4); }
+    50%       { box-shadow: 0 0 50px rgba(220, 38, 38, 0.7); }
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  .medical-shadow {
+    box-shadow: 0 8px 30px -6px rgba(220, 38, 38, 0.2);
+  }
+
+  .enhanced-card {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-premium);
+  }
+
+  .enhanced-card:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(220, 38, 38, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .feature-card {
+    position: relative;
+    background-color: #ffffff;
+    border-radius: 1rem;
+    border: 1px solid #f3f4f6;
+    padding: 1.5rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-premium);
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    opacity: 0;
+    transition: var(--transition-smooth);
+  }
+
+  .feature-card:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(220, 38, 38, 0.25);
+    transform: translateY(-4px);
+  }
+
+  .feature-card:hover::before {
+    opacity: 1;
+  }
+
+  .glass-effect {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-glow::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    filter: blur(12px);
+    transition: var(--transition-smooth);
+  }
+
+  .btn-glow:hover::after {
+    opacity: 0.4;
+  }
+}
