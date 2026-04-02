@@ -32,6 +32,27 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "suspended"],
       default: "active",
     },
+
+  phone: {
+  type: String,
+  default: "",
+},
+licenseNumber: {
+  type: String,
+  default: "",
+},
+address: {
+  type: String,
+  default: "",
+},
+orgDescription: {
+  type: String,
+  default: "",
+},
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

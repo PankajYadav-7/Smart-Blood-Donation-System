@@ -2,39 +2,42 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import Navbar from "../components/Navbar";
 import {
   Droplets, User, Building, Users, Eye, EyeOff,
-  Upload, CheckCircle,
+  Upload, CheckCircle, Clock, Mail, Phone,
+  FileText, MapPin, Shield,
 } from "lucide-react";
 
 const Register = () => {
   const navigate  = useNavigate();
-  const [userType, setUserType]     = useState("donor");
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState("");
-  const [showPass, setShowPass]     = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [userType, setUserType]           = useState("donor");
+  const [loading,  setLoading]            = useState(false);
+  const [error,    setError]              = useState("");
+  const [showPass, setShowPass]           = useState(false);
+  const [showConfirm, setShowConfirm]     = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [submitted, setSubmitted]         = useState(false); // pending approval screen
+  const [submittedData, setSubmittedData] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     password: "", confirmPassword: "",
     bloodType: "", age: "", location: "", lastDonation: "",
-    hospitalName: "", license: "", address: "",
-    orgName: "", registration: "", mission: "",
+    // Hospital / NGO specific
+    orgName: "", licenseNumber: "", address: "", orgDescription: "",
+    website: "",
   });
 
   const set = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
-
   const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   const tabs = [
-    { value: "donor",     label: "Donor",    icon: User },
-    { value: "requester", label: "Patient",  icon: User },
+    { value: "donor",     label: "Donor",    icon: User     },
+    { value: "requester", label: "Patient",  icon: User     },
     { value: "hospital",  label: "Hospital", icon: Building },
-    { value: "ngo",       label: "NGO",      icon: Users },
+    { value: "ngo",       label: "NGO",      icon: Users    },
   ];
 
   const inputCls = "w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-white";
@@ -49,22 +52,40 @@ const Register = () => {
     setLoading(true);
     setError("");
 
-    const fullName = (userType === "hospital")  ? formData.hospitalName
-                   : (userType === "ngo")        ? formData.orgName
-                   : `${formData.firstName} ${formData.lastName}`.trim();
+    const isOrg = userType === "hospital" || userType === "ngo";
+    const fullName = isOrg
+      ? formData.orgName
+      : `${formData.firstName} ${formData.lastName}`.trim();
 
     try {
       const response = await axios.post("http://localhost:5000/api/auth/register", {
-        fullName, email: formData.email, password: formData.password, role: userType,
+        fullName,
+        email:          formData.email,
+        password:       formData.password,
+        role:           userType,
+        phone:          formData.phone,
+        licenseNumber:  formData.licenseNumber,
+        address:        formData.address,
+        orgDescription: formData.orgDescription,
       });
 
+      // Hospital / NGO — show pending approval screen
+      if (response.data.requiresApproval) {
+        setSubmittedData({
+          name:  fullName,
+          email: formData.email,
+          role:  userType,
+        });
+        setSubmitted(true);
+        return;
+      }
+
+      // Donor / Patient — login immediately
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user",  JSON.stringify(response.data.user));
 
       const role = response.data.user.role;
       if      (role === "donor")     navigate("/donor/dashboard");
-      else if (role === "hospital")  navigate("/hospital/dashboard");
-      else if (role === "ngo")       navigate("/ngo/dashboard");
       else if (role === "requester") navigate("/patient/dashboard");
       else                           navigate("/");
 
@@ -74,13 +95,115 @@ const Register = () => {
     setLoading(false);
   };
 
+  // ── PENDING APPROVAL SCREEN ──
+  if (submitted && submittedData) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
+          <div className="w-full max-w-lg">
+            <Card className="border-0 shadow-xl">
+              <CardContent className="pt-10 pb-10 px-8 text-center">
+
+                {/* Icon */}
+                <div className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-6">
+                  <Clock className="h-10 w-10 text-yellow-600" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-gray-900 mb-3">
+                  Application Submitted!
+                </h1>
+                <p className="text-gray-500 mb-6 leading-relaxed">
+                  Thank you for registering <strong className="text-gray-800">{submittedData.name}</strong> on
+                  Jeevan Saarthi. Your application is now under review by our admin team.
+                </p>
+
+                {/* Status steps */}
+                <div className="bg-gray-50 rounded-2xl p-5 mb-6 text-left space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Application Submitted</p>
+                      <p className="text-xs text-gray-500">Your details have been received</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                      <Clock className="h-4 w-4 text-yellow-600 animate-spin" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Under Admin Review</p>
+                      <p className="text-xs text-gray-500">Our team is verifying your organisation — 2 to 3 business days</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-400">Email Notification</p>
+                      <p className="text-xs text-gray-400">You will receive an approval email at {submittedData.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-400">Account Activated</p>
+                      <p className="text-xs text-gray-400">Login and access your dashboard after approval</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Info box */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
+                  <p className="text-xs text-blue-700 font-semibold mb-1">
+                    📧 Check your email
+                  </p>
+                  <p className="text-xs text-blue-600 leading-relaxed">
+                    A confirmation has been sent to <strong>{submittedData.email}</strong>.
+                    Once our admin approves your application you will receive another email
+                    with login instructions.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <Link
+                    to="/login"
+                    className="w-full inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl text-sm transition-all"
+                  >
+                    Go to Login Page
+                  </Link>
+                  <Link
+                    to="/"
+                    className="w-full inline-flex items-center justify-center border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 rounded-xl text-sm transition-all"
+                  >
+                    Back to Home
+                  </Link>
+                </div>
+
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── MAIN REGISTER FORM ──
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-2xl">
-          <Card className="medical-shadow border-0 shadow-xl">
+          <Card className="border-0 shadow-xl">
 
             {/* Header */}
             <CardHeader className="text-center pb-2 pt-8">
@@ -100,8 +223,8 @@ const Register = () => {
             <CardContent className="pt-6 pb-8 px-8">
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
-                  {error}
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-5 text-sm flex items-center gap-2">
+                  <span className="flex-shrink-0">⚠️</span>{error}
                 </div>
               )}
 
@@ -114,7 +237,7 @@ const Register = () => {
                       <button
                         key={tab.value}
                         type="button"
-                        onClick={() => setUserType(tab.value)}
+                        onClick={() => { setUserType(tab.value); setError(""); }}
                         className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
                           userType === tab.value
                             ? "bg-white text-red-600 shadow-sm"
@@ -126,9 +249,21 @@ const Register = () => {
                       </button>
                     ))}
                   </div>
+
+                  {/* Hospital/NGO notice */}
+                  {(userType === "hospital" || userType === "ngo") && (
+                    <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-start gap-2">
+                      <Clock className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-yellow-800 leading-relaxed">
+                        <strong>Organisation accounts require admin approval.</strong> After
+                        registration your account will be reviewed within 2–3 business days.
+                        You will receive an email notification once approved.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Donor / Patient Form */}
+                {/* ── DONOR / PATIENT FORM ── */}
                 {(userType === "donor" || userType === "requester") && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -141,17 +276,14 @@ const Register = () => {
                         <input className={inputCls} placeholder="Yadav" value={formData.lastName} onChange={e => set("lastName", e.target.value)} required />
                       </div>
                     </div>
-
                     <div>
-                      <label className={labelCls}>Email *</label>
+                      <label className={labelCls}>Email Address *</label>
                       <input className={inputCls} type="email" placeholder="your@email.com" value={formData.email} onChange={e => set("email", e.target.value)} required />
                     </div>
-
                     <div>
                       <label className={labelCls}>Phone Number *</label>
                       <input className={inputCls} type="tel" placeholder="+977-98XXXXXXXX" value={formData.phone} onChange={e => set("phone", e.target.value)} required />
                     </div>
-
                     {userType === "donor" && (
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -167,27 +299,19 @@ const Register = () => {
                         </div>
                       </div>
                     )}
-
                     <div>
                       <label className={labelCls}>Location *</label>
                       <input className={inputCls} placeholder="Kathmandu, Nepal" value={formData.location} onChange={e => set("location", e.target.value)} required />
                     </div>
-
-                    {userType === "donor" && (
-                      <div>
-                        <label className={labelCls}>Last Donation Date <span className="text-gray-400 font-normal">(Optional)</span></label>
-                        <input className={inputCls} type="date" value={formData.lastDonation} onChange={e => set("lastDonation", e.target.value)} />
-                      </div>
-                    )}
                   </div>
                 )}
 
-                {/* Hospital Form */}
+                {/* ── HOSPITAL FORM ── */}
                 {userType === "hospital" && (
                   <div className="space-y-4">
                     <div>
                       <label className={labelCls}>Hospital Name *</label>
-                      <input className={inputCls} placeholder="Bir Hospital" value={formData.hospitalName} onChange={e => set("hospitalName", e.target.value)} required />
+                      <input className={inputCls} placeholder="Bir Hospital" value={formData.orgName} onChange={e => set("orgName", e.target.value)} required />
                     </div>
                     <div>
                       <label className={labelCls}>Official Email *</label>
@@ -199,24 +323,34 @@ const Register = () => {
                     </div>
                     <div>
                       <label className={labelCls}>Medical License Number *</label>
-                      <input className={inputCls} placeholder="License #12345" value={formData.license} onChange={e => set("license", e.target.value)} required />
+                      <input className={inputCls} placeholder="License #12345" value={formData.licenseNumber} onChange={e => set("licenseNumber", e.target.value)} required />
                     </div>
                     <div>
                       <label className={labelCls}>Hospital Address *</label>
                       <textarea className={inputCls} rows={2} placeholder="Full hospital address" value={formData.address} onChange={e => set("address", e.target.value)} required />
                     </div>
                     <div>
+                      <label className={labelCls}>About the Hospital</label>
+                      <textarea className={inputCls} rows={2} placeholder="Brief description of services offered..." value={formData.orgDescription} onChange={e => set("orgDescription", e.target.value)} />
+                    </div>
+                    <div>
                       <label className={labelCls}>Upload Verification Documents</label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-red-300 hover:bg-red-50 transition-colors cursor-pointer">
-                        <Upload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-red-300 hover:bg-red-50 transition-colors cursor-pointer">
+                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-500">Upload medical license, registration certificate</p>
-                        <button type="button" className="mt-2 text-xs border border-gray-300 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">Choose Files</button>
+                        <p className="text-xs text-gray-400 mt-1">PDF, JPG or PNG — max 5MB each</p>
+                        <button type="button" className="mt-2 text-xs border border-gray-300 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">
+                          Choose Files
+                        </button>
                       </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Note: Document upload will be available after approval. Admin will contact you for verification.
+                      </p>
                     </div>
                   </div>
                 )}
 
-                {/* NGO Form */}
+                {/* ── NGO FORM ── */}
                 {userType === "ngo" && (
                   <div className="space-y-4">
                     <div>
@@ -233,36 +367,36 @@ const Register = () => {
                     </div>
                     <div>
                       <label className={labelCls}>Registration Number *</label>
-                      <input className={inputCls} placeholder="NGO Registration #" value={formData.registration} onChange={e => set("registration", e.target.value)} required />
+                      <input className={inputCls} placeholder="NGO Registration #" value={formData.licenseNumber} onChange={e => set("licenseNumber", e.target.value)} required />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Organisation Address *</label>
+                      <textarea className={inputCls} rows={2} placeholder="Full organisation address" value={formData.address} onChange={e => set("address", e.target.value)} required />
                     </div>
                     <div>
                       <label className={labelCls}>Mission Statement</label>
-                      <textarea className={inputCls} rows={3} placeholder="Describe your organisation's mission" value={formData.mission} onChange={e => set("mission", e.target.value)} />
+                      <textarea className={inputCls} rows={2} placeholder="Describe your organisation's mission..." value={formData.orgDescription} onChange={e => set("orgDescription", e.target.value)} />
                     </div>
                     <div>
                       <label className={labelCls}>Upload Verification Documents</label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-red-300 hover:bg-red-50 transition-colors cursor-pointer">
-                        <Upload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-500">Upload registration certificate, tax exemption documents</p>
-                        <button type="button" className="mt-2 text-xs border border-gray-300 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">Choose Files</button>
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-red-300 hover:bg-red-50 transition-colors cursor-pointer">
+                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">Upload registration certificate, tax documents</p>
+                        <p className="text-xs text-gray-400 mt-1">PDF, JPG or PNG — max 5MB each</p>
+                        <button type="button" className="mt-2 text-xs border border-gray-300 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">
+                          Choose Files
+                        </button>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Password Fields */}
+                {/* ── PASSWORD FIELDS ── */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Password *</label>
                     <div className="relative">
-                      <input
-                        className={inputCls + " pr-10"}
-                        type={showPass ? "text" : "password"}
-                        placeholder="Min 6 characters"
-                        value={formData.password}
-                        onChange={e => set("password", e.target.value)}
-                        required
-                      />
+                      <input className={inputCls + " pr-10"} type={showPass ? "text" : "password"} placeholder="Min 6 characters" value={formData.password} onChange={e => set("password", e.target.value)} required />
                       <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                         {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -271,14 +405,7 @@ const Register = () => {
                   <div>
                     <label className={labelCls}>Confirm Password *</label>
                     <div className="relative">
-                      <input
-                        className={inputCls + " pr-10"}
-                        type={showConfirm ? "text" : "password"}
-                        placeholder="Repeat password"
-                        value={formData.confirmPassword}
-                        onChange={e => set("confirmPassword", e.target.value)}
-                        required
-                      />
+                      <input className={inputCls + " pr-10"} type={showConfirm ? "text" : "password"} placeholder="Repeat password" value={formData.confirmPassword} onChange={e => set("confirmPassword", e.target.value)} required />
                       <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                         {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -287,18 +414,10 @@ const Register = () => {
                 </div>
 
                 {/* Terms */}
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={e => setAcceptedTerms(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 flex-shrink-0"
-                  />
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" checked={acceptedTerms} onChange={e => setAcceptedTerms(e.target.checked)} className="mt-0.5 w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 flex-shrink-0" />
                   <span className="text-sm text-gray-600 leading-relaxed">
-                    I agree to the{" "}
-                    <span className="text-red-600 hover:underline cursor-pointer">Terms of Service</span>
-                    {" "}and{" "}
-                    <span className="text-red-600 hover:underline cursor-pointer">Privacy Policy</span>
+                    I agree to the <span className="text-red-600 hover:underline cursor-pointer">Terms of Service</span> and <span className="text-red-600 hover:underline cursor-pointer">Privacy Policy</span>
                   </span>
                 </label>
 
@@ -311,18 +430,19 @@ const Register = () => {
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                      Creating Account...
+                      {userType === "hospital" || userType === "ngo" ? "Submitting Application..." : "Creating Account..."}
                     </span>
-                  ) : "Create Account"}
+                  ) : (
+                    userType === "hospital" || userType === "ngo"
+                      ? "Submit Application"
+                      : "Create Account"
+                  )}
                 </button>
               </form>
 
-              {/* Login link */}
               <p className="text-center text-sm text-gray-500 mt-6">
                 Already have an account?{" "}
-                <Link to="/login" className="text-red-600 hover:underline font-semibold">
-                  Sign in
-                </Link>
+                <Link to="/login" className="text-red-600 hover:underline font-semibold">Sign in</Link>
               </p>
 
             </CardContent>

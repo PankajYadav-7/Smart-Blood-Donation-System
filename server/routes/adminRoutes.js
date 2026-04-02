@@ -50,4 +50,23 @@ router.patch("/users/:id/status", protect, adminOnly, async (req, res) => {
   }
 });
 
+// Verify hospital or NGO
+router.patch("/users/:userId/verify", protect, adminOnly, async (req, res) => {
+  try {
+    const { verified } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { isVerified: verified },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+    return res.status(200).json({
+      message: verified ? "User verified" : "Verification removed",
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;
