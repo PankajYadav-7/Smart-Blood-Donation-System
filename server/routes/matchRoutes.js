@@ -74,7 +74,6 @@ router.post("/find/:requestId", protect, async (req, res) => {
 
 // ─────────────────────────────────────────────────────
 // DONOR — Accept or decline a notified match
-// (used when hospital clicked Find Donors first)
 // ─────────────────────────────────────────────────────
 router.patch("/:matchId/respond", protect, async (req, res) => {
   try {
@@ -95,7 +94,6 @@ router.patch("/:matchId/respond", protect, async (req, res) => {
 
 // ─────────────────────────────────────────────────────
 // DONOR — Accept or decline a request directly
-// (used when donor sees request without hospital clicking Find Donors)
 // ─────────────────────────────────────────────────────
 router.post("/respond-direct", protect, async (req, res) => {
   try {
@@ -132,21 +130,58 @@ router.post("/respond-direct", protect, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────
-// DONOR — Get all compatible open requests
-// Shows requests even if hospital never clicked Find Donors
-// Only shows requests donor has NOT yet responded to
+// DONOR — Get all compatible OPEN requests
+// FIX 1: Returns eligibilityStatus so frontend shows
+//         correct message (cooldown / unavailable / eligible)
+// FIX 2: Checks 56-day cooldown before showing requests
 // ─────────────────────────────────────────────────────
 router.get("/compatible-requests", protect, async (req, res) => {
   try {
     const donorProfile = await DonorProfile.findOne({ userId: req.user.userId });
 
-    if (!donorProfile)            return res.status(200).json({ requests: [] });
-    if (!donorProfile.availability) return res.status(200).json({ requests: [] });
+    // No profile set up yet
+    if (!donorProfile) {
+      return res.status(200).json({
+        requests: [],
+        eligibilityStatus: "no_profile",
+      });
+    }
 
+    // Availability is turned off
+    if (!donorProfile.availability) {
+      return res.status(200).json({
+        requests: [],
+        eligibilityStatus: "unavailable",
+      });
+    }
+
+    // ── FIX: Check 56-day cooldown ──
+    if (donorProfile.lastDonationDate) {
+      const nextEligible = new Date(donorProfile.lastDonationDate);
+      nextEligible.setDate(nextEligible.getDate() + 56);
+      if (new Date() < nextEligible) {
+        const daysLeft = Math.ceil(
+          (nextEligible - new Date()) / (1000 * 60 * 60 * 24)
+        );
+        return res.status(200).json({
+          requests: [],
+          eligibilityStatus: "cooldown",
+          daysLeft,
+          nextEligibleDate: nextEligible,
+        });
+      }
+    }
+
+    // Get all open requests and filter compatible
     const openRequests = await BloodRequest.find({ status: "Open" });
 
     const compatibleRequests = openRequests.filter((request) =>
-      isCompatible(donorProfile.bloodGroup, donorProfile.rh, request.bloodGroup, request.rh)
+      isCompatible(
+        donorProfile.bloodGroup,
+        donorProfile.rh,
+        request.bloodGroup,
+        request.rh
+      )
     );
 
     const requestsWithStatus = await Promise.all(
@@ -156,30 +191,32 @@ router.get("/compatible-requests", protect, async (req, res) => {
           donorProfileId: donorProfile._id,
         });
         return {
-          _id:            existingMatch?._id || null,
-          requestId:      request,
-          status:         existingMatch?.status || "New",
-          matchExists:    !!existingMatch,
+          _id:             existingMatch?._id || null,
+          requestId:       request,
+          status:          existingMatch?.status || "New",
+          matchExists:     !!existingMatch,
           contactRevealed: existingMatch?.contactRevealed || false,
         };
       })
     );
 
-    // Only show requests where donor has NOT yet responded
+    // Only show requests donor has not yet responded to
     const pendingRequests = requestsWithStatus.filter(
       (r) => r.status === "New" || r.status === "Notified"
     );
 
-    return res.status(200).json({ requests: pendingRequests });
+    return res.status(200).json({
+      requests: pendingRequests,
+      eligibilityStatus: "eligible",
+    });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // ─────────────────────────────────────────────────────
-// DONOR — Get donation count for stats
-// ✅ ONLY counts "Donated" — patient must confirm first
-// Accepted = intent only, NOT a confirmed donation
+// DONOR — Get donation count (stats card)
+// Only counts "Donated" — confirmed by patient
 // ─────────────────────────────────────────────────────
 router.get("/my-history", protect, async (req, res) => {
   try {
@@ -188,7 +225,7 @@ router.get("/my-history", protect, async (req, res) => {
 
     const count = await Match.countDocuments({
       donorProfileId: donorProfile._id,
-      status: "Donated", // ← ONLY confirmed donations count
+      status: "Donated",
     });
 
     return res.status(200).json({ count });
@@ -198,8 +235,8 @@ router.get("/my-history", protect, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────
-// DONOR — Get donation history for history tab
-// ✅ ONLY shows "Donated" — confirmed by patient
+// DONOR — Get confirmed donation history tab
+// Only shows "Donated" — confirmed by patient
 // ─────────────────────────────────────────────────────
 router.get("/my-accepted", protect, async (req, res) => {
   try {
@@ -208,7 +245,7 @@ router.get("/my-accepted", protect, async (req, res) => {
 
     const matches = await Match.find({
       donorProfileId: donorProfile._id,
-      status: "Donated", // ← ONLY confirmed donations show in history
+      status: "Donated",
     })
       .populate("requestId")
       .sort({ donationConfirmedAt: -1 });
@@ -220,8 +257,11 @@ router.get("/my-accepted", protect, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────
-// DONOR — Get pending confirmations
-// Shows accepted requests waiting for patient to confirm
+// DONOR — Get pending confirmations for history tab
+// FIX: Only shows "Accepted" matches where the parent
+//      blood request is still OPEN — not closed ones
+// This fixes the bug where closed requests still showed
+// in the pending section after hospital marks fulfilled
 // ─────────────────────────────────────────────────────
 router.get("/pending-confirmation", protect, async (req, res) => {
   try {
@@ -235,7 +275,13 @@ router.get("/pending-confirmation", protect, async (req, res) => {
       .populate("requestId")
       .sort({ respondedAt: -1 });
 
-    return res.status(200).json({ matches });
+    // ── FIX: Filter out matches where the blood request is closed ──
+    // If the request is closed, remove it from pending list
+    const activeMatches = matches.filter(
+      (m) => m.requestId && m.requestId.status === "Open"
+    );
+
+    return res.status(200).json({ matches: activeMatches });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -276,20 +322,34 @@ router.get("/request/:requestId", protect, async (req, res) => {
 
 // ─────────────────────────────────────────────────────
 // PATIENT — Confirm donation was received
-// This is the ONLY action that counts as a real donation
+// FIX: Now auto-updates donor profile:
+//      - Sets lastDonationDate = today
+//      - Sets availability = false (56-day cooldown starts)
 // ─────────────────────────────────────────────────────
 router.patch("/:matchId/confirm-donation", protect, async (req, res) => {
   try {
     const match = await Match.findById(req.params.matchId);
     if (!match) return res.status(404).json({ message: "Match not found" });
 
+    // Mark donation as confirmed
     match.status = "Donated";
     match.donationConfirmedAt = new Date();
     match.donationConfirmedBy = "patient";
     await match.save();
 
+    // ── FIX: Auto-update donor profile ──
+    // Set lastDonationDate to today → triggers 56-day cooldown
+    // Set availability to false → donor removed from matching pool
+    await DonorProfile.findByIdAndUpdate(
+      match.donorProfileId,
+      {
+        lastDonationDate: new Date(),
+        availability: false,
+      }
+    );
+
     return res.status(200).json({
-      message: "Donation confirmed! Donor stats have been updated.",
+      message: "Donation confirmed! Donor profile has been updated automatically.",
       match,
     });
   } catch (error) {

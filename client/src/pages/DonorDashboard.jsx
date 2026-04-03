@@ -10,7 +10,7 @@ import {
   Droplets, Heart, Clock, MapPin, Award, CheckCircle,
   User, Trophy, Medal, Star, Bell, BellOff, Activity,
   AlertCircle, Calendar, Loader, Building, Hash,
-  ChevronDown, ChevronUp, ThumbsUp,
+  ChevronDown, ChevronUp, ThumbsUp, Mail,
 } from "lucide-react";
 
 const API = "http://localhost:5000/api";
@@ -20,13 +20,15 @@ const DonorDashboard = () => {
   const token     = localStorage.getItem("token");
   const user      = JSON.parse(localStorage.getItem("user") || "null");
 
-  const [matches,       setMatches]       = useState([]);
-  const [donorProfile,  setDonorProfile]  = useState(null);
-  const [acceptedCount, setAcceptedCount] = useState(0);
-  const [loading,       setLoading]       = useState(true);
-  const [activeTab,     setActiveTab]     = useState("requests");
-  const [isSnoozed,     setIsSnoozed]     = useState(false);
-  const [toast,         setToast]         = useState(null);
+  const [matches,         setMatches]         = useState([]);
+  const [donorProfile,    setDonorProfile]    = useState(null);
+  const [acceptedCount,   setAcceptedCount]   = useState(0);
+  const [loading,         setLoading]         = useState(true);
+  const [activeTab,       setActiveTab]       = useState("requests");
+  const [isSnoozed,       setIsSnoozed]       = useState(false);
+  const [toast,           setToast]           = useState(null);
+  // ── NEW: eligibility info returned from backend ──
+  const [eligibilityInfo, setEligibilityInfo] = useState(null);
 
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
@@ -38,12 +40,18 @@ const DonorDashboard = () => {
     setLoading(false);
   };
 
+  // ── UPDATED: now stores eligibilityInfo from backend ──
   const fetchMatches = async () => {
     try {
       const res = await axios.get(`${API}/matches/compatible-requests`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMatches(res.data.requests || []);
+      setEligibilityInfo({
+        status:           res.data.eligibilityStatus  || "eligible",
+        daysLeft:         res.data.daysLeft            || 0,
+        nextEligibleDate: res.data.nextEligibleDate    || null,
+      });
     } catch (err) { console.log(err); }
   };
 
@@ -80,17 +88,31 @@ const DonorDashboard = () => {
       );
       setDonorProfile(prev => ({ ...prev, availability: res.data.availability }));
       showToast(res.data.availability ? "You are now available to donate" : "You are now unavailable");
+      // Refresh matches after availability change
+      fetchMatches();
     } catch { showToast("Failed to update availability", "error"); }
   };
 
   const handleRespond = async (matchId, requestId, status) => {
     try {
       if (matchId) {
-        await axios.patch(`${API}/matches/${matchId}/respond`, { status }, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.patch(
+          `${API}/matches/${matchId}/respond`,
+          { status },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
       } else {
-        await axios.post(`${API}/matches/respond-direct`, { requestId, status }, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post(
+          `${API}/matches/respond-direct`,
+          { requestId, status },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
       }
-      showToast(status === "Accepted" ? "Request accepted! The patient has been notified." : "Request declined.");
+      showToast(
+        status === "Accepted"
+          ? "Request accepted! The patient has been notified."
+          : "Request declined."
+      );
       fetchMatches();
       fetchAcceptedCount();
     } catch { showToast("Failed to respond", "error"); }
@@ -119,10 +141,10 @@ const DonorDashboard = () => {
 
   const getBadges = () => {
     const b = [];
-    if (acceptedCount >= 1)  b.push({ title: "First Drop",    description: "Made your first donation",  icon: Droplets, color: "text-blue-600 bg-blue-50 border-blue-200"     });
-    if (acceptedCount >= 3)  b.push({ title: "Life Saver",    description: "Donated 3+ times",           icon: Heart,    color: "text-red-600 bg-red-50 border-red-200"         });
-    if (acceptedCount >= 5)  b.push({ title: "Regular Donor", description: "Donated 5+ times",           icon: Award,    color: "text-yellow-600 bg-yellow-50 border-yellow-200"});
-    if (acceptedCount >= 10) b.push({ title: "Hero Donor",    description: "Donated 10+ times",          icon: Trophy,   color: "text-purple-600 bg-purple-50 border-purple-200"});
+    if (acceptedCount >= 1)  b.push({ title: "First Drop",    description: "Made your first donation", icon: Droplets, color: "text-blue-600 bg-blue-50 border-blue-200"      });
+    if (acceptedCount >= 3)  b.push({ title: "Life Saver",    description: "Donated 3+ times",          icon: Heart,    color: "text-red-600 bg-red-50 border-red-200"          });
+    if (acceptedCount >= 5)  b.push({ title: "Regular Donor", description: "Donated 5+ times",          icon: Award,    color: "text-yellow-600 bg-yellow-50 border-yellow-200" });
+    if (acceptedCount >= 10) b.push({ title: "Hero Donor",    description: "Donated 10+ times",         icon: Trophy,   color: "text-purple-600 bg-purple-50 border-purple-200" });
     return b;
   };
 
@@ -151,11 +173,15 @@ const DonorDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
+      {/* Toast */}
       {toast && (
         <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-semibold transition-all duration-300 ${
           toast.type === "error" ? "bg-red-600 text-white" : "bg-green-600 text-white"
         }`}>
-          {toast.type === "error" ? <AlertCircle className="h-5 w-5 flex-shrink-0" /> : <CheckCircle className="h-5 w-5 flex-shrink-0" />}
+          {toast.type === "error"
+            ? <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            : <CheckCircle className="h-5 w-5 flex-shrink-0" />
+          }
           {toast.message}
         </div>
       )}
@@ -165,7 +191,9 @@ const DonorDashboard = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.fullName?.split(" ")[0]}! 👋</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Welcome back, {user?.fullName?.split(" ")[0]}! 👋
+            </h1>
             <p className="text-gray-500 mt-1">You are making a difference — keep saving lives!</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -176,13 +204,21 @@ const DonorDashboard = () => {
               </span>
               <button
                 onClick={handleToggleAvailability}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isAvailable && !isSnoozed ? "bg-green-500" : "bg-gray-300"}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  isAvailable && !isSnoozed ? "bg-green-500" : "bg-gray-300"
+                }`}
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow ${isAvailable && !isSnoozed ? "translate-x-6" : "translate-x-1"}`} />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow ${
+                  isAvailable && !isSnoozed ? "translate-x-6" : "translate-x-1"
+                }`} />
               </button>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/donor/profile")}>Edit Profile</Button>
-            <Button variant="outline" size="sm" onClick={handleLogout} className="text-red-600 border-red-200 hover:bg-red-50">Logout</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/donor/profile")}>
+              Edit Profile
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleLogout} className="text-red-600 border-red-200 hover:bg-red-50">
+              Logout
+            </Button>
           </div>
         </div>
 
@@ -210,6 +246,7 @@ const DonorDashboard = () => {
           ))}
         </div>
 
+        {/* No profile warning */}
         {!donorProfile && !loading && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 flex items-center gap-3">
             <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0" />
@@ -217,7 +254,9 @@ const DonorDashboard = () => {
               <p className="text-sm font-semibold text-yellow-800">Profile not complete</p>
               <p className="text-xs text-yellow-700 mt-0.5">Please set your blood group and location to start receiving matching requests.</p>
             </div>
-            <Button size="sm" onClick={() => navigate("/donor/profile")} className="flex-shrink-0">Complete Profile</Button>
+            <Button size="sm" onClick={() => navigate("/donor/profile")} className="flex-shrink-0">
+              Complete Profile
+            </Button>
           </div>
         )}
 
@@ -225,9 +264,13 @@ const DonorDashboard = () => {
         <div className="mb-6">
           <div className="flex gap-2 bg-white rounded-xl p-1 shadow-sm border border-gray-200 overflow-x-auto">
             {tabs.map((tab) => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeTab === tab.id ? "bg-red-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  activeTab === tab.id
+                    ? "bg-red-600 text-white shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 }`}
               >
                 {tab.label}
@@ -245,23 +288,152 @@ const DonorDashboard = () => {
                 <Button variant="outline" size="sm" onClick={() => handleSnooze(4)} className="text-gray-600">
                   <BellOff className="h-4 w-4 mr-1" />Snooze 4h
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleSnooze(24)} className="text-gray-600">Snooze 24h</Button>
+                <Button variant="outline" size="sm" onClick={() => handleSnooze(24)} className="text-gray-600">
+                  Snooze 24h
+                </Button>
               </div>
             </div>
 
-            {loading && <div className="text-center py-12"><Loader className="h-8 w-8 text-red-600 animate-spin mx-auto" /><p className="text-gray-500 mt-3">Loading matches...</p></div>}
-
-            {!loading && matches.length === 0 && (
-              <Card className="border-0 shadow-md">
-                <CardContent className="py-12 text-center">
-                  <Bell className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">No matching requests right now</h3>
-                  <p className="text-gray-500 text-sm max-w-sm mx-auto">Make sure your profile is complete and availability is turned ON to receive requests.</p>
-                  <Button className="mt-4" onClick={() => navigate("/donor/profile")}>Complete Profile</Button>
-                </CardContent>
-              </Card>
+            {loading && (
+              <div className="text-center py-12">
+                <Loader className="h-8 w-8 text-red-600 animate-spin mx-auto" />
+                <p className="text-gray-500 mt-3">Loading matches...</p>
+              </div>
             )}
 
+            {/* ── SMART EMPTY STATES based on eligibility ── */}
+            {!loading && matches.length === 0 && (
+              <>
+                {/* 1. COOLDOWN — donated recently, not eligible yet */}
+                {eligibilityInfo?.status === "cooldown" && (
+                  <Card className="border-0 shadow-md border-l-4 border-l-orange-400">
+                    <CardContent className="py-8 px-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-7 w-7 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-gray-900 mb-1">
+                            You donated blood recently 🩸
+                          </h3>
+                          <p className="text-gray-600 text-sm mb-5 leading-relaxed">
+                            Thank you for your life-saving donation! Your body needs time to fully
+                            recover before your next donation. You are not yet eligible to donate again.
+                          </p>
+
+                          {/* Countdown cards */}
+                          <div className="grid grid-cols-2 gap-3 mb-5">
+                            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
+                              <p className="text-xs text-orange-600 uppercase tracking-wider mb-1 font-semibold">
+                                Days Remaining
+                              </p>
+                              <p className="text-4xl font-bold text-orange-700">
+                                {eligibilityInfo.daysLeft}
+                              </p>
+                              <p className="text-xs text-orange-500 mt-1">days until eligible</p>
+                            </div>
+                            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                              <p className="text-xs text-green-600 uppercase tracking-wider mb-1 font-semibold">
+                                Next Eligible Date
+                              </p>
+                              <p className="text-base font-bold text-green-700 mt-1">
+                                {eligibilityInfo.nextEligibleDate
+                                  ? new Date(eligibilityInfo.nextEligibleDate).toLocaleDateString("en-GB", {
+                                      day: "numeric", month: "long", year: "numeric"
+                                    })
+                                  : "—"
+                                }
+                              </p>
+                              <p className="text-xs text-green-500 mt-1">mark your calendar</p>
+                            </div>
+                          </div>
+
+                          {/* Progress bar */}
+                          <div className="mb-5">
+                            <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                              <span>Recovery Progress</span>
+                              <span>{56 - (eligibilityInfo.daysLeft || 0)} of 56 days</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div
+                                className="bg-gradient-to-r from-orange-400 to-green-500 h-3 rounded-full transition-all"
+                                style={{ width: `${Math.min(((56 - (eligibilityInfo.daysLeft || 0)) / 56) * 100, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Tips */}
+                          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                            <p className="text-xs font-bold text-blue-700 mb-2">💡 What you can do now:</p>
+                            <ul className="text-xs text-blue-600 space-y-1.5 leading-relaxed">
+                              <li>• Your availability has been automatically turned off to protect your health</li>
+                              <li>• Eat iron-rich foods and stay hydrated to recover faster</li>
+                              <li>• You will be notified when you become eligible again</li>
+                              <li>• Check your History tab to see your donation record</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* 2. UNAVAILABLE — donor turned off availability */}
+                {eligibilityInfo?.status === "unavailable" && (
+                  <Card className="border-0 shadow-md">
+                    <CardContent className="py-12 text-center">
+                      <BellOff className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        You are currently unavailable
+                      </h3>
+                      <p className="text-gray-500 text-sm max-w-sm mx-auto mb-5">
+                        Toggle your availability to ON using the button at the top of this page
+                        to start receiving blood requests again.
+                      </p>
+                      <Button onClick={handleToggleAvailability}>
+                        Turn Availability ON
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* 3. NO PROFILE — profile not set up */}
+                {eligibilityInfo?.status === "no_profile" && (
+                  <Card className="border-0 shadow-md">
+                    <CardContent className="py-12 text-center">
+                      <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Complete your profile first
+                      </h3>
+                      <p className="text-gray-500 text-sm max-w-sm mx-auto mb-5">
+                        Set your blood group and availability to start receiving matching requests.
+                      </p>
+                      <Button onClick={() => navigate("/donor/profile")}>
+                        Complete Profile
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* 4. ELIGIBLE but no requests right now */}
+                {(eligibilityInfo?.status === "eligible" || !eligibilityInfo?.status) && (
+                  <Card className="border-0 shadow-md">
+                    <CardContent className="py-12 text-center">
+                      <Bell className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        No matching requests right now
+                      </h3>
+                      <p className="text-gray-500 text-sm max-w-sm mx-auto">
+                        You are eligible and available. New requests will appear here
+                        automatically when a matching blood type is needed.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+
+            {/* Request cards */}
             {matches.map((match) => (
               <Card key={match._id} className="border-0 shadow-md hover:shadow-lg transition-shadow border-l-4 border-l-red-500">
                 <CardContent className="pt-6 pb-4">
@@ -272,28 +444,48 @@ const DonorDashboard = () => {
                           <Droplets className="h-6 w-6 text-red-600" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900">{match.requestId?.bloodGroup}{match.requestId?.rh} Blood Needed</h3>
-                          <Badge className={match.requestId?.urgency === "Emergency" ? "bg-red-100 text-red-700 border-red-200" : "bg-gray-100 text-gray-700 border-gray-200"}>
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {match.requestId?.bloodGroup}{match.requestId?.rh} Blood Needed
+                          </h3>
+                          <Badge className={match.requestId?.urgency === "Emergency"
+                            ? "bg-red-100 text-red-700 border-red-200"
+                            : "bg-gray-100 text-gray-700 border-gray-200"
+                          }>
                             {match.requestId?.urgency}
                           </Badge>
                         </div>
                       </div>
                       <div className="space-y-1.5 ml-1">
                         {match.status === "New" && (
-                          <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium mb-1">🔵 New Request</span>
+                          <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium mb-1">
+                            🔵 New Request
+                          </span>
                         )}
-                        <p className="text-sm text-gray-600 flex items-center gap-2"><MapPin className="h-4 w-4 text-gray-400" />{match.requestId?.hospitalName}</p>
-                        <p className="text-sm text-gray-600 flex items-center gap-2"><Droplets className="h-4 w-4 text-gray-400" />Units Required: {match.requestId?.unitsRequired}</p>
+                        <p className="text-sm text-gray-600 flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-gray-400" />{match.requestId?.hospitalName}
+                        </p>
+                        <p className="text-sm text-gray-600 flex items-center gap-2">
+                          <Droplets className="h-4 w-4 text-gray-400" />Units Required: {match.requestId?.unitsRequired}
+                        </p>
                         {match.requestId?.notes && (
-                          <p className="text-sm text-gray-500 flex items-center gap-2"><Clock className="h-4 w-4 text-gray-400" />{match.requestId?.notes}</p>
+                          <p className="text-sm text-gray-500 flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-gray-400" />{match.requestId?.notes}
+                          </p>
                         )}
                       </div>
                     </div>
                     <div className="flex md:flex-col gap-3 justify-end">
-                      <Button onClick={() => handleRespond(match._id, match.requestId?._id, "Accepted")} className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white">
+                      <Button
+                        onClick={() => handleRespond(match._id, match.requestId?._id, "Accepted")}
+                        className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white"
+                      >
                         <CheckCircle className="h-4 w-4 mr-2" />Accept
                       </Button>
-                      <Button variant="outline" onClick={() => handleRespond(match._id, match.requestId?._id, "Declined")} className="flex-1 md:flex-none text-gray-600">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleRespond(match._id, match.requestId?._id, "Declined")}
+                        className="flex-1 md:flex-none text-gray-600"
+                      >
                         Decline
                       </Button>
                     </div>
@@ -335,12 +527,26 @@ const DonorDashboard = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-gray-500 uppercase tracking-wider">Blood Type</p><p className="text-xl font-bold text-red-600 mt-1">{bloodType}</p></div>
-                  <div className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-gray-500 uppercase tracking-wider">Location</p><p className="text-sm font-semibold text-gray-900 mt-1">{donorProfile?.locationName || "Not set"}</p></div>
-                  <div className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-gray-500 uppercase tracking-wider">Total Donations</p><p className="text-xl font-bold text-gray-900 mt-1">{acceptedCount}</p></div>
-                  <div className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-gray-500 uppercase tracking-wider">Next Eligible</p><p className={`text-sm font-bold mt-1 ${eligibility.color.split(" ")[0]}`}>{eligibility.label}</p></div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider">Blood Type</p>
+                    <p className="text-xl font-bold text-red-600 mt-1">{bloodType}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider">Location</p>
+                    <p className="text-sm font-semibold text-gray-900 mt-1">{donorProfile?.locationName || "Not set"}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider">Total Donations</p>
+                    <p className="text-xl font-bold text-gray-900 mt-1">{acceptedCount}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider">Next Eligible</p>
+                    <p className={`text-sm font-bold mt-1 ${eligibility.color.split(" ")[0]}`}>{eligibility.label}</p>
+                  </div>
                 </div>
-                <Button className="w-full" variant="outline" onClick={() => navigate("/donor/profile")}>Edit Profile</Button>
+                <Button className="w-full" variant="outline" onClick={() => navigate("/donor/profile")}>
+                  Edit Profile
+                </Button>
               </CardContent>
             </Card>
 
@@ -358,7 +564,10 @@ const DonorDashboard = () => {
                     {badges.map((badge, i) => (
                       <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${badge.color}`}>
                         <badge.icon className="h-8 w-8 flex-shrink-0" />
-                        <div><p className="font-semibold text-gray-900">{badge.title}</p><p className="text-xs text-gray-500">{badge.description}</p></div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{badge.title}</p>
+                          <p className="text-xs text-gray-500">{badge.description}</p>
+                        </div>
                         <CheckCircle className="h-5 w-5 text-green-500 ml-auto flex-shrink-0" />
                       </div>
                     ))}
@@ -382,7 +591,11 @@ const DonorDashboard = () => {
         {activeTab === "certificates" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="border-0 shadow-md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><Award className="h-5 w-5 text-red-600" />Your Certificates</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-red-600" />Your Certificates
+                </CardTitle>
+              </CardHeader>
               <CardContent>
                 {certificates.length === 0 ? (
                   <div className="text-center py-8">
@@ -396,7 +609,10 @@ const DonorDashboard = () => {
                       <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${cert.color}`}>
                         <div className="flex items-center gap-3">
                           <cert.icon className="h-6 w-6 flex-shrink-0" />
-                          <div><p className="font-semibold text-gray-900">{cert.title}</p><p className="text-xs text-gray-500">{cert.level}</p></div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{cert.title}</p>
+                            <p className="text-xs text-gray-500">{cert.level}</p>
+                          </div>
                         </div>
                         <Badge className="bg-green-100 text-green-700 border-green-200">Earned</Badge>
                       </div>
@@ -407,7 +623,11 @@ const DonorDashboard = () => {
             </Card>
 
             <Card className="border-0 shadow-md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-red-600" />Progress to Next</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-red-600" />Progress to Next
+                </CardTitle>
+              </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {[
@@ -424,9 +644,14 @@ const DonorDashboard = () => {
                           <Badge variant="outline">{acceptedCount}/{item.target}</Badge>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
-                          <div className={`h-2 rounded-full transition-all ${done ? "bg-green-500" : "bg-red-600"}`} style={{ width: `${pct}%` }} />
+                          <div
+                            className={`h-2 rounded-full transition-all ${done ? "bg-green-500" : "bg-red-600"}`}
+                            style={{ width: `${pct}%` }}
+                          />
                         </div>
-                        <p className="text-xs text-gray-500">{done ? "✅ Completed!" : `${item.target - acceptedCount} more ${item.label} needed`}</p>
+                        <p className="text-xs text-gray-500">
+                          {done ? "✅ Completed!" : `${item.target - acceptedCount} more ${item.label} needed`}
+                        </p>
                       </div>
                     );
                   })}
@@ -441,26 +666,36 @@ const DonorDashboard = () => {
   );
 };
 
-// ────────────────────────────────────────────────
-// HISTORY TAB — expandable donation details
-// ────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// HISTORY TAB COMPONENT
+// 1. Awaiting Confirmation — donor accepted, patient not yet confirmed
+// 2. Confirmed Donations   — patient confirmed, counts as real donation
+// ─────────────────────────────────────────────────────────
 const HistoryTab = ({ token }) => {
-  const [history,  setHistory]  = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [expanded, setExpanded] = useState(null);
+  const [confirmed, setConfirmed] = useState([]);
+  const [pending,   setPending]   = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [expanded,  setExpanded]  = useState(null);
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchAll = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/api/matches/my-accepted",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setHistory(res.data.matches || []);
+        const [confirmedRes, pendingRes] = await Promise.all([
+          axios.get(
+            "http://localhost:5000/api/matches/my-accepted",
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+          axios.get(
+            "http://localhost:5000/api/matches/pending-confirmation",
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+        ]);
+        setConfirmed(confirmedRes.data.matches || []);
+        setPending(pendingRes.data.matches     || []);
       } catch (err) { console.log(err); }
       setLoading(false);
     };
-    fetchHistory();
+    fetchAll();
   }, []);
 
   if (loading) return (
@@ -469,153 +704,243 @@ const HistoryTab = ({ token }) => {
     </div>
   );
 
-  if (history.length === 0) return (
+  if (confirmed.length === 0 && pending.length === 0) return (
     <div className="text-center py-10">
       <Calendar className="h-12 w-12 text-gray-200 mx-auto mb-3" />
       <p className="text-gray-500 text-sm font-medium">No donation history yet</p>
       <p className="text-gray-400 text-xs mt-1">
-        Your confirmed donations will appear here once a patient confirms your donation
+        When you accept a request it will appear here. Once the recipient confirms it counts as a donation.
       </p>
     </div>
   );
 
   return (
-    <div className="space-y-3">
-      {history.map((match, i) => {
-        const isOpen  = expanded === (match._id || i);
-        const reqId   = match.requestId;
-        const date    = match.donationConfirmedAt || match.respondedAt;
+    <div className="space-y-6">
 
-        return (
-          <div key={match._id || i}
-            className={`border rounded-xl transition-all duration-200 ${
-              isOpen ? "border-green-300 shadow-md" : "border-gray-200 hover:border-green-200"
-            }`}
-          >
-            {/* Row — always visible, clickable */}
-            <button
-              className="w-full p-4 text-left"
-              onClick={() => setExpanded(isOpen ? null : (match._id || i))}
-            >
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <Droplets className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {reqId?.hospitalName || "Hospital"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {reqId?.bloodGroup}{reqId?.rh} — {reqId?.unitsRequired} unit{reqId?.unitsRequired > 1 ? "s" : ""}
-                      {reqId?.urgency ? ` · ${reqId.urgency}` : ""}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className="text-xs font-medium text-gray-600">
-                      {date
-                        ? new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-                        : "—"
-                      }
-                    </p>
-                    <Badge className="mt-0.5 bg-green-100 text-green-700 border-green-200 text-xs">
-                      🎉 Confirmed
-                    </Badge>
-                  </div>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-                    isOpen ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"
-                  }`}>
-                    {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </div>
-                </div>
-              </div>
-            </button>
+      {/* ── AWAITING CONFIRMATION ── */}
+      {pending.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+            <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+              Awaiting Confirmation ({pending.length})
+            </p>
+          </div>
 
-            {/* Expanded details */}
-            {isOpen && (
-              <div className="border-t border-gray-100 p-4 bg-gray-50 rounded-b-xl">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-                  Donation Details
-                </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-3">
+            <p className="text-xs text-yellow-800 leading-relaxed">
+              <strong>You accepted these requests.</strong> If you have already donated blood,
+              the recipient needs to confirm your donation. You can send them a reminder below.
+            </p>
+          </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="space-y-3">
+            {pending.map((match, i) => {
+              const key    = `pending-${match._id || i}`;
+              const isOpen = expanded === key;
+              const req    = match.requestId;
 
-                  {/* Blood Type */}
-                  <div className="bg-white rounded-xl p-3 border border-gray-100">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Blood Type Donated</p>
-                    <p className="text-xl font-bold text-red-600">
-                      {reqId?.bloodGroup}{reqId?.rh}
-                    </p>
-                  </div>
+              return (
+                <div key={key} className={`border-2 rounded-xl transition-all duration-200 ${
+                  isOpen ? "border-yellow-400 shadow-md" : "border-yellow-200 hover:border-yellow-400"
+                }`}>
+                  <button className="w-full p-4 text-left" onClick={() => setExpanded(isOpen ? null : key)}>
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-5 w-5 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{req?.hospitalName || "Hospital"}</p>
+                          <p className="text-xs text-gray-500">
+                            {req?.bloodGroup}{req?.rh} — {req?.unitsRequired} unit{req?.unitsRequired > 1 ? "s" : ""}
+                            {req?.urgency ? ` · ${req.urgency}` : ""}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Accepted: {match.respondedAt
+                              ? new Date(match.respondedAt).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" })
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 text-xs">⏳ Confirmation Pending</Badge>
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isOpen ? "bg-yellow-100 text-yellow-600" : "bg-gray-100 text-gray-400"}`}>
+                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
 
-                  {/* Units */}
-                  <div className="bg-white rounded-xl p-3 border border-gray-100">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Units Donated</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {reqId?.unitsRequired || "—"}
-                    </p>
-                  </div>
+                  {isOpen && (
+                    <div className="border-t border-yellow-100 p-4 bg-yellow-50 rounded-b-xl space-y-3">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Donation Details</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Blood Type</p>
+                          <p className="text-xl font-bold text-red-600">{req?.bloodGroup}{req?.rh}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Units</p>
+                          <p className="text-xl font-bold text-gray-900">{req?.unitsRequired || "—"}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100 col-span-2">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Hospital</p>
+                          <p className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                            <Building className="h-3.5 w-3.5 text-gray-400" />{req?.hospitalName || "—"}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">You Accepted On</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {match.respondedAt
+                              ? new Date(match.respondedAt).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" })
+                              : "—"}
+                          </p>
+                        </div>
+                        <div className="bg-yellow-100 rounded-xl p-3 border border-yellow-200">
+                          <p className="text-xs text-yellow-700 uppercase tracking-wider mb-1">Status</p>
+                          <p className="text-sm font-bold text-yellow-800">⏳ Waiting for recipient</p>
+                        </div>
+                        {req?.notes && (
+                          <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 col-span-2">
+                            <p className="text-xs text-blue-500 uppercase tracking-wider mb-1">Request Notes</p>
+                            <p className="text-sm text-blue-800">{req.notes}</p>
+                          </div>
+                        )}
+                      </div>
 
-                  {/* Hospital */}
-                  <div className="bg-white rounded-xl p-3 border border-gray-100 col-span-2">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Hospital</p>
-                    <p className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-                      <Building className="h-3.5 w-3.5 text-gray-400" />
-                      {reqId?.hospitalName || "—"}
-                    </p>
-                  </div>
-
-                  {/* Urgency */}
-                  <div className="bg-white rounded-xl p-3 border border-gray-100">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Urgency</p>
-                    <Badge className={
-                      reqId?.urgency === "Emergency"
-                        ? "bg-red-100 text-red-700 border-red-200"
-                        : reqId?.urgency === "Urgent"
-                        ? "bg-orange-100 text-orange-700 border-orange-200"
-                        : "bg-gray-100 text-gray-700 border-gray-200"
-                    }>
-                      {reqId?.urgency || "Normal"}
-                    </Badge>
-                  </div>
-
-                  {/* Confirmed date */}
-                  <div className="bg-green-50 rounded-xl p-3 border border-green-200">
-                    <p className="text-xs text-green-600 uppercase tracking-wider mb-1">Confirmed On</p>
-                    <p className="font-semibold text-green-800 text-sm flex items-center gap-1.5">
-                      <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
-                      {match.donationConfirmedAt
-                        ? new Date(match.donationConfirmedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-                        : date
-                        ? new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-                        : "—"
-                      }
-                    </p>
-                  </div>
-
-                  {/* Notes */}
-                  {reqId?.notes && (
-                    <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 col-span-2">
-                      <p className="text-xs text-blue-500 uppercase tracking-wider mb-1">Request Notes</p>
-                      <p className="text-sm text-blue-800">{reqId.notes}</p>
+                      <div className="bg-white border border-yellow-200 rounded-xl p-4 mt-2">
+                        <p className="text-xs font-bold text-gray-700 mb-2">Already donated? Send a reminder:</p>
+                        <a
+                          href={`mailto:?subject=Blood Donation Confirmation Reminder — Jeevan Saarthi&body=Hello,%0D%0A%0D%0AI donated blood for your request at ${req?.hospitalName || "the hospital"} on ${match.respondedAt ? new Date(match.respondedAt).toLocaleDateString() : "the scheduled date"}.%0D%0A%0D%0ACould you please confirm my donation in the Jeevan Saarthi system so my contribution is recorded?%0D%0A%0D%0AThank you for helping save lives!%0D%0A%0D%0AJeevan Saarthi Donor`}
+                          className="w-full inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all"
+                        >
+                          <Mail className="h-3.5 w-3.5" />Send Reminder Email
+                        </a>
+                        <p className="text-xs text-gray-400 mt-2 text-center">Opens your email app with a pre-written reminder</p>
+                      </div>
                     </div>
                   )}
                 </div>
-
-                {/* Impact message */}
-                <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-xl p-3 flex items-center gap-3">
-                  <Heart className="h-5 w-5 text-red-500 flex-shrink-0" />
-                  <p className="text-xs text-red-700 font-medium">
-                    Your donation helped save up to 3 lives. Thank you for being a hero! 🩸
-                  </p>
-                </div>
-              </div>
-            )}
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+      )}
+
+      {/* ── CONFIRMED DONATIONS ── */}
+      {confirmed.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+              Confirmed Donations ({confirmed.length})
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {confirmed.map((match, i) => {
+              const key    = `confirmed-${match._id || i}`;
+              const isOpen = expanded === key;
+              const req    = match.requestId;
+              const date   = match.donationConfirmedAt || match.respondedAt;
+
+              return (
+                <div key={key} className={`border rounded-xl transition-all duration-200 ${
+                  isOpen ? "border-green-300 shadow-md" : "border-gray-200 hover:border-green-200"
+                }`}>
+                  <button className="w-full p-4 text-left" onClick={() => setExpanded(isOpen ? null : key)}>
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <Droplets className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{req?.hospitalName || "Hospital"}</p>
+                          <p className="text-xs text-gray-500">
+                            {req?.bloodGroup}{req?.rh} — {req?.unitsRequired} unit{req?.unitsRequired > 1 ? "s" : ""}
+                            {req?.urgency ? ` · ${req.urgency}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <p className="text-xs font-medium text-gray-600">
+                            {date ? new Date(date).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" }) : "—"}
+                          </p>
+                          <Badge className="mt-0.5 bg-green-100 text-green-700 border-green-200 text-xs">🎉 Confirmed</Badge>
+                        </div>
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isOpen ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="border-t border-gray-100 p-4 bg-gray-50 rounded-b-xl">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Donation Details</p>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Blood Type Donated</p>
+                          <p className="text-xl font-bold text-red-600">{req?.bloodGroup}{req?.rh}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Units Donated</p>
+                          <p className="text-xl font-bold text-gray-900">{req?.unitsRequired || "—"}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100 col-span-2">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Hospital</p>
+                          <p className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                            <Building className="h-3.5 w-3.5 text-gray-400" />{req?.hospitalName || "—"}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Urgency</p>
+                          <Badge className={req?.urgency === "Emergency" ? "bg-red-100 text-red-700 border-red-200" : req?.urgency === "Urgent" ? "bg-orange-100 text-orange-700 border-orange-200" : "bg-gray-100 text-gray-700 border-gray-200"}>
+                            {req?.urgency || "Normal"}
+                          </Badge>
+                        </div>
+                        <div className="bg-green-50 rounded-xl p-3 border border-green-200">
+                          <p className="text-xs text-green-600 uppercase tracking-wider mb-1">Confirmed On</p>
+                          <p className="font-semibold text-green-800 text-sm flex items-center gap-1.5">
+                            <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
+                            {match.donationConfirmedAt
+                              ? new Date(match.donationConfirmedAt).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" })
+                              : date ? new Date(date).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }) : "—"
+                            }
+                          </p>
+                        </div>
+                        {req?.notes && (
+                          <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 col-span-2">
+                            <p className="text-xs text-blue-500 uppercase tracking-wider mb-1">Request Notes</p>
+                            <p className="text-sm text-blue-800">{req.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-xl p-3 flex items-center gap-3">
+                        <Heart className="h-5 w-5 text-red-500 flex-shrink-0" />
+                        <p className="text-xs text-red-700 font-medium">
+                          Your donation helped save up to 3 lives. Thank you for being a hero! 🩸
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {confirmed.length === 0 && pending.length > 0 && (
+        <div className="text-center py-2">
+          <p className="text-xs text-gray-400">
+            Confirmed donations will appear here once recipients verify your donation
+          </p>
+        </div>
+      )}
     </div>
   );
 };
