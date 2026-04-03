@@ -43,7 +43,7 @@ router.post("/register", async (req, res) => {
     // Do NOT return token for hospital/NGO — they must wait for approval
     if (needsVerification) {
       return res.status(201).json({
-        message: "Application submitted successfully. Please wait for admin approval.",
+        message: "Application submitted successfully. Your details are under review by our verification team.",
         requiresApproval: true,
         user: {
           id:       user._id,
@@ -96,14 +96,14 @@ router.post("/login", async (req, res) => {
     // Block suspended accounts
     if (user.status === "suspended") {
       return res.status(403).json({
-        message: "Your account has been suspended. Please contact admin.",
+        message: "Your account has been suspended. Please contact our support team.",
       });
     }
 
     // Block hospital/NGO that are not yet verified
     if ((user.role === "hospital" || user.role === "ngo") && !user.isVerified) {
       return res.status(403).json({
-        message: "Your account is pending admin approval. You will receive an email once approved.",
+        message: "Your account is currently under review by our verification team. You will receive an email once approved.",
         pendingApproval: true,
       });
     }

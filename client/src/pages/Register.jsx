@@ -115,7 +115,7 @@ const Register = () => {
                 </h1>
                 <p className="text-gray-500 mb-6 leading-relaxed">
                   Thank you for registering <strong className="text-gray-800">{submittedData.name}</strong> on
-                  Jeevan Saarthi. Your application is now under review by our admin team.
+                  Jeevan Saarthi. Your application is now under review by our verification team.
                 </p>
 
                 {/* Status steps */}
@@ -135,7 +135,7 @@ const Register = () => {
                       <Clock className="h-4 w-4 text-yellow-600 animate-spin" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">Under Admin Review</p>
+                      <p className="text-sm font-semibold text-gray-900">Under Review by Our Team</p>
                       <p className="text-xs text-gray-500">Our team is verifying your organisation — 2 to 3 business days</p>
                     </div>
                   </div>
@@ -168,7 +168,7 @@ const Register = () => {
                   </p>
                   <p className="text-xs text-blue-600 leading-relaxed">
                     A confirmation has been sent to <strong>{submittedData.email}</strong>.
-                    Once our admin approves your application you will receive another email
+                    Once our verification team approves your application you will receive another email
                     with login instructions.
                   </p>
                 </div>
@@ -255,9 +255,10 @@ const Register = () => {
                     <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-start gap-2">
                       <Clock className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <p className="text-xs text-yellow-800 leading-relaxed">
-                        <strong>Organisation accounts require admin approval.</strong> After
-                        registration your account will be reviewed within 2–3 business days.
-                        You will receive an email notification once approved.
+                        <strong>Organisation accounts require verification</strong> After
+                        registration your details will be reviewed by our team
+                        within 2–3 business days. You will receive an email
+                        notification once your account is approved.
                       </p>
                     </div>
                   )}
@@ -344,7 +345,7 @@ const Register = () => {
                         </button>
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        Note: Document upload will be available after approval. Admin will contact you for verification.
+                        Note: Document upload will be available after approval. Our verification team will contact you to verify your documents.
                       </p>
                     </div>
                   </div>
