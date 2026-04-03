@@ -164,4 +164,41 @@ router.get("/request/:requestId", protect, async (req, res) => {
   }
 });
 
+// Get accepted matches count for donor (for stats)
+router.get("/my-history", protect, async (req, res) => {
+  try {
+    const donorProfile = await DonorProfile.findOne({ userId: req.user.userId });
+    if (!donorProfile) {
+      return res.status(200).json({ count: 0 });
+    }
+    const count = await Match.countDocuments({
+      donorProfileId: donorProfile._id,
+      status: "Accepted",
+    });
+    return res.status(200).json({ count });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Get all accepted matches for donor (for history tab)
+router.get("/my-accepted", protect, async (req, res) => {
+  try {
+    const donorProfile = await DonorProfile.findOne({ userId: req.user.userId });
+    if (!donorProfile) {
+      return res.status(200).json({ matches: [] });
+    }
+    const matches = await Match.find({
+      donorProfileId: donorProfile._id,
+      status: "Accepted",
+    })
+      .populate("requestId")
+      .sort({ respondedAt: -1 });
+
+    return res.status(200).json({ matches });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;
