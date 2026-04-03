@@ -219,7 +219,10 @@ const HospitalDashboard = () => {
                             <Droplets className="h-6 w-6 text-red-600" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <h3
+                              className="text-lg font-bold text-gray-900 hover:text-red-600 cursor-pointer transition-colors"
+                              onClick={() => navigate(`/request-details/${request._id}`)}
+                            >
                               {request.bloodGroup}{request.rh} Blood — {request.unitsRequired} units
                             </h3>
                             <div className="flex items-center gap-2 mt-1">
@@ -369,28 +372,47 @@ const HospitalDashboard = () => {
             )}
 
             {closedRequests.map((request) => {
-              const counts = matchData[request._id] || { accepted: 0, total: 0 };
+              const counts = matchData[request._id] || { accepted: 0, donated: 0, total: 0 };
               return (
-                <Card key={request._id} className="border-0 shadow-md opacity-80">
+                <Card
+                  key={request._id}
+                  className="border-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                  onClick={() => navigate(`/request-details/${request._id}`)}
+                >
                   <CardContent className="pt-5 pb-4">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                          <Droplets className="h-5 w-5 text-gray-400" />
+                        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-700">
+                          <h3 className="font-bold text-gray-700 group-hover:text-red-600 transition-colors">
                             {request.bloodGroup}{request.rh} — {request.unitsRequired} units
                           </h3>
                           <p className="text-sm text-gray-500">{request.hospitalName}</p>
-                          <p className="text-xs text-gray-400">
-                            {counts.accepted} donor{counts.accepted !== 1 ? "s" : ""} accepted · {new Date(request.createdAt).toLocaleDateString()}
-                          </p>
+                          <div className="flex items-center gap-3 mt-0.5">
+                            <p className="text-xs text-gray-400">
+                              {counts.accepted} donor{counts.accepted !== 1 ? "s" : ""} accepted
+                            </p>
+                            {counts.donated > 0 && (
+                              <p className="text-xs text-green-600 font-medium">
+                                · {counts.donated} donation{counts.donated !== 1 ? "s" : ""} confirmed
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              · {new Date(request.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <Badge className="bg-green-100 text-green-700 border-green-200">
-                        <CheckCircle className="h-3 w-3 mr-1" />Closed
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-green-100 text-green-700 border-green-200">
+                          <CheckCircle className="h-3 w-3 mr-1" />Fulfilled
+                        </Badge>
+                        <span className="text-xs text-gray-400 group-hover:text-red-500 transition-colors">
+                          View Details →
+                        </span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

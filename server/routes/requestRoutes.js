@@ -97,4 +97,20 @@ router.patch("/:id/close", protect, async (req, res) => {
   }
 });
 
+// Edit a request
+router.patch("/:requestId", protect, async (req, res) => {
+  try {
+    const { bloodGroup, rh, unitsRequired, urgency, hospitalName, notes } = req.body;
+    const request = await BloodRequest.findByIdAndUpdate(
+      req.params.requestId,
+      { bloodGroup, rh, unitsRequired, urgency, hospitalName, notes },
+      { new: true }
+    );
+    if (!request) return res.status(404).json({ message: "Request not found" });
+    return res.status(200).json({ message: "Request updated", request });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;

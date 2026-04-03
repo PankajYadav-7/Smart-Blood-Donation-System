@@ -19,7 +19,13 @@ const matchSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Notified", "Accepted", "Declined", "Expired"],
+      enum: [
+        "Notified",   // Hospital found donor — donor not yet responded
+        "Accepted",   // Donor accepted — has NOT donated yet
+        "Declined",   // Donor declined
+        "Donated",    // Patient confirmed donation was received ✅
+        "NoShow",     // Donor accepted but did not come
+      ],
       default: "Notified",
     },
     contactRevealed: {
@@ -28,6 +34,15 @@ const matchSchema = new mongoose.Schema(
     },
     respondedAt: {
       type: Date,
+      default: null,
+    },
+    donationConfirmedAt: {
+      type: Date,
+      default: null,
+    },
+    donationConfirmedBy: {
+      type: String,
+      default: null, // "patient" or "hospital"
     },
   },
   { timestamps: true }

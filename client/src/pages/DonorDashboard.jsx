@@ -38,10 +38,10 @@ const DonorDashboard = () => {
 
   const fetchMatches = async () => {
     try {
-      const res = await axios.get(`${API}/matches/my-matches`, {
+      const res = await axios.get(`${API}/matches/compatible-requests`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setMatches(res.data.matches || []);
+      setMatches(res.data.requests || []);
     } catch (err) { console.log(err); }
   };
 
@@ -63,6 +63,13 @@ const DonorDashboard = () => {
     } catch (err) { console.log(err); }
   };
 
+  // ── Toast notification state ──
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const handleToggleAvailability = async () => {
     if (!donorProfile) {
       navigate("/donor/profile");
@@ -75,25 +82,39 @@ const DonorDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setDonorProfile(prev => ({ ...prev, availability: res.data.availability }));
-    } catch { alert("Failed to update availability"); }
+      showToast(res.data.availability ? "You are now available to donate" : "You are now unavailable");
+    } catch { showToast("Failed to update availability", "error"); }
   };
 
-  const handleRespond = async (matchId, status) => {
+  const handleRespond = async (matchId, requestId, status) => {
     try {
-      await axios.patch(
-        `${API}/matches/${matchId}/respond`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+      if (matchId) {
+        await axios.patch(
+          `${API}/matches/${matchId}/respond`,
+          { status },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.post(
+          `${API}/matches/respond-direct`,
+          { requestId, status },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      showToast(
+        status === "Accepted"
+          ? "Request accepted! The patient has been notified."
+          : "Request declined."
       );
       fetchMatches();
       fetchAcceptedCount();
-    } catch { alert("Failed to respond"); }
+    } catch { showToast("Failed to respond", "error"); }
   };
 
   const handleSnooze = (hours) => {
     setIsSnoozed(true);
     setTimeout(() => setIsSnoozed(false), hours * 60 * 60 * 1000);
-    alert(`Alerts snoozed for ${hours} hours`);
+    showToast(`Alerts snoozed for ${hours} hours`);
   };
 
   const handleLogout = () => {
@@ -149,6 +170,21 @@ const DonorDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+
+      {/* ── Toast Notification ── */}
+      {toast && (
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-semibold transition-all duration-300 ${
+          toast.type === "error"
+            ? "bg-red-600 text-white"
+            : "bg-green-600 text-white"
+        }`}>
+          {toast.type === "error"
+            ? <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            : <CheckCircle className="h-5 w-5 flex-shrink-0" />
+          }
+          {toast.message}
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -306,6 +342,11 @@ const DonorDashboard = () => {
                       </div>
 
                       <div className="space-y-1.5 ml-1">
+                        {match.status === "New" && (
+                          <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium mb-1">
+                            🔵 New Request
+                          </span>
+                        )}
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-gray-400" />
                           {match.requestId?.hospitalName}
@@ -325,14 +366,22 @@ const DonorDashboard = () => {
 
                     <div className="flex md:flex-col gap-3 justify-end">
                       <Button
-                        onClick={() => handleRespond(match._id, "Accepted")}
+                        onClick={() => handleRespond(
+                          match._id,
+                          match.requestId?._id,
+                          "Accepted"
+                        )}
                         className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />Accept
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => handleRespond(match._id, "Declined")}
+                        onClick={() => handleRespond(
+                          match._id,
+                          match.requestId?._id,
+                          "Declined"
+                        )}
                         className="flex-1 md:flex-none text-gray-600"
                       >
                         Decline
