@@ -449,8 +449,13 @@ const PatientDashboard = () => {
             {fulfilledRequests.map((request) => {
               const donors  = matchData[request._id] || [];
               const donated = donors.filter(m => m.status === "Donated");
+              const accepted = donors.filter(m => m.status === "Accepted" || m.status === "Donated");
               return (
-                <Card key={request._id} className="border-0 shadow-md opacity-85">
+                <Card
+                  key={request._id}
+                  className="border-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                  onClick={() => navigate(`/request-details/${request._id}`)}
+                >
                   <CardContent className="pt-5 pb-4">
                     <div className="flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex items-center gap-3">
@@ -458,21 +463,33 @@ const PatientDashboard = () => {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900">
-                            {request.bloodGroup}{request.rh} — {request.unitsRequired} units
+                          <p className="font-bold text-gray-900 group-hover:text-red-600 transition-colors">
+                            {request.bloodGroup}{request.rh} — {request.unitsRequired} units needed
                           </p>
                           <p className="text-sm text-gray-500">🏥 {request.hospitalName}</p>
-                          <p className="text-xs text-gray-400">
-                            {donated.length > 0
-                              ? `Fulfilled by ${donated.length} donor${donated.length > 1 ? "s" : ""}`
-                              : "Fulfilled"
-                            }
-                          </p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {accepted.length > 0 && (
+                              <p className="text-xs text-gray-400">{accepted.length} donor{accepted.length > 1 ? "s" : ""} responded</p>
+                            )}
+                            {donated.length > 0 && (
+                              <p className="text-xs text-green-600 font-medium">
+                                · {donated.length} donation{donated.length > 1 ? "s" : ""} confirmed
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              · {new Date(request.createdAt).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" })}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <Badge className="bg-green-100 text-green-700 border-green-200">
-                        <CheckCircle className="h-3 w-3 mr-1" />Fulfilled
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-green-100 text-green-700 border-green-200">
+                          <CheckCircle className="h-3 w-3 mr-1" />Fulfilled
+                        </Badge>
+                        <span className="text-xs text-gray-400 group-hover:text-red-500 transition-colors">
+                          View Details →
+                        </span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
