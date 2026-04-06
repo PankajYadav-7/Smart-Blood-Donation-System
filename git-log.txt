@@ -1,0 +1,15 @@
+5d15d35 Upadte everythings now
+a495efc Make all closed/fulfilled history sections clickable across all dashboards
+2ce1cf2 Clean simple closed request view, full detail view for open requests
+58fd32d Fix donor dashboard - replace all hardcoded data with real database queries
+0a43128 Fix remaining admin language in the backed messages
+7d07d7a Complete hospital/NGO verification flow - pending approval, admin review, email blocking
+23faa9c Fix donor profile - load saved data, add 56-day eligibility cooldown calculator
+d7fd94a Remove test accounts from login page
+0c76dda Complete matching system working - donor responses showing on hospital dashboard
+19a35cb Update Login and Register pages with professional design
+09fcd38 Fix Help and Settings pages - all pages working
+2b78ca0 Update project README and documentation
+d3ae34f Complete Jeevan Saarthi UI redesign - all pages done
+6363885 Complete Jeevan Saarthi UI redesign - all pages done
+1922e1b Initial commit - Blood Donation System
