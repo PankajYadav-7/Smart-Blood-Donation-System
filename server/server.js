@@ -38,6 +38,25 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
+app.get('/api/stats', async (req, res) => {
+  try {
+    const User         = require('./models/User');
+    const BloodRequest = require('./models/BloodRequest');
+    const Match        = require('./models/Match');
+    const DonorProfile = require('./models/DonorProfile');
+
+    const [donors, organisations, openRequests] = await Promise.all([
+      User.countDocuments({ role: 'donor' }),
+      User.countDocuments({ role: { $in: ['hospital', 'ngo'] }, isVerified: true }),
+      BloodRequest.countDocuments({ status: 'Open' }),
+    ]);
+
+    res.json({ donors, organisations, openRequests });
+  } catch (err) {
+    res.status(500).json({ donors: 0, organisations: 0, openRequests: 0 });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

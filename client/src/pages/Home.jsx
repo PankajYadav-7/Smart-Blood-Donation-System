@@ -16,21 +16,21 @@ import {
 const Home = () => {
 
   // ── Live stats from database ──
-  const [stats, setStats] = useState([
-    { number: "...", label: "Donors Registered"   },
-    { number: "3",   label: "Lives Saved Per Donation" },
-    { number: "...", label: "Verified Organisations" },
-    { number: "...", label: "Requests Need Help Now" },
-  ]);
+const [stats, setStats] = useState([
+  { number: "...",  label: "Registered Donors",      sub: ""                   },
+  { number: "24/7", label: "Active Donor Network",   sub: ""                   },
+  { number: "...",  label: "Verified Organisations", sub: "(Hospitals / NGOs)" },
+  { number: "...",  label: "Open Blood Requests",    sub: ""                   },
+]);
 
   useEffect(() => {
     axios.get("http://localhost:5000/api/stats")
       .then(res => {
         setStats([
-          { number: res.data.donors,        label: "Donors Registered"        },
-          { number: "3",                    label: "Lives Saved Per Donation"  },
-          { number: res.data.organisations, label: "Verified Organisations"   },
-          { number: res.data.openRequests,  label: "Requests Need Help Now"   },
+          { number: res.data.donors,        label: "Registered Donors",      sub: ""                   },
+          { number: "24/7",                 label: "Active Donor Network",   sub: ""                   },
+          { number: res.data.organisations, label: "Verified Organisations", sub: "(Hospitals / NGOs)" },
+          { number: res.data.openRequests,  label: "Open Blood Requests",    sub: ""                   },
         ]);
       })
       .catch(() => {});
@@ -172,11 +172,20 @@ const Home = () => {
             </div>
             <div className="relative z-10 grid grid-cols-2 md:grid-cols-4">
               {stats.map((stat, index) => (
-                <div key={index} className={`py-10 px-6 text-center ${index !== stats.length - 1 ? "border-r border-white/10" : ""}`}>
-                  <div className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">{stat.number}</div>
-                  <div className="text-sm md:text-base text-white font-medium tracking-wide uppercase opacity-90">{stat.label}</div>
-                </div>
-              ))}
+  <div key={index} className={`py-10 px-6 text-center ${index !== stats.length - 1 ? "border-r border-white/10" : ""}`}>
+    <div className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+      {stat.number}
+    </div>
+    <div className="text-sm md:text-base text-white font-medium tracking-wide uppercase opacity-90">
+      {stat.label}
+    </div>
+    {stat.sub && (
+      <div className="text-xs text-white/50 mt-1 normal-case tracking-normal">
+        {stat.sub}
+      </div>
+    )}
+  </div>
+))}
             </div>
           </div>
         </div>
