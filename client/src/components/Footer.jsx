@@ -41,7 +41,7 @@ const Footer = () => {
             </p>
             <div className="flex items-center gap-2 pt-2">
               <Heart className="h-4 w-4 text-white/60" />
-              <span className="text-sm text-white/60">Saving lives since 2024</span>
+              <span className="text-sm text-white/60">Saving lives since 2026</span>
             </div>
           </div>
 
