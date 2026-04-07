@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "../components/ui/button";
+import axios from "axios";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import Navbar from "../components/Navbar";
@@ -13,6 +14,28 @@ import {
 } from "lucide-react";
 
 const Home = () => {
+
+  // ── Live stats from database ──
+  const [stats, setStats] = useState([
+    { number: "...", label: "Donors Registered"   },
+    { number: "3",   label: "Lives Saved Per Donation" },
+    { number: "...", label: "Verified Organisations" },
+    { number: "...", label: "Requests Need Help Now" },
+  ]);
+
+  useEffect(() => {
+    axios.get("http://localhost:5000/api/stats")
+      .then(res => {
+        setStats([
+          { number: res.data.donors,        label: "Donors Registered"        },
+          { number: "3",                    label: "Lives Saved Per Donation"  },
+          { number: res.data.organisations, label: "Verified Organisations"   },
+          { number: res.data.openRequests,  label: "Requests Need Help Now"   },
+        ]);
+      })
+      .catch(() => {});
+  }, []);
+
   const features = [
     { icon: Clock,      title: "Real-time Matching",            description: "Instant donor matching based on blood type and location" },
     { icon: Shield,     title: "Verified Requests",             description: "Only verified hospitals and NGOs can post emergency requests" },
@@ -20,13 +43,6 @@ const Home = () => {
     { icon: ToggleLeft, title: "Donor Availability Control",    description: "Toggle availability and control when you can donate" },
     { icon: Award,      title: "Donor Badges & Impact Stats",   description: "Track your donations and earn recognition badges" },
     { icon: Heart,      title: "Privacy First",                 description: "Complete privacy protection for all users" },
-  ];
-
-  const stats = [
-    { number: "7,528", label: "Total Donors" },
-    { number: "3,902", label: "Lives Saved" },
-    { number: "9,282", label: "Requests Fulfilled" },
-    { number: "102",   label: "Cities Covered" },
   ];
 
   const howItWorks = [
@@ -38,25 +54,24 @@ const Home = () => {
   const upcomingEvents = [
     {
       id: 1, title: "Community Blood Drive", organizer: "Bir Hospital",
-      date: "April 10, 2026", time: "9:00 AM - 4:00 PM",
+      date: "Kathmandu", time: "9:00 AM - 4:00 PM",
       location: "Kathmandu Community Center", address: "Bagbazar, Kathmandu",
       bloodTypes: ["A+", "O+", "B+", "AB+"], icon: Building2, status: "Open",
     },
     {
       id: 2, title: "Emergency Blood Collection", organizer: "Nepal Red Cross",
-      date: "April 15, 2026", time: "10:00 AM - 6:00 PM",
+      date: "Lalitpur", time: "10:00 AM - 6:00 PM",
       location: "Patan Hospital", address: "Lagankhel, Lalitpur",
       bloodTypes: ["O-", "A-", "B-"], icon: Heart, status: "Urgent",
     },
     {
-      id: 3, title: "New Year Blood Campaign", organizer: "Hope Medical NGO",
-      date: "April 20, 2026", time: "8:00 AM - 5:00 PM",
+      id: 3, title: "Campus Blood Campaign", organizer: "Hope Medical NGO",
+      date: "Kirtipur", time: "8:00 AM - 5:00 PM",
       location: "Tribhuvan University Campus", address: "Kirtipur, Kathmandu",
       bloodTypes: ["All Types"], icon: Users, status: "Upcoming",
     },
   ];
 
-  // ── Thing 1: Blood Compatibility Chart Data ──
   const bloodCompatibility = [
     { type: "O-",  canDonateTo: ["O-","O+","A-","A+","B-","B+","AB-","AB+"], canReceiveFrom: ["O-"],                                label: "Universal Donor",    color: "bg-red-600"    },
     { type: "O+",  canDonateTo: ["O+","A+","B+","AB+"],                       canReceiveFrom: ["O-","O+"],                           label: "Most Common",        color: "bg-red-500"    },
@@ -68,37 +83,35 @@ const Home = () => {
     { type: "AB+", canDonateTo: ["AB+"],                                       canReceiveFrom: ["O-","O+","A-","A+","B-","B+","AB-","AB+"], label: "Universal Receiver", color: "bg-purple-500" },
   ];
 
-  // ── Thing 2: Testimonials ──
   const testimonials = [
     {
-      name: "Dr. Ramesh Sharma",
-      role: "Senior Emergency Doctor",
-      hospital: "Bir Hospital, Kathmandu",
-      message: "Jeevan Saarthi has completely transformed how we find blood donors in emergency situations. What used to take hours now takes minutes. The verified request system gives us and donors full confidence.",
-      rating: 5, avatar: "RS", color: "bg-blue-100 text-blue-700",
+      name: "Emergency Department",
+      role: "Hospital Staff",
+      hospital: "Kathmandu, Nepal",
+      message: "Finding compatible blood donors manually during emergencies takes hours. A platform that instantly matches donors by blood type and notifies them automatically would drastically cut response time and save more lives.",
+      rating: 5, avatar: "ED", color: "bg-blue-100 text-blue-700",
     },
     {
-      name: "Sita Karmacharya",
-      role: "Regular Blood Donor",
+      name: "Voluntary Blood Donor",
+      role: "Regular Donor",
       hospital: "Lalitpur, Nepal",
-      message: "I have been donating blood for 3 years but never felt this organised. The platform notifies me only for matching requests near me and I love that hospitals cannot see my contact until I agree to help.",
-      rating: 5, avatar: "SK", color: "bg-green-100 text-green-700",
+      message: "What matters most as a donor is control over my own information. Knowing that my contact details are only shared after I personally agree to help makes me feel safe and encourages me to stay registered and available.",
+      rating: 5, avatar: "VD", color: "bg-green-100 text-green-700",
     },
     {
-      name: "Binod Thapa",
-      role: "NGO Programme Coordinator",
-      hospital: "Nepal Red Cross Society",
-      message: "Managing blood donation drives used to be very difficult. Now we post verified requests and the system automatically matches donors. We fulfilled three times more requests this year compared to last year.",
-      rating: 5, avatar: "BT", color: "bg-red-100 text-red-700",
+      name: "Blood Drive Coordinator",
+      role: "NGO Programme Staff",
+      hospital: "Kathmandu, Nepal",
+      message: "Organising blood donation drives manually using phone calls and spreadsheets is slow and unreliable. A centralised system that posts requests and automatically matches donors would make every campaign far more effective.",
+      rating: 5, avatar: "BC", color: "bg-red-100 text-red-700",
     },
   ];
 
-  // ── Thing 3: Nepal Blood Crisis Statistics ──
   const nepalStats = [
-    { number: "40%",     label: "Blood Shortage",        description: "Nepal faces up to 40% blood shortage every year during emergencies",           icon: Droplets, color: "text-red-600 bg-red-50"    },
-    { number: "2 hrs",   label: "Average Wait Time",     description: "Average time families spend searching for blood donors manually in Nepal",      icon: Clock,    color: "text-orange-600 bg-orange-50" },
-    { number: "180,000", label: "Annual Blood Demand",   description: "Units of blood needed annually across Nepal's hospitals and medical facilities", icon: Heart,    color: "text-pink-600 bg-pink-50"     },
-    { number: "67%",     label: "Replacement Donation",  description: "Of Nepal's blood supply comes from replacement donation rather than voluntary",  icon: Users,    color: "text-blue-600 bg-blue-50"     },
+    { number: "40%",     label: "Blood Shortage",       description: "Nepal faces up to 40% blood shortage every year during emergencies",           icon: Droplets, color: "text-red-600 bg-red-50"    },
+    { number: "2 hrs",   label: "Average Wait Time",    description: "Average time families spend searching for blood donors manually in Nepal",      icon: Clock,    color: "text-orange-600 bg-orange-50" },
+    { number: "180,000", label: "Annual Blood Demand",  description: "Units of blood needed annually across Nepal's hospitals and medical facilities", icon: Heart,    color: "text-pink-600 bg-pink-50"     },
+    { number: "67%",     label: "Replacement Donation", description: "Of Nepal's blood supply comes from replacement donation rather than voluntary",  icon: Users,    color: "text-blue-600 bg-blue-50"     },
   ];
 
   return (
@@ -116,12 +129,15 @@ const Home = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center relative z-10 w-full">
             <div className="mx-auto max-w-4xl space-y-8">
               <Badge className="mb-4 bg-white/20 text-white backdrop-blur-sm border-white/30 px-4 py-2 text-sm font-medium">
-                Trusted by 500+ Hospitals Worldwide
+                Connecting Donors, Patients and Hospitals Across Nepal
               </Badge>
-              <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl leading-tight">
-                <span className="text-white">Save Lives Through</span>
-                <span className="block hero-highlight mt-2">Blood Donation</span>
+
+              {/* ── NEW HEADLINE ── */}
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl leading-tight">
+                <span className="text-white">Someone Is Already Looking For</span>
+                <span className="block hero-highlight mt-2">Your Blood Type Right Now</span>
               </h1>
+
               <p className="mx-auto max-w-2xl text-lg md:text-xl text-white/90 leading-relaxed">
                 Connect patients in urgent need with compatible donors, hospitals, and NGOs in real time.
                 Our platform ensures faster response times and trusted, verified requests.
@@ -144,7 +160,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── PLATFORM STATS ── */}
+      {/* ── LIVE STATS ── */}
       <section className="py-12 -mt-16 relative z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-2xl overflow-hidden shadow-2xl" style={{background: 'linear-gradient(145deg, #b91c1c 0%, #991b1b 100%)'}}>
@@ -166,7 +182,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── THING 3: NEPAL BLOOD CRISIS STATISTICS ── */}
+      {/* ── NEPAL BLOOD CRISIS ── */}
       <section className="py-20 bg-gray-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5 pointer-events-none">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -228,7 +244,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── THING 1: BLOOD COMPATIBILITY CHART ── */}
+      {/* ── BLOOD COMPATIBILITY CHART ── */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-12">
@@ -239,13 +255,11 @@ const Home = () => {
               Our system automatically checks these rules for every single request.
             </p>
           </div>
-
-          {/* Key facts */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
             {[
-              { title: "O- is the Universal Donor",    desc: "O Negative can donate to ALL blood types — the most critical type in emergencies. Always in highest demand.", color: "bg-red-50 border-red-200 text-red-700" },
-              { title: "AB+ is Universal Receiver",     desc: "AB Positive can receive blood from ALL types — but can only donate to AB+. Rarest in donation value.",       color: "bg-purple-50 border-purple-200 text-purple-700" },
-              { title: "Rh Factor is Critical",         desc: "Rh Negative patients CANNOT receive Rh Positive blood. Our system checks this automatically for every match.", color: "bg-blue-50 border-blue-200 text-blue-700" },
+              { title: "O- is the Universal Donor",  desc: "O Negative can donate to ALL blood types — the most critical type in emergencies. Always in highest demand.", color: "bg-red-50 border-red-200 text-red-700" },
+              { title: "AB+ is Universal Receiver",   desc: "AB Positive can receive blood from ALL types — but can only donate to AB+. Rarest in donation value.",       color: "bg-purple-50 border-purple-200 text-purple-700" },
+              { title: "Rh Factor is Critical",       desc: "Rh Negative patients CANNOT receive Rh Positive blood. Our system checks this automatically for every match.", color: "bg-blue-50 border-blue-200 text-blue-700" },
             ].map((fact, i) => (
               <div key={i} className={`border-2 rounded-2xl p-5 ${fact.color}`}>
                 <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
@@ -255,8 +269,6 @@ const Home = () => {
               </div>
             ))}
           </div>
-
-          {/* Blood type grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {bloodCompatibility.map((blood, index) => (
               <div key={index} className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 group">
@@ -285,7 +297,6 @@ const Home = () => {
               </div>
             ))}
           </div>
-
           <div className="text-center">
             <div className="inline-flex flex-wrap items-center justify-center gap-6 bg-gray-50 border border-gray-200 rounded-2xl px-8 py-4">
               <div className="flex items-center gap-2">
@@ -336,8 +347,8 @@ const Home = () => {
                       <span className="font-medium">{event.organizer}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 text-red-400 flex-shrink-0" />
-                      <span>{event.date} · {event.time}</span>
+                      <MapPin className="h-4 w-4 text-red-400 flex-shrink-0" />
+                      <span>{event.date}</span>
                     </div>
                     <div className="flex items-start gap-3 text-sm text-gray-500">
                       <MapPin className="h-4 w-4 mt-0.5 text-red-400 flex-shrink-0" />
@@ -397,7 +408,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── THING 2: TESTIMONIALS & TRUST ── */}
+      {/* ── TESTIMONIALS ── */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
@@ -407,8 +418,6 @@ const Home = () => {
               Donors, hospitals and NGOs across Nepal share their experience with Jeevan Saarthi
             </p>
           </div>
-
-          {/* Testimonial cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {testimonials.map((t, index) => (
               <div key={index} className="bg-gray-50 border border-gray-100 rounded-2xl p-7 hover:shadow-lg transition-all duration-300 relative group">
@@ -434,8 +443,6 @@ const Home = () => {
               </div>
             ))}
           </div>
-
-          {/* Trust badges */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: Shield,      label: "Verified Platform",     desc: "All organisations verified by admin before posting requests" },
