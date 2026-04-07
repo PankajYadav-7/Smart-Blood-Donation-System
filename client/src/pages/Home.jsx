@@ -134,8 +134,8 @@ const [stats, setStats] = useState([
 
               {/* ── NEW HEADLINE ── */}
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl leading-tight">
-                <span className="text-white">Someone Is Already Looking For</span>
-                <span className="block hero-highlight mt-2">Your Blood Type Right Now</span>
+                <span className="text-white">Your Blood.</span>
+                <span className="block hero-highlight mt-2">Their Tomorrow.</span>
               </h1>
 
               <p className="mx-auto max-w-2xl text-lg md:text-xl text-white/90 leading-relaxed">
