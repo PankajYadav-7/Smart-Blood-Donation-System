@@ -1,11 +1,20 @@
 const express  = require("express");
-const bcrypt    = require("bcryptjs");
-const jwt       = require("jsonwebtoken");
-const User      = require("../models/User");
+const bcrypt   = require("bcryptjs");
+const jwt      = require("jsonwebtoken");
+const crypto   = require("crypto");
+const User     = require("../models/User");
+const { sendOTPEmail } = require("../utils/emailService");
 
 const router = express.Router();
 
-// ── REGISTER ──
+// ── Helper: generate 6-digit OTP ────────────────────────────────────────────
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGISTER
+// ─────────────────────────────────────────────────────────────────────────────
 router.post("/register", async (req, res) => {
   try {
     const {
@@ -23,27 +32,31 @@ router.post("/register", async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-
-    // hospitals and NGOs start as unverified — need admin approval
     const needsVerification = role === "hospital" || role === "ngo";
+
+    // Generate OTP for donor/patient only
+    const otp       = needsVerification ? null : generateOTP();
+    const otpExpiry = needsVerification ? null : new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
     const user = await User.create({
       fullName,
       email,
       passwordHash,
       role,
-      emailVerified:  true,
+      emailVerified:  needsVerification ? true : false, // orgs skip OTP
       isVerified:     needsVerification ? false : true,
+      otp,
+      otpExpiry,
       phone:          phone          || "",
       licenseNumber:  licenseNumber  || "",
       address:        address        || "",
       orgDescription: orgDescription || "",
     });
 
-    // Do NOT return token for hospital/NGO — they must wait for approval
+    // ── Hospital / NGO — no OTP needed, pending admin approval ──
     if (needsVerification) {
       return res.status(201).json({
-        message: "Application submitted successfully. Your details are under review by our verification team.",
+        message: "Application submitted successfully. Your details are under review.",
         requiresApproval: true,
         user: {
           id:       user._id,
@@ -54,23 +67,18 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // For donors, patients, admins — login immediately
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // ── Donor / Patient — send OTP email ──
+    sendOTPEmail({
+      email:    user.email,
+      fullName: user.fullName,
+      otp,
+    });
+    // fire-and-forget — no await so API responds instantly
 
     return res.status(201).json({
-      message:          "Registration successful",
-      requiresApproval: false,
-      token,
-      user: {
-        id:       user._id,
-        fullName: user.fullName,
-        email:    user.email,
-        role:     user.role,
-      },
+      message:        "Registration successful. Please check your email for the verification code.",
+      requiresOTP:    true,
+      email:          user.email,   // frontend needs this to show on OTP screen
     });
 
   } catch (error) {
@@ -78,7 +86,92 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ── LOGIN ──
+// ─────────────────────────────────────────────────────────────────────────────
+// VERIFY OTP
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/verify-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: "Email is already verified. Please login." });
+    }
+
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({ message: "No verification code found. Please register again." });
+    }
+
+    // Check if OTP is expired
+    if (new Date() > new Date(user.otpExpiry)) {
+      return res.status(400).json({ message: "Verification code has expired. Please register again." });
+    }
+
+    // Check if OTP matches
+    if (user.otp !== otp.toString()) {
+      return res.status(400).json({ message: "Incorrect verification code. Please try again." });
+    }
+
+    // ✅ OTP is correct — mark email as verified and clear OTP
+    user.emailVerified = true;
+    user.otp           = null;
+    user.otpExpiry     = null;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Email verified successfully! You can now log in.",
+      verified: true,
+    });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESEND OTP
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/resend-otp", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: "Email already verified. Please login." });
+    }
+
+    const otp       = generateOTP();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.otp       = otp;
+    user.otpExpiry = otpExpiry;
+    await user.save();
+
+    sendOTPEmail({ email: user.email, fullName: user.fullName, otp });
+
+    return res.status(200).json({ message: "New verification code sent to your email." });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOGIN
+// ─────────────────────────────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -100,10 +193,19 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Block hospital/NGO that are not yet verified
+    // Block donor/patient who have not verified their email yet
+    if (!user.emailVerified && (user.role === "donor" || user.role === "requester")) {
+      return res.status(403).json({
+        message: "Please verify your email first. Check your inbox for the verification code.",
+        requiresOTP: true,
+        email: user.email,
+      });
+    }
+
+    // Block hospital/NGO not yet approved by admin
     if ((user.role === "hospital" || user.role === "ngo") && !user.isVerified) {
       return res.status(403).json({
-        message: "Your account is currently under review by our verification team. You will receive an email once approved.",
+        message: "Your account is under review. You will receive an email once approved.",
         pendingApproval: true,
       });
     }

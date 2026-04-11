@@ -301,9 +301,57 @@ async function notifyRequesterOfNoShow({ requesterEmail, requesterName, bloodGro
   await send(requesterEmail, `⚠️ Your donor didn't arrive — we're finding another for ${bloodGroup}${rh}`, html);
 }
 
+
+// EMAIL 5 — OTP Verification email on Registration
+// Triggered: POST /api/auth/register  (donor and patient only)
+
+async function sendOTPEmail({ email, fullName, otp }) {
+  const html = wrap(`
+    <h2 style="margin:0 0 8px;color:#1a1a1a;font-size:20px;">Verify Your Email Address</h2>
+    <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.6;">
+      Hi <strong>${fullName}</strong>, welcome to Jeevan Saarthi!
+      Please use the verification code below to confirm your email address.
+    </p>
+
+    <!-- OTP Box -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      <tr>
+        <td align="center">
+          <div style="background:#fef2f2;border:2px solid #fecaca;border-radius:14px;
+                      padding:28px 40px;display:inline-block;text-align:center;">
+            <p style="margin:0 0 6px;color:#991b1b;font-size:12px;font-weight:bold;
+                      text-transform:uppercase;letter-spacing:2px;">
+              Your Verification Code
+            </p>
+            <p style="margin:0;color:#991b1b;font-size:42px;font-weight:bold;
+                      letter-spacing:10px;font-family:monospace;">
+              ${otp}
+            </p>
+            <p style="margin:8px 0 0;color:#999999;font-size:12px;">
+              This code expires in <strong>10 minutes</strong>
+            </p>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;line-height:1.6;">
+      Enter this code on the verification screen to activate your account.
+      After verification you will be redirected to the login page.
+    </p>
+
+    <p style="margin:0;color:#999999;font-size:13px;">
+      If you did not create an account on Jeevan Saarthi, please ignore this email.
+    </p>
+  `);
+
+  await send(email, `${otp} — Your Jeevan Saarthi Verification Code`, html);
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
   notifyDonorOfConfirmation,
   notifyRequesterOfNoShow,
+  sendOTPEmail,
 };

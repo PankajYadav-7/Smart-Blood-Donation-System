@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
@@ -10,6 +10,150 @@ import {
   FileText, MapPin, Shield,
 } from "lucide-react";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// OTP VERIFICATION SCREEN COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+const OTPScreen = ({ email, onSuccess }) => {
+  const [otp, setOtp]               = useState("");
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState("");
+  const [success, setSuccess]       = useState("");
+  const [resendTimer, setResendTimer] = useState(60);
+
+  // Countdown timer for resend button
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setResendTimer(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleVerify = async () => {
+    if (otp.length !== 6) {
+      setError("Please enter the complete 6-digit code.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      await axios.post("http://localhost:5000/api/auth/verify-otp", { email, otp });
+      setSuccess("Email verified successfully! Redirecting to login...");
+      setTimeout(() => onSuccess(), 2000);
+    } catch (err) {
+      setError(err.response?.data?.message || "Verification failed. Please try again.");
+    }
+    setLoading(false);
+  };
+
+  const handleResend = async () => {
+    if (resendTimer > 0) return;
+    try {
+      await axios.post("http://localhost:5000/api/auth/resend-otp", { email });
+      setSuccess("New verification code sent to your email!");
+      setResendTimer(60);
+      setError("");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to resend. Please try again.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-md">
+          <Card className="border-0 shadow-xl">
+            <CardContent className="pt-10 pb-10 px-8 text-center">
+
+              {/* Icon */}
+              <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
+                <Mail className="h-10 w-10 text-red-600" />
+              </div>
+
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Check Your Email
+              </h1>
+              <p className="text-gray-500 mb-2 leading-relaxed text-sm">
+                We sent a 6-digit verification code to:
+              </p>
+              <p className="text-red-600 font-semibold mb-6 text-sm break-all">{email}</p>
+
+              {/* Error message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-left">
+                  ⚠️ {error}
+                </div>
+              )}
+
+              {/* Success message */}
+              {success && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-4 text-sm text-left">
+                  ✅ {success}
+                </div>
+              )}
+
+              {/* OTP Input */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
+                  Enter Verification Code
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  className="w-full border-2 border-gray-300 rounded-xl px-4 py-4 text-center text-3xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white"
+                />
+                <p className="text-xs text-gray-400 mt-2 text-left">
+                  Code expires in 10 minutes. Check your spam folder if you don't see it.
+                </p>
+              </div>
+
+              {/* Verify Button */}
+              <button
+                onClick={handleVerify}
+                disabled={loading || otp.length !== 6}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl text-base shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    Verifying...
+                  </span>
+                ) : (
+                  "Verify Email"
+                )}
+              </button>
+
+              {/* Resend code */}
+              <p className="text-sm text-gray-500">
+                Did not receive the code?{" "}
+                <button
+                  onClick={handleResend}
+                  disabled={resendTimer > 0}
+                  className={`font-semibold transition-all ${
+                    resendTimer > 0
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-red-600 hover:underline cursor-pointer"
+                  }`}
+                >
+                  {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
+                </button>
+              </p>
+
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN REGISTER COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 const Register = () => {
   const navigate  = useNavigate();
   const [userType, setUserType]           = useState("donor");
@@ -20,12 +164,13 @@ const Register = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitted, setSubmitted]         = useState(false); // pending approval screen
   const [submittedData, setSubmittedData] = useState(null);
+  const [showOTP, setShowOTP]             = useState(false); // OTP verification screen
+  const [otpEmail, setOtpEmail]           = useState("");    // email to show on OTP screen
 
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     password: "", confirmPassword: "",
     bloodType: "", age: "", location: "", lastDonation: "",
-    // Hospital / NGO specific
     orgName: "", licenseNumber: "", address: "", orgDescription: "",
     website: "",
   });
@@ -80,20 +225,23 @@ const Register = () => {
         return;
       }
 
-      // Donor / Patient — login immediately
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user",  JSON.stringify(response.data.user));
-
-      const role = response.data.user.role;
-      if      (role === "donor")     navigate("/donor/dashboard");
-      else if (role === "requester") navigate("/patient/dashboard");
-      else                           navigate("/");
+      // Donor / Patient — show OTP verification screen
+      if (response.data.requiresOTP) {
+        setOtpEmail(response.data.email);
+        setShowOTP(true);
+        return;
+      }
 
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
     }
     setLoading(false);
   };
+
+  // ── OTP SCREEN ──
+  if (showOTP) {
+    return <OTPScreen email={otpEmail} onSuccess={() => navigate("/login")} />;
+  }
 
   // ── PENDING APPROVAL SCREEN ──
   if (submitted && submittedData) {
@@ -105,7 +253,6 @@ const Register = () => {
             <Card className="border-0 shadow-xl">
               <CardContent className="pt-10 pb-10 px-8 text-center">
 
-                {/* Icon */}
                 <div className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-6">
                   <Clock className="h-10 w-10 text-yellow-600" />
                 </div>
@@ -118,7 +265,6 @@ const Register = () => {
                   Jeevan Saarthi. Your application is now under review by our verification team.
                 </p>
 
-                {/* Status steps */}
                 <div className="bg-gray-50 rounded-2xl p-5 mb-6 text-left space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -161,11 +307,8 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* Info box */}
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
-                  <p className="text-xs text-blue-700 font-semibold mb-1">
-                    📧 Check your email
-                  </p>
+                  <p className="text-xs text-blue-700 font-semibold mb-1">📧 Check your email</p>
                   <p className="text-xs text-blue-600 leading-relaxed">
                     A confirmation has been sent to <strong>{submittedData.email}</strong>.
                     Once our verification team approves your application you will receive another email
@@ -205,7 +348,6 @@ const Register = () => {
         <div className="w-full max-w-2xl">
           <Card className="border-0 shadow-xl">
 
-            {/* Header */}
             <CardHeader className="text-center pb-2 pt-8">
               <div className="flex justify-center mb-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-600 shadow-lg">
@@ -250,15 +392,25 @@ const Register = () => {
                     ))}
                   </div>
 
-                  {/* Hospital/NGO notice */}
                   {(userType === "hospital" || userType === "ngo") && (
                     <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-start gap-2">
                       <Clock className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <p className="text-xs text-yellow-800 leading-relaxed">
-                        <strong>Organisation accounts require verification</strong> After
+                        <strong>Organisation accounts require verification.</strong> After
                         registration your details will be reviewed by our team
                         within 2–3 business days. You will receive an email
                         notification once your account is approved.
+                      </p>
+                    </div>
+                  )}
+
+                  {(userType === "donor" || userType === "requester") && (
+                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
+                      <Mail className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-blue-800 leading-relaxed">
+                        <strong>Email verification required.</strong> After registration
+                        a 6-digit code will be sent to your email. You must verify
+                        your email before you can log in.
                       </p>
                     </div>
                   )}
