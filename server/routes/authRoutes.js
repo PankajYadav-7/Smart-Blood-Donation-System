@@ -72,8 +72,11 @@ router.post("/register", async (req, res) => {
       email:    user.email,
       fullName: user.fullName,
       otp,
+    }).then(() => {
+      console.log(`✅ OTP email sent → ${user.email} | OTP: ${otp}`);
+    }).catch((err) => {
+      console.error(`❌ OTP email failed → ${user.email} | ${err.message}`);
     });
-    // fire-and-forget — no await so API responds instantly
 
     return res.status(201).json({
       message:        "Registration successful. Please check your email for the verification code.",
@@ -160,7 +163,12 @@ router.post("/resend-otp", async (req, res) => {
     user.otpExpiry = otpExpiry;
     await user.save();
 
-    sendOTPEmail({ email: user.email, fullName: user.fullName, otp });
+    sendOTPEmail({ email: user.email, fullName: user.fullName, otp })
+    .then(() => {
+      console.log(`✅ OTP resend sent → ${user.email} | OTP: ${otp}`);
+    }).catch((err) => {
+      console.error(`❌ OTP resend failed → ${user.email} | ${err.message}`);
+    });
 
     return res.status(200).json({ message: "New verification code sent to your email." });
 
