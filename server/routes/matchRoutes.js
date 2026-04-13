@@ -60,29 +60,43 @@ router.post("/find/:requestId", protect, async (req, res) => {
       });
 
       if (!existingMatch) {
-        const match = await Match.create({
-          requestId:      request._id,
-          donorProfileId: donor._id,
-          donorUserId:    donor.userId,
-          status:         "Notified",
-        });
-        matches.push(match);
+  // First time — create match and send email
+  const match = await Match.create({
+    requestId:      request._id,
+    donorProfileId: donor._id,
+    donorUserId:    donor.userId,
+    status:         "Notified",
+  });
+  matches.push(match);
 
-        // 📧 EMAIL 1 — Notify this donor of the matching request
-        const donorUser = await User.findById(donor.userId).select("fullName email");
-        if (donorUser) {
-          notifyDonorOfRequest({
-            donorEmail:   donorUser.email,
-            donorName:    donorUser.fullName,
-            bloodGroup:   request.bloodGroup,
-            rh:           request.rh,
-            urgency:      request.urgency      || "Normal",
-            hospitalName: request.hospitalName || "the hospital",
-            requestId:    request._id,
-          });
-          // fire-and-forget — no await so API responds instantly
-        }
-      }
+  const donorUser = await User.findById(donor.userId).select("fullName email");
+  if (donorUser) {
+    notifyDonorOfRequest({
+      donorEmail:   donorUser.email,
+      donorName:    donorUser.fullName,
+      bloodGroup:   request.bloodGroup,
+      rh:           request.rh,
+      urgency:      request.urgency      || "Normal",
+      hospitalName: request.hospitalName || "the hospital",
+      requestId:    request._id,
+    });
+  }
+} else if (existingMatch.status === "Notified") {
+  // Match exists but donor has not responded yet — re-send reminder email
+  const donorUser = await User.findById(donor.userId).select("fullName email");
+  if (donorUser) {
+    notifyDonorOfRequest({
+      donorEmail:   donorUser.email,
+      donorName:    donorUser.fullName,
+      bloodGroup:   request.bloodGroup,
+      rh:           request.rh,
+      urgency:      request.urgency      || "Normal",
+      hospitalName: request.hospitalName || "the hospital",
+      requestId:    request._id,
+    });
+  }
+  matches.push(existingMatch);
+}
     }
 
     return res.status(200).json({
