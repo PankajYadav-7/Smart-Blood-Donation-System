@@ -13,10 +13,23 @@ const Login = () => {
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState("");
 
+  // ── OTP verification state ───────────────────────────────────────────────
+  const [showOTPBox,    setShowOTPBox]    = useState(false); // show OTP input below error
+  const [otp,           setOtp]           = useState("");
+  const [otpLoading,    setOtpLoading]    = useState(false);
+  const [otpError,      setOtpError]      = useState("");
+  const [otpSuccess,    setOtpSuccess]    = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState("");
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setShowOTPBox(false);
+    setOtpError("");
+    setOtpSuccess("");
+    setResendSuccess("");
 
     try {
       const response = await axios.post(
@@ -36,12 +49,50 @@ const Login = () => {
       else                           navigate("/");
 
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        "Invalid email or password. Please check your credentials."
-      );
+      const message = err.response?.data?.message ||
+        "Invalid email or password. Please check your credentials.";
+      setError(message);
+
+      // If backend says email not verified — show OTP box automatically
+      if (err.response?.data?.requiresOTP) {
+        setShowOTPBox(true);
+      }
     }
     setLoading(false);
+  };
+
+  // ── Resend OTP ─────────────────────────────────────────────────────────
+  const handleResendOTP = async () => {
+    setResendLoading(true);
+    setOtpError("");
+    setResendSuccess("");
+    try {
+      await axios.post("http://localhost:5000/api/auth/resend-otp", { email });
+      setResendSuccess("✅ New verification code sent! Check your email inbox.");
+    } catch (err) {
+      setOtpError(err.response?.data?.message || "Failed to resend. Please try again.");
+    }
+    setResendLoading(false);
+  };
+
+  // ── Verify OTP ─────────────────────────────────────────────────────────
+  const handleVerifyOTP = async () => {
+    if (otp.length !== 6) {
+      setOtpError("Please enter the complete 6-digit code.");
+      return;
+    }
+    setOtpLoading(true);
+    setOtpError("");
+    try {
+      await axios.post("http://localhost:5000/api/auth/verify-otp", { email, otp });
+      setOtpSuccess("✅ Email verified! You can now click Sign In to login.");
+      setShowOTPBox(false);
+      setError("");
+      setOtp("");
+    } catch (err) {
+      setOtpError(err.response?.data?.message || "Incorrect code. Please try again.");
+    }
+    setOtpLoading(false);
   };
 
   return (
@@ -69,11 +120,87 @@ const Login = () => {
 
             <CardContent className="pt-6 pb-8 px-8 space-y-5">
 
+              {/* Success message after OTP verified */}
+              {otpSuccess && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm">
+                  {otpSuccess}
+                </div>
+              )}
+
               {/* Error message */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2">
                   <span className="text-red-500 flex-shrink-0 mt-0.5">⚠️</span>
-                  {error}
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* ── OTP VERIFICATION BOX — shown automatically if email not verified ── */}
+              {showOTPBox && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 space-y-3">
+
+                  <p className="text-sm font-semibold text-yellow-800">
+                    📧 Verify your email to continue
+                  </p>
+                  <p className="text-xs text-yellow-700 leading-relaxed">
+                    Your email <strong>{email}</strong> is not verified yet.
+                    Click <strong>Resend Code</strong> to get a fresh 6-digit
+                    verification code in your inbox, then enter it below.
+                  </p>
+
+                  {/* Resend button */}
+                  <button
+                    onClick={handleResendOTP}
+                    disabled={resendLoading}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2.5 rounded-xl text-sm transition-all disabled:opacity-50"
+                  >
+                    {resendLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
+                        Sending...
+                      </span>
+                    ) : "📨 Resend Verification Code"}
+                  </button>
+
+                  {/* Resend success */}
+                  {resendSuccess && (
+                    <p className="text-xs text-green-700 font-medium">{resendSuccess}</p>
+                  )}
+
+                  {/* OTP input */}
+                  <div>
+                    <label className="block text-xs font-medium text-yellow-800 mb-1.5">
+                      Enter 6-digit verification code:
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={otp}
+                      onChange={e => setOtp(e.target.value.replace(/\D/g, ""))}
+                      placeholder="000000"
+                      className="w-full border-2 border-yellow-300 rounded-xl px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all bg-white"
+                    />
+                  </div>
+
+                  {/* OTP error */}
+                  {otpError && (
+                    <p className="text-xs text-red-600 font-medium">⚠️ {otpError}</p>
+                  )}
+
+                  {/* Verify button */}
+                  <button
+                    onClick={handleVerifyOTP}
+                    disabled={otpLoading || otp.length !== 6}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {otpLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
+                        Verifying...
+                      </span>
+                    ) : "✅ Verify Email"}
+                  </button>
+
                 </div>
               )}
 
@@ -155,8 +282,7 @@ const Login = () => {
                 </p>
                 <p className="text-xs text-blue-600 leading-relaxed">
                   Enter your email and password. The system will automatically
-                  detect your account type and
-                  redirect you to the correct dashboard.
+                  detect your account type and redirect you to the correct dashboard.
                 </p>
               </div>
 
@@ -195,9 +321,6 @@ const Login = () => {
 
             </CardContent>
           </Card>
-
-
-
         </div>
       </div>
     </div>
