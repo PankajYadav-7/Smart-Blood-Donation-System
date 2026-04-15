@@ -18,28 +18,37 @@ const donorProfileSchema = new mongoose.Schema(
       enum: ["+", "-"],
       required: true,
     },
-    locationLat: {
-      type: Number,
-    },
-    locationLng: {
-      type: Number,
-    },
-    locationName: {
+    locationLat:  { type: Number },
+    locationLng:  { type: Number },
+    locationName: { type: String },
+    radiusKm:     { type: Number, default: 10 },
+    availability: { type: Boolean, default: true },
+    snoozeUntil:  { type: Date },
+    lastDonationDate: { type: Date },
+
+    // ── New fields added during registration ──────────────────────────────
+    gender: {
       type: String,
+      enum: ["male", "female", "other"],
+      default: "male",
     },
-    radiusKm: {
-      type: Number,
-      default: 10,
+    dateOfBirth: {
+      type: Date,
     },
-    availability: {
+    weight: {
+      type: Number,  // in kg
+    },
+    hasIllness: {
       type: Boolean,
-      default: true,
+      default: false,
     },
-    snoozeUntil: {
-      type: Date,
+    illnessDetails: {
+      type: String,
+      default: "",
     },
-    lastDonationDate: {
-      type: Date,
+    phone: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }

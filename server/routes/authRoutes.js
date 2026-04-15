@@ -2,7 +2,8 @@ const express  = require("express");
 const bcrypt   = require("bcryptjs");
 const jwt      = require("jsonwebtoken");
 const crypto   = require("crypto");
-const User     = require("../models/User");
+const User         = require("../models/User");
+const DonorProfile = require("../models/DonorProfile");
 const { sendOTPEmail } = require("../utils/emailService");
 
 const router = express.Router();
@@ -20,6 +21,9 @@ router.post("/register", async (req, res) => {
     const {
       fullName, email, password, role,
       phone, licenseNumber, address, orgDescription,
+      // Donor specific fields
+      bloodType, location, gender, dateOfBirth, weight,
+      hasIllness, illnessDetails,
     } = req.body;
 
     if (!fullName || !email || !password || !role) {
@@ -66,6 +70,38 @@ router.post("/register", async (req, res) => {
         },
       });
     }
+    
+    // ── Auto-create DonorProfile for donors ──────────────────────────────
+    if (role === "donor") {
+      try {
+        // Parse blood type — frontend sends "A+", "B-" etc
+        // Split into bloodGroup and rh
+        let bloodGroup = "O";
+        let rh         = "+";
+        if (bloodType) {
+          rh          = bloodType.includes("-") ? "-" : "+";
+          bloodGroup  = bloodType.replace("+", "").replace("-", "").trim();
+        }
+
+        await DonorProfile.create({
+          userId:       user._id,
+          bloodGroup,
+          rh,
+          locationName: location || "",
+          availability: true,
+          gender:       gender       || "male",
+          dateOfBirth:  dateOfBirth  || null,
+          weight:       weight       || null,
+          hasIllness:   hasIllness   === "yes" ? true : false,
+          illnessDetails: illnessDetails || "",
+          phone:        phone        || "",
+        });
+      } catch (profileErr) {
+        // Profile creation failed — do not block registration
+        console.error("Auto profile creation failed:", profileErr.message);
+      }
+    }
+
 
     // ── Donor / Patient — send OTP email ──
     sendOTPEmail({

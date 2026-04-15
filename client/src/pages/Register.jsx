@@ -171,6 +171,10 @@ const Register = () => {
     firstName: "", lastName: "", email: "", phone: "",
     password: "", confirmPassword: "",
     bloodType: "", age: "", location: "", lastDonation: "",
+    // New donor fields
+    gender: "male", dateOfBirth: "", weight: "",
+    hasIllness: "no", illnessDetails: "",
+    // Hospital / NGO specific
     orgName: "", licenseNumber: "", address: "", orgDescription: "",
     website: "",
   });
@@ -212,6 +216,14 @@ const Register = () => {
         licenseNumber:  formData.licenseNumber,
         address:        formData.address,
         orgDescription: formData.orgDescription,
+        // Donor specific
+        bloodType:      formData.bloodType,
+        location:       formData.location,
+        gender:         formData.gender,
+        dateOfBirth:    formData.dateOfBirth,
+        weight:         formData.weight,
+        hasIllness:     formData.hasIllness,
+        illnessDetails: formData.illnessDetails,
       });
 
       // Hospital / NGO — show pending approval screen
@@ -438,18 +450,83 @@ const Register = () => {
                       <input className={inputCls} type="tel" placeholder="+977-98XXXXXXXX" value={formData.phone} onChange={e => set("phone", e.target.value)} required />
                     </div>
                     {userType === "donor" && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className={labelCls}>Blood Type</label>
-                          <select className={inputCls} value={formData.bloodType} onChange={e => set("bloodType", e.target.value)}>
-                            <option value="">Select blood type</option>
-                            {bloodTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                          </select>
+                      <div className="space-y-4">
+
+                        {/* Gender + Date of Birth */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className={labelCls}>Gender *</label>
+                            <select className={inputCls} value={formData.gender} onChange={e => set("gender", e.target.value)} required>
+                              <option value="male">Male</option>
+                              <option value="female">Female</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Date of Birth *</label>
+                            <input className={inputCls} type="date"
+                              max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
+                              value={formData.dateOfBirth} onChange={e => set("dateOfBirth", e.target.value)} required />
+                          </div>
                         </div>
-                        <div>
-                          <label className={labelCls}>Age *</label>
-                          <input className={inputCls} type="number" placeholder="25" min="18" max="65" value={formData.age} onChange={e => set("age", e.target.value)} required />
+
+                        {/* Blood Type + Weight */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className={labelCls}>Blood Type *</label>
+                            <select className={inputCls} value={formData.bloodType} onChange={e => set("bloodType", e.target.value)} required>
+                              <option value="">Select blood type</option>
+                              {bloodTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Weight (kg) *</label>
+                            <input className={inputCls} type="number" placeholder="e.g. 65" min="50" max="200"
+                              value={formData.weight} onChange={e => set("weight", e.target.value)} required />
+                            <p className="text-xs text-gray-400 mt-1">Minimum 50kg required to donate</p>
+                          </div>
                         </div>
+
+                        {/* Health condition */}
+                        <div>
+                          <label className={labelCls}>Do you have any chronic illness? *</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { value: "no",  label: "✅ No — I am healthy" },
+                              { value: "yes", label: "⚠️ Yes — I have a condition" },
+                            ].map(opt => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => set("hasIllness", opt.value)}
+                                className={`py-2.5 px-3 rounded-xl text-xs font-semibold border-2 transition-all ${
+                                  formData.hasIllness === opt.value
+                                    ? opt.value === "no"
+                                      ? "border-green-500 bg-green-50 text-green-700"
+                                      : "border-yellow-500 bg-yellow-50 text-yellow-700"
+                                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Illness details — only show if yes */}
+                        {formData.hasIllness === "yes" && (
+                          <div>
+                            <label className={labelCls}>Please describe your condition *</label>
+                            <textarea className={inputCls} rows={2}
+                              placeholder="e.g. Diabetes, Hepatitis B, Heart condition..."
+                              value={formData.illnessDetails}
+                              onChange={e => set("illnessDetails", e.target.value)} required />
+                            <p className="text-xs text-yellow-600 mt-1">
+                              ⚠️ Some conditions may affect eligibility. Our team will review your application.
+                            </p>
+                          </div>
+                        )}
+
                       </div>
                     )}
                     <div>
