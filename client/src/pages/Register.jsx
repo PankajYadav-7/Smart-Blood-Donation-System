@@ -7,20 +7,19 @@ import Navbar from "../components/Navbar";
 import {
   Droplets, User, Building, Users, Eye, EyeOff,
   Upload, CheckCircle, Clock, Mail, Phone,
-  FileText, MapPin, Shield,
+  FileText, MapPin, Shield, ArrowLeft,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OTP VERIFICATION SCREEN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
-const OTPScreen = ({ email, onSuccess }) => {
-  const [otp, setOtp]               = useState("");
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState("");
-  const [success, setSuccess]       = useState("");
+const OTPScreen = ({ email, onSuccess, onChangeEmail }) => {
+  const [otp, setOtp]                 = useState("");
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState("");
+  const [success, setSuccess]         = useState("");
   const [resendTimer, setResendTimer] = useState(60);
 
-  // Countdown timer for resend button
   useEffect(() => {
     const interval = setInterval(() => {
       setResendTimer(prev => (prev > 0 ? prev - 1 : 0));
@@ -29,10 +28,7 @@ const OTPScreen = ({ email, onSuccess }) => {
   }, []);
 
   const handleVerify = async () => {
-    if (otp.length !== 6) {
-      setError("Please enter the complete 6-digit code.");
-      return;
-    }
+    if (otp.length !== 6) { setError("Please enter the complete 6-digit code."); return; }
     setLoading(true);
     setError("");
     try {
@@ -66,34 +62,35 @@ const OTPScreen = ({ email, onSuccess }) => {
           <Card className="border-0 shadow-xl">
             <CardContent className="pt-10 pb-10 px-8 text-center">
 
-              {/* Icon */}
               <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
                 <Mail className="h-10 w-10 text-red-600" />
               </div>
 
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Check Your Email
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
               <p className="text-gray-500 mb-2 leading-relaxed text-sm">
                 We sent a 6-digit verification code to:
               </p>
-              <p className="text-red-600 font-semibold mb-6 text-sm break-all">{email}</p>
+              <p className="text-red-600 font-semibold mb-2 text-sm break-all">{email}</p>
 
-              {/* Error message */}
+              {/* ── Wrong email — go back button ── */}
+              <button
+                onClick={onChangeEmail}
+                className="text-xs text-gray-400 hover:text-red-600 underline mb-6 block mx-auto transition-colors"
+              >
+                ✏️ Wrong email? Go back and fix it
+              </button>
+
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-left">
                   ⚠️ {error}
                 </div>
               )}
-
-              {/* Success message */}
               {success && (
                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-4 text-sm text-left">
                   ✅ {success}
                 </div>
               )}
 
-              {/* OTP Input */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
                   Enter Verification Code
@@ -111,7 +108,6 @@ const OTPScreen = ({ email, onSuccess }) => {
                 </p>
               </div>
 
-              {/* Verify Button */}
               <button
                 onClick={handleVerify}
                 disabled={loading || otp.length !== 6}
@@ -122,21 +118,16 @@ const OTPScreen = ({ email, onSuccess }) => {
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                     Verifying...
                   </span>
-                ) : (
-                  "Verify Email"
-                )}
+                ) : "Verify Email"}
               </button>
 
-              {/* Resend code */}
               <p className="text-sm text-gray-500">
                 Did not receive the code?{" "}
                 <button
                   onClick={handleResend}
                   disabled={resendTimer > 0}
                   className={`font-semibold transition-all ${
-                    resendTimer > 0
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-red-600 hover:underline cursor-pointer"
+                    resendTimer > 0 ? "text-gray-400 cursor-not-allowed" : "text-red-600 hover:underline cursor-pointer"
                   }`}
                 >
                   {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
@@ -152,6 +143,14 @@ const OTPScreen = ({ email, onSuccess }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PHONE VALIDATION — Nepal 10 digits starting with 97 or 98
+// ─────────────────────────────────────────────────────────────────────────────
+const validateNepalPhone = (phone) => {
+  const cleaned = phone.replace(/[\s\-\+]/g, "");
+  return /^(97|98)\d{8}$/.test(cleaned);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN REGISTER COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const Register = () => {
@@ -162,19 +161,18 @@ const Register = () => {
   const [showPass, setShowPass]           = useState(false);
   const [showConfirm, setShowConfirm]     = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [submitted, setSubmitted]         = useState(false); // pending approval screen
+  const [submitted, setSubmitted]         = useState(false);
   const [submittedData, setSubmittedData] = useState(null);
-  const [showOTP, setShowOTP]             = useState(false); // OTP verification screen
-  const [otpEmail, setOtpEmail]           = useState("");    // email to show on OTP screen
+  const [showOTP, setShowOTP]             = useState(false);
+  const [otpEmail, setOtpEmail]           = useState("");
+  const [phoneError, setPhoneError]       = useState("");
 
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     password: "", confirmPassword: "",
     bloodType: "", age: "", location: "", lastDonation: "",
-    // New donor fields
     gender: "male", dateOfBirth: "", weight: "",
     hasIllness: "no", illnessDetails: "",
-    // Hospital / NGO specific
     orgName: "", licenseNumber: "", address: "", orgDescription: "",
     website: "",
   });
@@ -192,11 +190,35 @@ const Register = () => {
   const inputCls = "w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-white";
   const labelCls = "block text-sm font-medium text-gray-700 mb-1.5";
 
+  // Phone input — digits only, max 10, validate Nepal format
+  const handlePhoneChange = (value) => {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    set("phone", digits);
+    if (digits.length === 10) {
+      if (!validateNepalPhone(digits)) {
+        setPhoneError("Nepal phone numbers must start with 97 or 98 and be 10 digits.");
+      } else {
+        setPhoneError("");
+      }
+    } else {
+      setPhoneError("");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!acceptedTerms) { setError("Please accept the Terms of Service to continue."); return; }
     if (formData.password !== formData.confirmPassword) { setError("Passwords do not match."); return; }
     if (formData.password.length < 6) { setError("Password must be at least 6 characters."); return; }
+
+    // Nepal phone validation for donor and patient
+    if (userType === "donor" || userType === "requester") {
+      if (!formData.phone) { setError("Phone number is required."); return; }
+      if (!validateNepalPhone(formData.phone)) {
+        setError("Please enter a valid Nepal phone number — 10 digits starting with 97 or 98.");
+        return;
+      }
+    }
 
     setLoading(true);
     setError("");
@@ -216,7 +238,6 @@ const Register = () => {
         licenseNumber:  formData.licenseNumber,
         address:        formData.address,
         orgDescription: formData.orgDescription,
-        // Donor specific
         bloodType:      formData.bloodType,
         location:       formData.location,
         gender:         formData.gender,
@@ -226,18 +247,12 @@ const Register = () => {
         illnessDetails: formData.illnessDetails,
       });
 
-      // Hospital / NGO — show pending approval screen
       if (response.data.requiresApproval) {
-        setSubmittedData({
-          name:  fullName,
-          email: formData.email,
-          role:  userType,
-        });
+        setSubmittedData({ name: fullName, email: formData.email, role: userType });
         setSubmitted(true);
         return;
       }
 
-      // Donor / Patient — show OTP verification screen
       if (response.data.requiresOTP) {
         setOtpEmail(response.data.email);
         setShowOTP(true);
@@ -252,7 +267,17 @@ const Register = () => {
 
   // ── OTP SCREEN ──
   if (showOTP) {
-    return <OTPScreen email={otpEmail} onSuccess={() => navigate("/login")} />;
+    return (
+      <OTPScreen
+        email={otpEmail}
+        onSuccess={() => navigate("/login")}
+        onChangeEmail={() => {
+          setShowOTP(false);
+          setOtpEmail("");
+          set("email", ""); // clear wrong email so user must type correct one
+        }}
+      />
+    );
   }
 
   // ── PENDING APPROVAL SCREEN ──
@@ -264,85 +289,46 @@ const Register = () => {
           <div className="w-full max-w-lg">
             <Card className="border-0 shadow-xl">
               <CardContent className="pt-10 pb-10 px-8 text-center">
-
                 <div className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-6">
                   <Clock className="h-10 w-10 text-yellow-600" />
                 </div>
-
-                <h1 className="text-2xl font-bold text-gray-900 mb-3">
-                  Application Submitted!
-                </h1>
+                <h1 className="text-2xl font-bold text-gray-900 mb-3">Application Submitted!</h1>
                 <p className="text-gray-500 mb-6 leading-relaxed">
                   Thank you for registering <strong className="text-gray-800">{submittedData.name}</strong> on
                   Jeevan Saarthi. Your application is now under review by our verification team.
                 </p>
-
                 <div className="bg-gray-50 rounded-2xl p-5 mb-6 text-left space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+                  {[
+                    { icon: <CheckCircle className="h-4 w-4 text-green-600" />, bg: "bg-green-100", title: "Application Submitted", sub: "Your details have been received" },
+                    { icon: <Clock className="h-4 w-4 text-yellow-600 animate-spin" />, bg: "bg-yellow-100", title: "Under Review by Our Team", sub: "Our team is verifying your organisation — 2 to 3 business days" },
+                    { icon: <Mail className="h-4 w-4 text-gray-400" />, bg: "bg-gray-100", title: "Email Notification", sub: `You will receive an approval email at ${submittedData.email}`, muted: true },
+                    { icon: <Shield className="h-4 w-4 text-gray-400" />, bg: "bg-gray-100", title: "Account Activated", sub: "Login and access your dashboard after approval", muted: true },
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full ${step.bg} flex items-center justify-center flex-shrink-0`}>
+                        {step.icon}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-semibold ${step.muted ? "text-gray-400" : "text-gray-900"}`}>{step.title}</p>
+                        <p className="text-xs text-gray-400">{step.sub}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">Application Submitted</p>
-                      <p className="text-xs text-gray-500">Your details have been received</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                      <Clock className="h-4 w-4 text-yellow-600 animate-spin" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">Under Review by Our Team</p>
-                      <p className="text-xs text-gray-500">Our team is verifying your organisation — 2 to 3 business days</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-400">Email Notification</p>
-                      <p className="text-xs text-gray-400">You will receive an approval email at {submittedData.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <Shield className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-400">Account Activated</p>
-                      <p className="text-xs text-gray-400">Login and access your dashboard after approval</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
                   <p className="text-xs text-blue-700 font-semibold mb-1">📧 Check your email</p>
                   <p className="text-xs text-blue-600 leading-relaxed">
                     A confirmation has been sent to <strong>{submittedData.email}</strong>.
-                    Once our verification team approves your application you will receive another email
-                    with login instructions.
                   </p>
                 </div>
-
                 <div className="flex flex-col gap-3">
-                  <Link
-                    to="/login"
-                    className="w-full inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl text-sm transition-all"
-                  >
+                  <Link to="/login" className="w-full inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl text-sm transition-all">
                     Go to Login Page
                   </Link>
-                  <Link
-                    to="/"
-                    className="w-full inline-flex items-center justify-center border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 rounded-xl text-sm transition-all"
-                  >
+                  <Link to="/" className="w-full inline-flex items-center justify-center border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 rounded-xl text-sm transition-all">
                     Back to Home
                   </Link>
                 </div>
-
               </CardContent>
             </Card>
           </div>
@@ -355,7 +341,6 @@ const Register = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-2xl">
           <Card className="border-0 shadow-xl">
@@ -366,9 +351,7 @@ const Register = () => {
                   <Droplets className="h-7 w-7 text-white" />
                 </div>
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">
-                Join Jeevan Saarthi
-              </CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">Join Jeevan Saarthi</CardTitle>
               <CardDescription className="text-gray-500 mt-1">
                 Create your account and start saving lives today
               </CardDescription>
@@ -391,11 +374,9 @@ const Register = () => {
                       <button
                         key={tab.value}
                         type="button"
-                        onClick={() => { setUserType(tab.value); setError(""); }}
+                        onClick={() => { setUserType(tab.value); setError(""); setPhoneError(""); }}
                         className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                          userType === tab.value
-                            ? "bg-white text-red-600 shadow-sm"
-                            : "text-gray-500 hover:text-gray-700"
+                          userType === tab.value ? "bg-white text-red-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
                         }`}
                       >
                         <tab.icon className="h-3.5 w-3.5" />
@@ -408,10 +389,7 @@ const Register = () => {
                     <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-start gap-2">
                       <Clock className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <p className="text-xs text-yellow-800 leading-relaxed">
-                        <strong>Organisation accounts require verification.</strong> After
-                        registration your details will be reviewed by our team
-                        within 2–3 business days. You will receive an email
-                        notification once your account is approved.
+                        <strong>Organisation accounts require verification.</strong> After registration your details will be reviewed by our team within 2–3 business days.
                       </p>
                     </div>
                   )}
@@ -420,9 +398,7 @@ const Register = () => {
                     <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
                       <Mail className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
                       <p className="text-xs text-blue-800 leading-relaxed">
-                        <strong>Email verification required.</strong> After registration
-                        a 6-digit code will be sent to your email. You must verify
-                        your email before you can log in.
+                        <strong>Email verification required.</strong> After registration a 6-digit code will be sent to your email. You must verify before logging in.
                       </p>
                     </div>
                   )}
@@ -431,6 +407,7 @@ const Register = () => {
                 {/* ── DONOR / PATIENT FORM ── */}
                 {(userType === "donor" || userType === "requester") && (
                   <div className="space-y-4">
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className={labelCls}>First Name *</label>
@@ -441,18 +418,47 @@ const Register = () => {
                         <input className={inputCls} placeholder="Yadav" value={formData.lastName} onChange={e => set("lastName", e.target.value)} required />
                       </div>
                     </div>
+
                     <div>
                       <label className={labelCls}>Email Address *</label>
                       <input className={inputCls} type="email" placeholder="your@email.com" value={formData.email} onChange={e => set("email", e.target.value)} required />
+                      <p className="text-xs text-orange-500 mt-1 font-medium">
+                        ⚠️ Double check your email — a verification code will be sent here and cannot be changed after this step
+                      </p>
                     </div>
+
+                    {/* Nepal phone validation */}
                     <div>
                       <label className={labelCls}>Phone Number *</label>
-                      <input className={inputCls} type="tel" placeholder="+977-98XXXXXXXX" value={formData.phone} onChange={e => set("phone", e.target.value)} required />
+                      <div className="flex gap-2">
+                        <span className="inline-flex items-center px-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-600 text-sm font-semibold flex-shrink-0">
+                          +977
+                        </span>
+                        <div className="flex-1">
+                          <input
+                            className={`${inputCls} ${phoneError ? "border-red-400 focus:ring-red-400" : formData.phone.length === 10 && validateNepalPhone(formData.phone) ? "border-green-400 focus:ring-green-400" : ""}`}
+                            type="tel"
+                            placeholder="98XXXXXXXX"
+                            value={formData.phone}
+                            onChange={e => handlePhoneChange(e.target.value)}
+                            maxLength={10}
+                            required
+                          />
+                        </div>
+                      </div>
+                      {phoneError ? (
+                        <p className="text-xs text-red-500 mt-1">⚠️ {phoneError}</p>
+                      ) : formData.phone.length === 10 && validateNepalPhone(formData.phone) ? (
+                        <p className="text-xs text-green-600 mt-1">✅ Valid Nepal number</p>
+                      ) : (
+                        <p className="text-xs text-gray-400 mt-1">Enter 10-digit number starting with 97 or 98 (e.g. 9841234567)</p>
+                      )}
                     </div>
+
+                    {/* Donor specific */}
                     {userType === "donor" && (
                       <div className="space-y-4">
 
-                        {/* Gender + Date of Birth */}
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className={labelCls}>Gender *</label>
@@ -470,7 +476,6 @@ const Register = () => {
                           </div>
                         </div>
 
-                        {/* Blood Type + Weight */}
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className={labelCls}>Blood Type *</label>
@@ -487,7 +492,6 @@ const Register = () => {
                           </div>
                         </div>
 
-                        {/* Health condition */}
                         <div>
                           <label className={labelCls}>Do you have any chronic illness? *</label>
                           <div className="grid grid-cols-2 gap-3">
@@ -495,15 +499,10 @@ const Register = () => {
                               { value: "no",  label: "✅ No — I am healthy" },
                               { value: "yes", label: "⚠️ Yes — I have a condition" },
                             ].map(opt => (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => set("hasIllness", opt.value)}
+                              <button key={opt.value} type="button" onClick={() => set("hasIllness", opt.value)}
                                 className={`py-2.5 px-3 rounded-xl text-xs font-semibold border-2 transition-all ${
                                   formData.hasIllness === opt.value
-                                    ? opt.value === "no"
-                                      ? "border-green-500 bg-green-50 text-green-700"
-                                      : "border-yellow-500 bg-yellow-50 text-yellow-700"
+                                    ? opt.value === "no" ? "border-green-500 bg-green-50 text-green-700" : "border-yellow-500 bg-yellow-50 text-yellow-700"
                                     : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                                 }`}
                               >
@@ -513,26 +512,24 @@ const Register = () => {
                           </div>
                         </div>
 
-                        {/* Illness details — only show if yes */}
                         {formData.hasIllness === "yes" && (
                           <div>
                             <label className={labelCls}>Please describe your condition *</label>
                             <textarea className={inputCls} rows={2}
                               placeholder="e.g. Diabetes, Hepatitis B, Heart condition..."
-                              value={formData.illnessDetails}
-                              onChange={e => set("illnessDetails", e.target.value)} required />
-                            <p className="text-xs text-yellow-600 mt-1">
-                              ⚠️ Some conditions may affect eligibility. Our team will review your application.
-                            </p>
+                              value={formData.illnessDetails} onChange={e => set("illnessDetails", e.target.value)} required />
+                            <p className="text-xs text-yellow-600 mt-1">⚠️ Some conditions may affect eligibility. Our team will review.</p>
                           </div>
                         )}
 
                       </div>
                     )}
+
                     <div>
                       <label className={labelCls}>Location *</label>
                       <input className={inputCls} placeholder="Kathmandu, Nepal" value={formData.location} onChange={e => set("location", e.target.value)} required />
                     </div>
+
                   </div>
                 )}
 
@@ -569,13 +566,9 @@ const Register = () => {
                         <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-500">Upload medical license, registration certificate</p>
                         <p className="text-xs text-gray-400 mt-1">PDF, JPG or PNG — max 5MB each</p>
-                        <button type="button" className="mt-2 text-xs border border-gray-300 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">
-                          Choose Files
-                        </button>
+                        <button type="button" className="mt-2 text-xs border border-gray-300 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">Choose Files</button>
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Note: Document upload will be available after approval. Our verification team will contact you to verify your documents.
-                      </p>
+                      <p className="text-xs text-gray-400 mt-1">Note: Document upload will be available after approval.</p>
                     </div>
                   </div>
                 )}
@@ -613,9 +606,7 @@ const Register = () => {
                         <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-500">Upload registration certificate, tax documents</p>
                         <p className="text-xs text-gray-400 mt-1">PDF, JPG or PNG — max 5MB each</p>
-                        <button type="button" className="mt-2 text-xs border border-gray-300 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">
-                          Choose Files
-                        </button>
+                        <button type="button" className="mt-2 text-xs border border-gray-300 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">Choose Files</button>
                       </div>
                     </div>
                   </div>
@@ -654,7 +645,7 @@ const Register = () => {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !!phoneError}
                   className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl text-base shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
@@ -663,9 +654,7 @@ const Register = () => {
                       {userType === "hospital" || userType === "ngo" ? "Submitting Application..." : "Creating Account..."}
                     </span>
                   ) : (
-                    userType === "hospital" || userType === "ngo"
-                      ? "Submit Application"
-                      : "Create Account"
+                    userType === "hospital" || userType === "ngo" ? "Submit Application" : "Create Account"
                   )}
                 </button>
               </form>
