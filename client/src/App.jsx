@@ -26,6 +26,7 @@ import VerifyPending from "./pages/VerifyPending";
 import PartnershipApplication from "./pages/PartnershipApplication";
 import RequestDetails from "./pages/RequestDetails";
 import NotFound from "./pages/NotFound";
+import PatientProfile from "./pages/PatientProfile";
 
 function App() {
   return (
@@ -56,6 +57,8 @@ function App() {
 
         {/* Protected — Patient */}
         <Route path="/patient/dashboard"        element={<PatientDashboard />} />
+
+        <Route path="/patient/profile" element={<PatientProfile />} />
 
         {/* Protected — Admin */}
         <Route path="/admin/dashboard"          element={<AdminDashboard />} />

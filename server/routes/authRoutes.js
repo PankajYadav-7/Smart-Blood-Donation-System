@@ -4,6 +4,7 @@ const jwt      = require("jsonwebtoken");
 const crypto   = require("crypto");
 const User         = require("../models/User");
 const DonorProfile = require("../models/DonorProfile");
+const PatientProfile = require("../models/PatientProfile");
 const { sendOTPEmail } = require("../utils/emailService");
 
 const router = express.Router();
@@ -24,6 +25,10 @@ router.post("/register", async (req, res) => {
       // Donor specific fields
       bloodType, location, gender, dateOfBirth, weight,
       hasIllness, illnessDetails,
+      // Patient specific fields
+      bloodGroupNeeded, rhNeeded, requestingFor,
+      patientName, medicalCondition, hospitalName,
+      emergencyContactName, emergencyContactPhone,
     } = req.body;
 
     if (!fullName || !email || !password || !role) {
@@ -32,7 +37,16 @@ router.post("/register", async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
+      // If account exists but email is NOT verified yet
+      // — delete the old unverified account and let them register fresh
+      // This handles the case where user went back after not receiving OTP
+      if (!existingUser.emailVerified) {
+        await existingUser.deleteOne();
+        // Continue registration below — create fresh account with new OTP
+      } else {
+        // Email is verified and fully registered — block
+        return res.status(400).json({ message: "Email already registered" });
+      }
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -99,6 +113,29 @@ router.post("/register", async (req, res) => {
       } catch (profileErr) {
         // Profile creation failed — do not block registration
         console.error("Auto profile creation failed:", profileErr.message);
+      }
+    }
+
+    // ── Auto-create PatientProfile for patients ───────────────────────────
+    if (role === "requester") {
+      try {
+        await PatientProfile.create({
+          userId:          user._id,
+          gender:          gender       || "male",
+          dateOfBirth:     dateOfBirth  || null,
+          phone:           phone        || "",
+          location:        location     || "",
+          bloodGroupNeeded: bloodGroupNeeded || "",
+          rhNeeded:        rhNeeded     || "",
+          requestingFor:   requestingFor || "myself",
+          patientName:     patientName  || "",
+          medicalCondition: medicalCondition || "",
+          hospitalName:    hospitalName || "",
+          emergencyContactName:  emergencyContactName  || "",
+          emergencyContactPhone: emergencyContactPhone || "",
+        });
+      } catch (profileErr) {
+        console.error("Auto patient profile creation failed:", profileErr.message);
       }
     }
 

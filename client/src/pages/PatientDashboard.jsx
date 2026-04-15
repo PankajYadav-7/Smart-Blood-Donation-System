@@ -164,6 +164,10 @@ const PatientDashboard = () => {
             <Button onClick={() => navigate("/create-request")}>
               <Plus className="h-4 w-4 mr-2" />New Request
             </Button>
+            <Button variant="outline" onClick={() => navigate("/patient/profile")}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50">
+              <User className="h-4 w-4 mr-2" />Edit Profile
+            </Button>
             <Button variant="outline" onClick={handleLogout} className="text-red-600 border-red-200 hover:bg-red-50">
               Logout
             </Button>

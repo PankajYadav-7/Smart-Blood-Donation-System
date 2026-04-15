@@ -171,8 +171,15 @@ const Register = () => {
     firstName: "", lastName: "", email: "", phone: "",
     password: "", confirmPassword: "",
     bloodType: "", age: "", location: "", lastDonation: "",
+    // Donor fields
     gender: "male", dateOfBirth: "", weight: "",
     hasIllness: "no", illnessDetails: "",
+    // Patient fields
+    bloodGroupNeeded: "", rhNeeded: "+",
+    requestingFor: "myself", patientName: "",
+    medicalCondition: "", hospitalName: "",
+    emergencyContactName: "", emergencyContactPhone: "",
+    // Org fields
     orgName: "", licenseNumber: "", address: "", orgDescription: "",
     website: "",
   });
@@ -245,6 +252,15 @@ const Register = () => {
         weight:         formData.weight,
         hasIllness:     formData.hasIllness,
         illnessDetails: formData.illnessDetails,
+        // Patient specific
+        bloodGroupNeeded:      formData.bloodGroupNeeded,
+        rhNeeded:              formData.rhNeeded,
+        requestingFor:         formData.requestingFor,
+        patientName:           formData.patientName,
+        medicalCondition:      formData.medicalCondition,
+        hospitalName:          formData.hospitalName,
+        emergencyContactName:  formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
       });
 
       if (response.data.requiresApproval) {
@@ -455,6 +471,147 @@ const Register = () => {
                         <p className="text-xs text-gray-400 mt-1">Enter 10-digit number starting with 97 or 98 (e.g. 9841234567)</p>
                       )}
                     </div>
+
+                    {/* ── PATIENT SPECIFIC FIELDS ── */}
+                    {userType === "requester" && (
+                      <div className="space-y-4">
+
+                        {/* Gender + Date of Birth */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className={labelCls}>Gender *</label>
+                            <select className={inputCls} value={formData.gender} onChange={e => set("gender", e.target.value)} required>
+                              <option value="male">Male</option>
+                              <option value="female">Female</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Date of Birth *</label>
+                            <input className={inputCls} type="date"
+                              max={new Date().toISOString().split("T")[0]}
+                              value={formData.dateOfBirth}
+                              onChange={e => set("dateOfBirth", e.target.value)} required />
+                          </div>
+                        </div>
+
+                        {/* Requesting for */}
+                        <div>
+                          <label className={labelCls}>Who are you requesting blood for? *</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              { value: "myself", label: "🙋 Myself" },
+                              { value: "family", label: "👨‍👩‍👧 Family Member" },
+                              { value: "friend", label: "🤝 Friend" },
+                              { value: "other",  label: "👤 Other Person" },
+                            ].map(opt => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => set("requestingFor", opt.value)}
+                                className={`py-2.5 px-3 rounded-xl text-xs font-semibold border-2 transition-all ${
+                                  formData.requestingFor === opt.value
+                                    ? "border-red-500 bg-red-50 text-red-700"
+                                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Patient name — only if not for myself */}
+                        {formData.requestingFor !== "myself" && (
+                          <div>
+                            <label className={labelCls}>Patient's Full Name *</label>
+                            <input className={inputCls}
+                              placeholder="Name of the person who needs blood"
+                              value={formData.patientName}
+                              onChange={e => set("patientName", e.target.value)} required />
+                          </div>
+                        )}
+
+                        {/* Blood group needed */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className={labelCls}>Blood Group Needed *</label>
+                            <select className={inputCls} value={formData.bloodGroupNeeded} onChange={e => set("bloodGroupNeeded", e.target.value)} required>
+                              <option value="">Select blood group</option>
+                              {["A", "B", "AB", "O"].map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Rh Factor *</label>
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              {[
+                                { value: "+", label: "Positive (+)" },
+                                { value: "-", label: "Negative (−)" },
+                              ].map(opt => (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => set("rhNeeded", opt.value)}
+                                  className={`py-2 rounded-xl text-xs font-semibold border-2 transition-all ${
+                                    formData.rhNeeded === opt.value
+                                      ? "border-red-500 bg-red-50 text-red-700"
+                                      : "border-gray-200 bg-white text-gray-600"
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Medical condition */}
+                        <div>
+                          <label className={labelCls}>Medical Condition / Reason for Blood *</label>
+                          <textarea className={inputCls} rows={2}
+                            placeholder="e.g. Surgery, Accident, Cancer treatment, Anaemia..."
+                            value={formData.medicalCondition}
+                            onChange={e => set("medicalCondition", e.target.value)} required />
+                          <p className="text-xs text-gray-400 mt-1">
+                            This helps donors understand the urgency of your request
+                          </p>
+                        </div>
+
+                        {/* Hospital name */}
+                        <div>
+                          <label className={labelCls}>Hospital / Medical Centre Name *</label>
+                          <input className={inputCls}
+                            placeholder="e.g. Bir Hospital, Kathmandu"
+                            value={formData.hospitalName}
+                            onChange={e => set("hospitalName", e.target.value)} required />
+                        </div>
+
+                        {/* Emergency contact */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-3">
+                          <p className="text-xs font-semibold text-orange-800">
+                            🚨 Emergency Contact (Optional but recommended)
+                          </p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className={labelCls}>Contact Name</label>
+                              <input className={inputCls}
+                                placeholder="e.g. Ram Sharma"
+                                value={formData.emergencyContactName}
+                                onChange={e => set("emergencyContactName", e.target.value)} />
+                            </div>
+                            <div>
+                              <label className={labelCls}>Contact Phone</label>
+                              <input className={inputCls}
+                                type="tel"
+                                placeholder="98XXXXXXXX"
+                                value={formData.emergencyContactPhone}
+                                onChange={e => set("emergencyContactPhone", e.target.value.replace(/\D/g, "").slice(0, 10))} />
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
 
                     {/* Donor specific */}
                     {userType === "donor" && (
