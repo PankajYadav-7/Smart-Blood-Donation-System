@@ -277,4 +277,103 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CHANGE EMAIL — Step 1: Send OTP to new email
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/change-email/request", async (req, res) => {
+  try {
+    const { currentEmail, newEmail } = req.body;
+
+    if (!currentEmail || !newEmail) {
+      return res.status(400).json({ message: "Both current and new email are required" });
+    }
+
+    if (currentEmail === newEmail) {
+      return res.status(400).json({ message: "New email must be different from current email" });
+    }
+
+    // Check new email not already taken
+    const existingUser = await User.findOne({ email: newEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: "This email is already registered to another account" });
+    }
+
+    const user = await User.findOne({ email: currentEmail });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate OTP and save temporarily
+    const otp       = generateOTP();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.otp       = otp;
+    user.otpExpiry = otpExpiry;
+    await user.save();
+
+    // Send OTP to NEW email
+    sendOTPEmail({
+      email:    newEmail,
+      fullName: user.fullName,
+      otp,
+    }).then(() => {
+      console.log(`✅ Change email OTP sent → ${newEmail} | OTP: ${otp}`);
+    }).catch(err => {
+      console.error(`❌ Change email OTP failed → ${newEmail} | ${err.message}`);
+    });
+
+    return res.status(200).json({
+      message: "Verification code sent to your new email address.",
+      sent: true,
+    });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHANGE EMAIL — Step 2: Verify OTP and update email
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/change-email/verify", async (req, res) => {
+  try {
+    const { currentEmail, newEmail, otp } = req.body;
+
+    if (!currentEmail || !newEmail || !otp) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const user = await User.findOne({ email: currentEmail });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({ message: "No verification code found. Please request again." });
+    }
+
+    if (new Date() > new Date(user.otpExpiry)) {
+      return res.status(400).json({ message: "Verification code has expired. Please request again." });
+    }
+
+    if (user.otp !== otp.toString()) {
+      return res.status(400).json({ message: "Incorrect verification code. Please try again." });
+    }
+
+    // ✅ OTP correct — update email
+    user.email     = newEmail;
+    user.otp       = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Email updated successfully! Please log in again with your new email.",
+      updated: true,
+    });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;

@@ -7,7 +7,7 @@ import Footer from "../components/Footer";
 import {
   Droplets, MapPin, ArrowLeft, CheckCircle,
   AlertCircle, Save, Loader, User, Phone,
-  Mail, Weight, Calendar, Heart,
+  Mail, Heart, LogOut,
 } from "lucide-react";
 
 const DonorProfile = () => {
@@ -19,6 +19,15 @@ const DonorProfile = () => {
   const [saving,  setSaving]  = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
+
+  // ── Change email state ──────────────────────────────────────────────────
+  const [showEmailChange, setShowEmailChange] = useState(false);
+  const [newEmail,        setNewEmail]        = useState("");
+  const [emailOtp,        setEmailOtp]        = useState("");
+  const [emailOtpSent,    setEmailOtpSent]    = useState(false);
+  const [emailLoading,    setEmailLoading]    = useState(false);
+  const [emailError,      setEmailError]      = useState("");
+  const [emailSuccess,    setEmailSuccess]    = useState("");
 
   const [formData, setFormData] = useState({
     // Blood
@@ -258,6 +267,128 @@ const DonorProfile = () => {
                   onChange={e => set("weight", e.target.value)}
                 />
                 <p className="text-xs text-gray-400 mt-1">Minimum 50kg required to be eligible to donate</p>
+              </div>
+
+              {/* ── Change Email Section ── */}
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Email Address</p>
+                    <p className="text-sm text-gray-500">{user?.email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEmailChange(!showEmailChange);
+                      setEmailError("");
+                      setEmailSuccess("");
+                      setEmailOtpSent(false);
+                      setNewEmail("");
+                      setEmailOtp("");
+                    }}
+                    className="text-xs text-red-600 hover:underline font-semibold"
+                  >
+                    {showEmailChange ? "Cancel" : "Change Email"}
+                  </button>
+                </div>
+
+                {showEmailChange && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+
+                    {emailError && (
+                      <p className="text-xs text-red-600 font-medium">⚠️ {emailError}</p>
+                    )}
+                    {emailSuccess && (
+                      <p className="text-xs text-green-600 font-medium">✅ {emailSuccess}</p>
+                    )}
+
+                    {!emailOtpSent ? (
+                      <>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">New Email Address</label>
+                          <input
+                            type="email"
+                            className={inputCls}
+                            placeholder="your.new@email.com"
+                            value={newEmail}
+                            onChange={e => setNewEmail(e.target.value)}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={emailLoading || !newEmail}
+                          onClick={async () => {
+                            setEmailLoading(true);
+                            setEmailError("");
+                            try {
+                              await axios.post("http://localhost:5000/api/auth/change-email/request", {
+                                currentEmail: user?.email,
+                                newEmail,
+                              });
+                              setEmailOtpSent(true);
+                            } catch (err) {
+                              setEmailError(err.response?.data?.message || "Failed to send code. Try again.");
+                            }
+                            setEmailLoading(false);
+                          }}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-all disabled:opacity-50"
+                        >
+                          {emailLoading ? "Sending..." : "📨 Send Verification Code to New Email"}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-blue-700">
+                          A 6-digit code was sent to <strong>{newEmail}</strong>. Enter it below to confirm.
+                        </p>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={emailOtp}
+                          onChange={e => setEmailOtp(e.target.value.replace(/\D/g, ""))}
+                          placeholder="000000"
+                          className="w-full border-2 border-blue-300 rounded-xl px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white"
+                        />
+                        <button
+                          type="button"
+                          disabled={emailLoading || emailOtp.length !== 6}
+                          onClick={async () => {
+                            setEmailLoading(true);
+                            setEmailError("");
+                            try {
+                              await axios.post("http://localhost:5000/api/auth/change-email/verify", {
+                                currentEmail: user?.email,
+                                newEmail,
+                                otp: emailOtp,
+                              });
+                              setEmailSuccess("Email updated successfully! Please log in again with your new email.");
+                              setShowEmailChange(false);
+                              // Update localStorage and force re-login after 3 seconds
+                              setTimeout(() => {
+                                localStorage.removeItem("token");
+                                localStorage.removeItem("user");
+                                window.location.href = "/login";
+                              }, 3000);
+                            } catch (err) {
+                              setEmailError(err.response?.data?.message || "Incorrect code. Try again.");
+                            }
+                            setEmailLoading(false);
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all disabled:opacity-50"
+                        >
+                          {emailLoading ? "Verifying..." : "✅ Confirm New Email"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setEmailOtpSent(false); setEmailOtp(""); setEmailError(""); }}
+                          className="w-full text-xs text-gray-500 hover:text-gray-700 underline"
+                        >
+                          Wrong email? Go back
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
             </CardContent>

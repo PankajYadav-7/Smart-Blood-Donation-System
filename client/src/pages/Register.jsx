@@ -274,7 +274,8 @@ const Register = () => {
         onChangeEmail={() => {
           setShowOTP(false);
           setOtpEmail("");
-          set("email", ""); // clear wrong email so user must type correct one
+          set("email", "");
+          setLoading(false); // ← this fixes the spinning button
         }}
       />
     );
