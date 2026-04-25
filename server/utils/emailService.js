@@ -348,10 +348,58 @@ async function sendOTPEmail({ email, fullName, otp }) {
   await send(email, `${otp} — Your Jeevan Saarthi Verification Code`, html);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 6 — Password Reset Email
+// Triggered: POST /api/auth/forgot-password
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendPasswordResetEmail({ email, fullName, otp }) {
+  const html = wrap(`
+    <h2 style="margin:0 0 8px;color:#1a1a1a;font-size:20px;">Reset Your Password</h2>
+    <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.6;">
+      Hi <strong>${fullName}</strong>, we received a request to reset your
+      Jeevan Saarthi password. Use the code below to reset it.
+    </p>
+
+    <!-- OTP Box -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      <tr>
+        <td align="center">
+          <div style="background:#fef2f2;border:2px solid #fecaca;border-radius:14px;
+                      padding:28px 40px;display:inline-block;text-align:center;">
+            <p style="margin:0 0 6px;color:#991b1b;font-size:12px;font-weight:bold;
+                      text-transform:uppercase;letter-spacing:2px;">
+              Password Reset Code
+            </p>
+            <p style="margin:0;color:#991b1b;font-size:42px;font-weight:bold;
+                      letter-spacing:10px;font-family:monospace;">
+              ${otp}
+            </p>
+            <p style="margin:8px 0 0;color:#999999;font-size:12px;">
+              This code expires in <strong>15 minutes</strong>
+            </p>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;line-height:1.6;">
+      Enter this code on the password reset page to set your new password.
+    </p>
+
+    <p style="margin:0;color:#999999;font-size:13px;">
+      If you did not request a password reset, please ignore this email.
+      Your account is safe and no changes have been made.
+    </p>
+  `);
+
+  await send(email, `🔐 Your Jeevan Saarthi Password Reset Code — ${otp}`, html);
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
   notifyDonorOfConfirmation,
   notifyRequesterOfNoShow,
   sendOTPEmail,
+  sendPasswordResetEmail,
 };

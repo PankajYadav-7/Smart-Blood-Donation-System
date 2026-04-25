@@ -5,7 +5,7 @@ const crypto   = require("crypto");
 const User         = require("../models/User");
 const DonorProfile = require("../models/DonorProfile");
 const PatientProfile = require("../models/PatientProfile");
-const { sendOTPEmail } = require("../utils/emailService");
+const { sendOTPEmail, sendPasswordResetEmail } = require("../utils/emailService");
 
 const router = express.Router();
 
@@ -406,6 +406,102 @@ router.post("/change-email/verify", async (req, res) => {
     return res.status(200).json({
       message: "Email updated successfully! Please log in again with your new email.",
       updated: true,
+    });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FORGOT PASSWORD — Send reset link to email
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const user = await User.findOne({ email });
+
+    // Always return success even if email not found — security best practice
+    // This prevents attackers from knowing which emails are registered
+    if (!user) {
+      return res.status(200).json({
+        message: "If this email is registered, a reset link has been sent."
+      });
+    }
+
+    // Generate reset token — 6 digit OTP
+    const resetToken  = generateOTP();
+    const resetExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    user.otp       = resetToken;
+    user.otpExpiry = resetExpiry;
+    await user.save();
+
+    // Send reset email
+    sendPasswordResetEmail({
+      email:    user.email,
+      fullName: user.fullName,
+      otp:      resetToken,
+    }).then(() => {
+      console.log(`✅ Password reset email sent → ${user.email} | OTP: ${resetToken}`);
+    }).catch(err => {
+      console.error(`❌ Password reset email failed → ${user.email} | ${err.message}`);
+    });
+
+    return res.status(200).json({
+      message: "If this email is registered, a reset link has been sent.",
+      sent: true,
+    });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESET PASSWORD — Verify OTP and set new password
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({ message: "No reset code found. Please request again." });
+    }
+
+    if (new Date() > new Date(user.otpExpiry)) {
+      return res.status(400).json({ message: "Reset code has expired. Please request again." });
+    }
+
+    if (user.otp !== otp.toString()) {
+      return res.status(400).json({ message: "Incorrect reset code. Please try again." });
+    }
+
+    // ✅ OTP correct — update password
+    const bcrypt = require("bcryptjs");
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.otp          = null;
+    user.otpExpiry    = null;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password reset successfully! You can now log in with your new password.",
+      success: true,
     });
 
   } catch (error) {

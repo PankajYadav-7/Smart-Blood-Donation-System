@@ -158,7 +158,7 @@ const PatientDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">👨‍👩‍👧 Patient Dashboard</h1>
-            <p className="text-gray-500 mt-1">Welcome, {user?.fullName} — manage your blood requests</p>
+            <p className="text-gray-500 mt-1">Welcome, {user?.fullName || "back"} — manage your blood requests</p>
           </div>
           <div className="flex gap-3">
             <Button onClick={() => navigate("/create-request")}>
@@ -172,6 +172,25 @@ const PatientDashboard = () => {
               Logout
             </Button>
           </div>
+        </div>
+
+        {/* Profile Summary Banner */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+              <User className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <p className="font-bold text-gray-900">{user?.fullName || "Patient"}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate("/patient/profile")}
+            className="text-xs text-red-600 hover:underline font-semibold border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all"
+          >
+            ✏️ Edit Profile
+          </button>
         </div>
 
         {/* Stats */}
