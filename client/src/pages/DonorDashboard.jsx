@@ -10,7 +10,7 @@ import {
   Droplets, Heart, Clock, MapPin, Award, CheckCircle,
   User, Trophy, Medal, Star, Bell, BellOff, Activity,
   AlertCircle, Calendar, Loader, Building, Hash,
-  ChevronDown, ChevronUp, ThumbsUp, Mail,
+  ChevronDown, ChevronUp, ThumbsUp, Mail, Phone,
 } from "lucide-react";
 
 const API = "http://localhost:5000/api";
@@ -27,8 +27,12 @@ const DonorDashboard = () => {
   const [activeTab,       setActiveTab]       = useState("requests");
   const [isSnoozed,       setIsSnoozed]       = useState(false);
   const [toast,           setToast]           = useState(null);
-  // ── NEW: eligibility info returned from backend ──
   const [eligibilityInfo, setEligibilityInfo] = useState(null);
+
+  // ── Emergency state ──────────────────────────────────────────────────────
+  const [emergencies,     setEmergencies]     = useState([]);
+  const [emergencyLoading, setEmergencyLoading] = useState(false);
+  const [acceptingId,     setAcceptingId]     = useState(null);
 
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
@@ -40,7 +44,6 @@ const DonorDashboard = () => {
     setLoading(false);
   };
 
-  // ── UPDATED: now stores eligibilityInfo from backend ──
   const fetchMatches = async () => {
     try {
       const res = await axios.get(`${API}/matches/compatible-requests`, {
@@ -73,9 +76,40 @@ const DonorDashboard = () => {
     } catch (err) { console.log(err); }
   };
 
+  // ── Fetch active emergencies ─────────────────────────────────────────────
+  const fetchEmergencies = async () => {
+    setEmergencyLoading(true);
+    try {
+      const res = await axios.get(`${API}/emergency/active`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEmergencies(res.data.emergencies || []);
+    } catch (err) { console.log(err); }
+    setEmergencyLoading(false);
+  };
+
+  // Fetch emergencies when tab is opened
+  useEffect(() => {
+    if (activeTab === "emergency") fetchEmergencies();
+  }, [activeTab]);
+
+  const handleAcceptEmergency = async (emergencyId) => {
+    setAcceptingId(emergencyId);
+    try {
+      await axios.post(`${API}/emergency/${emergencyId}/accept`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      showToast("You accepted this emergency request! The requester has been notified with your contact details.");
+      fetchEmergencies();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to accept", "error");
+    }
+    setAcceptingId(null);
+  };
+
   const showToast = (message, type = "success") => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
+    setTimeout(() => setToast(null), 4000);
   };
 
   const handleToggleAvailability = async () => {
@@ -88,7 +122,6 @@ const DonorDashboard = () => {
       );
       setDonorProfile(prev => ({ ...prev, availability: res.data.availability }));
       showToast(res.data.availability ? "You are now available to donate" : "You are now unavailable");
-      // Refresh matches after availability change
       fetchMatches();
     } catch { showToast("Failed to update availability", "error"); }
   };
@@ -164,10 +197,26 @@ const DonorDashboard = () => {
 
   const tabs = [
     { id: "requests",     label: "🔔 Nearby Requests" },
+    { id: "emergency",    label: "🚨 Emergency"        },
     { id: "history",      label: "📋 History"          },
     { id: "profile",      label: "👤 Profile & Badges" },
     { id: "certificates", label: "🏆 Certificates"     },
   ];
+
+  const getUrgencyColor = (level) => {
+    if (level === "Critical") return "bg-red-600 text-white";
+    if (level === "Urgent")   return "bg-orange-500 text-white";
+    return "bg-yellow-500 text-white";
+  };
+
+  const timeAgo = (date) => {
+    const mins = Math.floor((new Date() - new Date(date)) / 60000);
+    if (mins < 1)  return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -262,14 +311,16 @@ const DonorDashboard = () => {
 
         {/* Tabs */}
         <div className="mb-6">
-          <div className="flex gap-2 bg-white rounded-xl p-1 shadow-sm border border-gray-200 overflow-x-auto">
+          <div className="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-200 overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                className={`flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? "bg-red-600 text-white shadow-sm"
+                    ? tab.id === "emergency"
+                      ? "bg-red-600 text-white shadow-sm"
+                      : "bg-red-600 text-white shadow-sm"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 }`}
               >
@@ -278,6 +329,160 @@ const DonorDashboard = () => {
             ))}
           </div>
         </div>
+
+        {/* ── EMERGENCY TAB ── */}
+        {activeTab === "emergency" && (
+          <div className="space-y-4">
+
+            {/* Emergency banner */}
+            <div className="bg-red-600 rounded-2xl p-5 text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <AlertCircle className="h-6 w-6 flex-shrink-0" />
+                <h2 className="text-xl font-bold">🚨 Active Emergency Requests</h2>
+              </div>
+              <p className="text-red-100 text-sm">
+                These are urgent emergency requests submitted directly by people in need.
+                No hospital system — direct person-to-donor connection.
+                If you accept, your phone number will be shared with the requester immediately.
+              </p>
+            </div>
+
+            {emergencyLoading && (
+              <div className="text-center py-12">
+                <Loader className="h-8 w-8 text-red-600 animate-spin mx-auto" />
+                <p className="text-gray-500 mt-3 text-sm">Loading emergencies...</p>
+              </div>
+            )}
+
+            {!emergencyLoading && emergencies.length === 0 && (
+              <Card className="border-0 shadow-md">
+                <CardContent className="py-12 text-center">
+                  <CheckCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">No active emergencies</h3>
+                  <p className="text-gray-500 text-sm">
+                    There are no active emergency requests right now. Check back later.
+                  </p>
+                  <button
+                    onClick={fetchEmergencies}
+                    className="mt-4 text-sm text-red-600 hover:underline font-medium"
+                  >
+                    Refresh
+                  </button>
+                </CardContent>
+              </Card>
+            )}
+
+            {emergencies.map((emergency) => {
+              const alreadyAccepted = emergency.acceptedDonors?.some(
+                d => d.donorUserId?.toString() === user?._id?.toString() ||
+                     d.donorEmail === user?.email
+              );
+
+              return (
+                <Card key={emergency._id} className="border-0 shadow-md border-l-4 border-l-red-500">
+                  <CardContent className="pt-5 pb-4">
+
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-14 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                          {emergency.bloodGroup}{emergency.rh}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-lg font-bold text-gray-900">
+                              {emergency.bloodGroup}{emergency.rh} Blood Needed
+                            </h3>
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${getUrgencyColor(emergency.urgencyLevel)}`}>
+                              {emergency.urgencyLevel}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-0.5">
+                            🏥 {emergency.hospitalName}
+                          </p>
+                          <p className="text-xs text-gray-400">{timeAgo(emergency.createdAt)}</p>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs font-bold text-red-600">{emergency.trackingCode}</p>
+                        <p className="text-xs text-gray-400">{emergency.unitsRequired} unit{emergency.unitsRequired > 1 ? "s" : ""} needed</p>
+                      </div>
+                    </div>
+
+                    {/* Details */}
+                    <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-4 space-y-1.5">
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700">Requested by: <strong>{emergency.requesterName}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <a href={`tel:${emergency.requesterPhone}`} className="text-red-600 font-bold hover:underline">
+                          {emergency.requesterPhone}
+                        </a>
+                      </div>
+                      {emergency.medicalCondition && (
+                        <div className="flex items-start gap-2 text-sm">
+                          <Heart className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-600">{emergency.medicalCondition}</span>
+                        </div>
+                      )}
+                      {emergency.acceptedDonors?.length > 0 && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          <span className="text-green-700 font-medium">
+                            {emergency.acceptedDonors.length} donor{emergency.acceptedDonors.length > 1 ? "s have" : " has"} already accepted
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Warning about sharing contact */}
+                    {!alreadyAccepted && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4">
+                        <p className="text-xs text-yellow-800 font-medium">
+                          ⚠️ If you accept, your phone number and email will be shared with the requester immediately so they can contact you directly.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Action */}
+                    {alreadyAccepted ? (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                        <p className="text-sm text-green-700 font-semibold">
+                          ✅ You accepted this emergency. The requester has your contact details.
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleAcceptEmergency(emergency._id)}
+                        disabled={acceptingId === emergency._id}
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {acceptingId === emergency._id ? (
+                          <><Loader className="h-4 w-4 animate-spin" />Accepting...</>
+                        ) : (
+                          <><Heart className="h-4 w-4" />🩸 I Can Help — Accept Emergency</>
+                        )}
+                      </button>
+                    )}
+
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            {/* Nepal Red Cross */}
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+              <p className="text-sm font-semibold text-red-700 mb-1">Nepal Red Cross Emergency Line</p>
+              <a href="tel:014270650" className="text-xl font-bold text-red-600 hover:underline">
+                01-4270650
+              </a>
+            </div>
+
+          </div>
+        )}
 
         {/* ── REQUESTS TAB ── */}
         {activeTab === "requests" && (
@@ -301,10 +506,8 @@ const DonorDashboard = () => {
               </div>
             )}
 
-            {/* ── SMART EMPTY STATES based on eligibility ── */}
             {!loading && matches.length === 0 && (
               <>
-                {/* 1. COOLDOWN — donated recently, not eligible yet */}
                 {eligibilityInfo?.status === "cooldown" && (
                   <Card className="border-0 shadow-md border-l-4 border-l-orange-400">
                     <CardContent className="py-8 px-6">
@@ -313,42 +516,25 @@ const DonorDashboard = () => {
                           <Clock className="h-7 w-7 text-orange-600" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-bold text-gray-900 mb-1">
-                            You donated blood recently 🩸
-                          </h3>
+                          <h3 className="text-lg font-bold text-gray-900 mb-1">You donated blood recently 🩸</h3>
                           <p className="text-gray-600 text-sm mb-5 leading-relaxed">
-                            Thank you for your life-saving donation! Your body needs time to fully
-                            recover before your next donation. You are not yet eligible to donate again.
+                            Thank you for your life-saving donation! Your body needs time to fully recover before your next donation.
                           </p>
-
-                          {/* Countdown cards */}
                           <div className="grid grid-cols-2 gap-3 mb-5">
                             <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
-                              <p className="text-xs text-orange-600 uppercase tracking-wider mb-1 font-semibold">
-                                Days Remaining
-                              </p>
-                              <p className="text-4xl font-bold text-orange-700">
-                                {eligibilityInfo.daysLeft}
-                              </p>
+                              <p className="text-xs text-orange-600 uppercase tracking-wider mb-1 font-semibold">Days Remaining</p>
+                              <p className="text-4xl font-bold text-orange-700">{eligibilityInfo.daysLeft}</p>
                               <p className="text-xs text-orange-500 mt-1">days until eligible</p>
                             </div>
                             <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                              <p className="text-xs text-green-600 uppercase tracking-wider mb-1 font-semibold">
-                                Next Eligible Date
-                              </p>
+                              <p className="text-xs text-green-600 uppercase tracking-wider mb-1 font-semibold">Next Eligible Date</p>
                               <p className="text-base font-bold text-green-700 mt-1">
                                 {eligibilityInfo.nextEligibleDate
-                                  ? new Date(eligibilityInfo.nextEligibleDate).toLocaleDateString("en-GB", {
-                                      day: "numeric", month: "long", year: "numeric"
-                                    })
-                                  : "—"
-                                }
+                                  ? new Date(eligibilityInfo.nextEligibleDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+                                  : "—"}
                               </p>
-                              <p className="text-xs text-green-500 mt-1">mark your calendar</p>
                             </div>
                           </div>
-
-                          {/* Progress bar */}
                           <div className="mb-5">
                             <div className="flex justify-between text-xs text-gray-500 mb-1.5">
                               <span>Recovery Progress</span>
@@ -361,14 +547,11 @@ const DonorDashboard = () => {
                               />
                             </div>
                           </div>
-
-                          {/* Tips */}
                           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
                             <p className="text-xs font-bold text-blue-700 mb-2">💡 What you can do now:</p>
                             <ul className="text-xs text-blue-600 space-y-1.5 leading-relaxed">
-                              <li>• Your availability has been automatically turned off to protect your health</li>
                               <li>• Eat iron-rich foods and stay hydrated to recover faster</li>
-                              <li>• You will be notified when you become eligible again</li>
+                              <li>• Check the Emergency tab — you can still help in critical cases</li>
                               <li>• Check your History tab to see your donation record</li>
                             </ul>
                           </div>
@@ -377,55 +560,35 @@ const DonorDashboard = () => {
                     </CardContent>
                   </Card>
                 )}
-
-                {/* 2. UNAVAILABLE — donor turned off availability */}
                 {eligibilityInfo?.status === "unavailable" && (
                   <Card className="border-0 shadow-md">
                     <CardContent className="py-12 text-center">
                       <BellOff className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        You are currently unavailable
-                      </h3>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">You are currently unavailable</h3>
                       <p className="text-gray-500 text-sm max-w-sm mx-auto mb-5">
-                        Toggle your availability to ON using the button at the top of this page
-                        to start receiving blood requests again.
+                        Toggle your availability to ON using the button at the top to start receiving requests.
                       </p>
-                      <Button onClick={handleToggleAvailability}>
-                        Turn Availability ON
-                      </Button>
+                      <Button onClick={handleToggleAvailability}>Turn Availability ON</Button>
                     </CardContent>
                   </Card>
                 )}
-
-                {/* 3. NO PROFILE — profile not set up */}
                 {eligibilityInfo?.status === "no_profile" && (
                   <Card className="border-0 shadow-md">
                     <CardContent className="py-12 text-center">
                       <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        Complete your profile first
-                      </h3>
-                      <p className="text-gray-500 text-sm max-w-sm mx-auto mb-5">
-                        Set your blood group and availability to start receiving matching requests.
-                      </p>
-                      <Button onClick={() => navigate("/donor/profile")}>
-                        Complete Profile
-                      </Button>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Complete your profile first</h3>
+                      <p className="text-gray-500 text-sm max-w-sm mx-auto mb-5">Set your blood group and availability.</p>
+                      <Button onClick={() => navigate("/donor/profile")}>Complete Profile</Button>
                     </CardContent>
                   </Card>
                 )}
-
-                {/* 4. ELIGIBLE but no requests right now */}
                 {(eligibilityInfo?.status === "eligible" || !eligibilityInfo?.status) && (
                   <Card className="border-0 shadow-md">
                     <CardContent className="py-12 text-center">
                       <Bell className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        No matching requests right now
-                      </h3>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">No matching requests right now</h3>
                       <p className="text-gray-500 text-sm max-w-sm mx-auto">
-                        You are eligible and available. New requests will appear here
-                        automatically when a matching blood type is needed.
+                        You are eligible and available. New requests will appear here automatically.
                       </p>
                     </CardContent>
                   </Card>
@@ -433,7 +596,6 @@ const DonorDashboard = () => {
               </>
             )}
 
-            {/* Request cards */}
             {matches.map((match) => (
               <Card key={match._id} className="border-0 shadow-md hover:shadow-lg transition-shadow border-l-4 border-l-red-500">
                 <CardContent className="pt-6 pb-4">
@@ -450,16 +612,12 @@ const DonorDashboard = () => {
                           <Badge className={match.requestId?.urgency === "Emergency"
                             ? "bg-red-100 text-red-700 border-red-200"
                             : "bg-gray-100 text-gray-700 border-gray-200"
-                          }>
-                            {match.requestId?.urgency}
-                          </Badge>
+                          }>{match.requestId?.urgency}</Badge>
                         </div>
                       </div>
                       <div className="space-y-1.5 ml-1">
                         {match.status === "New" && (
-                          <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium mb-1">
-                            🔵 New Request
-                          </span>
+                          <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium mb-1">🔵 New Request</span>
                         )}
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-gray-400" />{match.requestId?.hospitalName}
@@ -475,17 +633,10 @@ const DonorDashboard = () => {
                       </div>
                     </div>
                     <div className="flex md:flex-col gap-3 justify-end">
-                      <Button
-                        onClick={() => handleRespond(match._id, match.requestId?._id, "Accepted")}
-                        className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white"
-                      >
+                      <Button onClick={() => handleRespond(match._id, match.requestId?._id, "Accepted")} className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white">
                         <CheckCircle className="h-4 w-4 mr-2" />Accept
                       </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleRespond(match._id, match.requestId?._id, "Declined")}
-                        className="flex-1 md:flex-none text-gray-600"
-                      >
+                      <Button variant="outline" onClick={() => handleRespond(match._id, match.requestId?._id, "Declined")} className="flex-1 md:flex-none text-gray-600">
                         Decline
                       </Button>
                     </div>
@@ -544,12 +695,9 @@ const DonorDashboard = () => {
                     <p className={`text-sm font-bold mt-1 ${eligibility.color.split(" ")[0]}`}>{eligibility.label}</p>
                   </div>
                 </div>
-                <Button className="w-full" variant="outline" onClick={() => navigate("/donor/profile")}>
-                  Edit Profile
-                </Button>
+                <Button className="w-full" variant="outline" onClick={() => navigate("/donor/profile")}>Edit Profile</Button>
               </CardContent>
             </Card>
-
             <Card className="border-0 shadow-md">
               <CardHeader><CardTitle>Achievements & Badges</CardTitle></CardHeader>
               <CardContent>
@@ -621,7 +769,6 @@ const DonorDashboard = () => {
                 )}
               </CardContent>
             </Card>
-
             <Card className="border-0 shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -644,10 +791,7 @@ const DonorDashboard = () => {
                           <Badge variant="outline">{acceptedCount}/{item.target}</Badge>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
-                          <div
-                            className={`h-2 rounded-full transition-all ${done ? "bg-green-500" : "bg-red-600"}`}
-                            style={{ width: `${pct}%` }}
-                          />
+                          <div className={`h-2 rounded-full transition-all ${done ? "bg-green-500" : "bg-red-600"}`} style={{ width: `${pct}%` }} />
                         </div>
                         <p className="text-xs text-gray-500">
                           {done ? "✅ Completed!" : `${item.target - acceptedCount} more ${item.label} needed`}
@@ -660,6 +804,7 @@ const DonorDashboard = () => {
             </Card>
           </div>
         )}
+
       </div>
       <Footer />
     </div>
@@ -668,8 +813,6 @@ const DonorDashboard = () => {
 
 // ─────────────────────────────────────────────────────────
 // HISTORY TAB COMPONENT
-// 1. Awaiting Confirmation — donor accepted, patient not yet confirmed
-// 2. Confirmed Donations   — patient confirmed, counts as real donation
 // ─────────────────────────────────────────────────────────
 const HistoryTab = ({ token }) => {
   const [confirmed, setConfirmed] = useState([]);
@@ -681,14 +824,8 @@ const HistoryTab = ({ token }) => {
     const fetchAll = async () => {
       try {
         const [confirmedRes, pendingRes] = await Promise.all([
-          axios.get(
-            "http://localhost:5000/api/matches/my-accepted",
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
-          axios.get(
-            "http://localhost:5000/api/matches/pending-confirmation",
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
+          axios.get("http://localhost:5000/api/matches/my-accepted",          { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get("http://localhost:5000/api/matches/pending-confirmation", { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         setConfirmed(confirmedRes.data.matches || []);
         setPending(pendingRes.data.matches     || []);
@@ -698,247 +835,66 @@ const HistoryTab = ({ token }) => {
     fetchAll();
   }, []);
 
-  if (loading) return (
-    <div className="text-center py-8">
-      <Loader className="h-8 w-8 text-red-600 animate-spin mx-auto" />
-    </div>
-  );
+  if (loading) return <div className="text-center py-8"><Loader className="h-8 w-8 text-red-600 animate-spin mx-auto" /></div>;
 
   if (confirmed.length === 0 && pending.length === 0) return (
     <div className="text-center py-10">
       <Calendar className="h-12 w-12 text-gray-200 mx-auto mb-3" />
       <p className="text-gray-500 text-sm font-medium">No donation history yet</p>
-      <p className="text-gray-400 text-xs mt-1">
-        When you accept a request it will appear here. Once the recipient confirms it counts as a donation.
-      </p>
+      <p className="text-gray-400 text-xs mt-1">When you accept a request it will appear here.</p>
     </div>
   );
 
   return (
     <div className="space-y-6">
-
-      {/* ── AWAITING CONFIRMATION ── */}
       {pending.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-            <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-              Awaiting Confirmation ({pending.length})
-            </p>
+            <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">Awaiting Confirmation ({pending.length})</p>
           </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-3">
-            <p className="text-xs text-yellow-800 leading-relaxed">
-              <strong>You accepted these requests.</strong> If you have already donated blood,
-              the recipient needs to confirm your donation. You can send them a reminder below.
-            </p>
-          </div>
-
           <div className="space-y-3">
             {pending.map((match, i) => {
-              const key    = `pending-${match._id || i}`;
-              const isOpen = expanded === key;
-              const req    = match.requestId;
-
+              const key = `pending-${match._id || i}`;
+              const req = match.requestId;
               return (
-                <div key={key} className={`border-2 rounded-xl transition-all duration-200 ${
-                  isOpen ? "border-yellow-400 shadow-md" : "border-yellow-200 hover:border-yellow-400"
-                }`}>
-                  <button className="w-full p-4 text-left" onClick={() => setExpanded(isOpen ? null : key)}>
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                          <Clock className="h-5 w-5 text-yellow-600" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 text-sm">{req?.hospitalName || "Hospital"}</p>
-                          <p className="text-xs text-gray-500">
-                            {req?.bloodGroup}{req?.rh} — {req?.unitsRequired} unit{req?.unitsRequired > 1 ? "s" : ""}
-                            {req?.urgency ? ` · ${req.urgency}` : ""}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Accepted: {match.respondedAt
-                              ? new Date(match.respondedAt).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" })
-                              : "—"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 text-xs">⏳ Confirmation Pending</Badge>
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isOpen ? "bg-yellow-100 text-yellow-600" : "bg-gray-100 text-gray-400"}`}>
-                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </div>
-                      </div>
+                <div key={key} className="border-2 border-yellow-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{req?.hospitalName || "Hospital"}</p>
+                      <p className="text-xs text-gray-500">{req?.bloodGroup}{req?.rh} — {req?.unitsRequired} unit{req?.unitsRequired > 1 ? "s" : ""}</p>
                     </div>
-                  </button>
-
-                  {isOpen && (
-                    <div className="border-t border-yellow-100 p-4 bg-yellow-50 rounded-b-xl space-y-3">
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Donation Details</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white rounded-xl p-3 border border-gray-100">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Blood Type</p>
-                          <p className="text-xl font-bold text-red-600">{req?.bloodGroup}{req?.rh}</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 border border-gray-100">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Units</p>
-                          <p className="text-xl font-bold text-gray-900">{req?.unitsRequired || "—"}</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 border border-gray-100 col-span-2">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Hospital</p>
-                          <p className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-                            <Building className="h-3.5 w-3.5 text-gray-400" />{req?.hospitalName || "—"}
-                          </p>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 border border-gray-100">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">You Accepted On</p>
-                          <p className="text-sm font-semibold text-gray-900">
-                            {match.respondedAt
-                              ? new Date(match.respondedAt).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" })
-                              : "—"}
-                          </p>
-                        </div>
-                        <div className="bg-yellow-100 rounded-xl p-3 border border-yellow-200">
-                          <p className="text-xs text-yellow-700 uppercase tracking-wider mb-1">Status</p>
-                          <p className="text-sm font-bold text-yellow-800">⏳ Waiting for recipient</p>
-                        </div>
-                        {req?.notes && (
-                          <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 col-span-2">
-                            <p className="text-xs text-blue-500 uppercase tracking-wider mb-1">Request Notes</p>
-                            <p className="text-sm text-blue-800">{req.notes}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="bg-white border border-yellow-200 rounded-xl p-4 mt-2">
-                        <p className="text-xs font-bold text-gray-700 mb-2">Already donated? Send a reminder:</p>
-                        <a
-                          href={`mailto:?subject=Blood Donation Confirmation Reminder — Jeevan Saarthi&body=Hello,%0D%0A%0D%0AI donated blood for your request at ${req?.hospitalName || "the hospital"} on ${match.respondedAt ? new Date(match.respondedAt).toLocaleDateString() : "the scheduled date"}.%0D%0A%0D%0ACould you please confirm my donation in the Jeevan Saarthi system so my contribution is recorded?%0D%0A%0D%0AThank you for helping save lives!%0D%0A%0D%0AJeevan Saarthi Donor`}
-                          className="w-full inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all"
-                        >
-                          <Mail className="h-3.5 w-3.5" />Send Reminder Email
-                        </a>
-                        <p className="text-xs text-gray-400 mt-2 text-center">Opens your email app with a pre-written reminder</p>
-                      </div>
-                    </div>
-                  )}
+                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 text-xs">⏳ Pending</Badge>
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
       )}
-
-      {/* ── CONFIRMED DONATIONS ── */}
       {confirmed.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 rounded-full bg-green-500" />
-            <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-              Confirmed Donations ({confirmed.length})
-            </p>
+            <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">Confirmed Donations ({confirmed.length})</p>
           </div>
-
           <div className="space-y-3">
             {confirmed.map((match, i) => {
-              const key    = `confirmed-${match._id || i}`;
-              const isOpen = expanded === key;
-              const req    = match.requestId;
-              const date   = match.donationConfirmedAt || match.respondedAt;
-
+              const req  = match.requestId;
+              const date = match.donationConfirmedAt || match.respondedAt;
               return (
-                <div key={key} className={`border rounded-xl transition-all duration-200 ${
-                  isOpen ? "border-green-300 shadow-md" : "border-gray-200 hover:border-green-200"
-                }`}>
-                  <button className="w-full p-4 text-left" onClick={() => setExpanded(isOpen ? null : key)}>
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                          <Droplets className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 text-sm">{req?.hospitalName || "Hospital"}</p>
-                          <p className="text-xs text-gray-500">
-                            {req?.bloodGroup}{req?.rh} — {req?.unitsRequired} unit{req?.unitsRequired > 1 ? "s" : ""}
-                            {req?.urgency ? ` · ${req.urgency}` : ""}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <p className="text-xs font-medium text-gray-600">
-                            {date ? new Date(date).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" }) : "—"}
-                          </p>
-                          <Badge className="mt-0.5 bg-green-100 text-green-700 border-green-200 text-xs">🎉 Confirmed</Badge>
-                        </div>
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isOpen ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
-                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </div>
-                      </div>
+                <div key={i} className="border border-gray-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{req?.hospitalName || "Hospital"}</p>
+                      <p className="text-xs text-gray-500">{req?.bloodGroup}{req?.rh} — {date ? new Date(date).toLocaleDateString("en-GB") : "—"}</p>
                     </div>
-                  </button>
-
-                  {isOpen && (
-                    <div className="border-t border-gray-100 p-4 bg-gray-50 rounded-b-xl">
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Donation Details</p>
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div className="bg-white rounded-xl p-3 border border-gray-100">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Blood Type Donated</p>
-                          <p className="text-xl font-bold text-red-600">{req?.bloodGroup}{req?.rh}</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 border border-gray-100">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Units Donated</p>
-                          <p className="text-xl font-bold text-gray-900">{req?.unitsRequired || "—"}</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 border border-gray-100 col-span-2">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Hospital</p>
-                          <p className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-                            <Building className="h-3.5 w-3.5 text-gray-400" />{req?.hospitalName || "—"}
-                          </p>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 border border-gray-100">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Urgency</p>
-                          <Badge className={req?.urgency === "Emergency" ? "bg-red-100 text-red-700 border-red-200" : req?.urgency === "Urgent" ? "bg-orange-100 text-orange-700 border-orange-200" : "bg-gray-100 text-gray-700 border-gray-200"}>
-                            {req?.urgency || "Normal"}
-                          </Badge>
-                        </div>
-                        <div className="bg-green-50 rounded-xl p-3 border border-green-200">
-                          <p className="text-xs text-green-600 uppercase tracking-wider mb-1">Confirmed On</p>
-                          <p className="font-semibold text-green-800 text-sm flex items-center gap-1.5">
-                            <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
-                            {match.donationConfirmedAt
-                              ? new Date(match.donationConfirmedAt).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" })
-                              : date ? new Date(date).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }) : "—"
-                            }
-                          </p>
-                        </div>
-                        {req?.notes && (
-                          <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 col-span-2">
-                            <p className="text-xs text-blue-500 uppercase tracking-wider mb-1">Request Notes</p>
-                            <p className="text-sm text-blue-800">{req.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-xl p-3 flex items-center gap-3">
-                        <Heart className="h-5 w-5 text-red-500 flex-shrink-0" />
-                        <p className="text-xs text-red-700 font-medium">
-                          Your donation helped save up to 3 lives. Thank you for being a hero! 🩸
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                    <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">🎉 Confirmed</Badge>
+                  </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
-
-      {confirmed.length === 0 && pending.length > 0 && (
-        <div className="text-center py-2">
-          <p className="text-xs text-gray-400">
-            Confirmed donations will appear here once recipients verify your donation
-          </p>
         </div>
       )}
     </div>
