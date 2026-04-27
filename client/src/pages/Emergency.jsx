@@ -192,6 +192,32 @@ const Emergency = () => {
           </div>
         </div>
 
+        {/* Track existing request */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
+          <p className="text-sm font-bold text-gray-700 mb-3">
+            📍 Already submitted? Track your request:
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Enter tracking code e.g. EM-2026-4821"
+              className="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 uppercase"
+              id="trackingInput"
+              onChange={e => e.target.value = e.target.value.toUpperCase()}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const code = document.getElementById("trackingInput").value.trim();
+                if (code) navigate(`/emergency/track/${code}`);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all"
+            >
+              Track
+            </button>
+          </div>
+        </div>
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-5 text-sm flex items-center gap-2">
             <AlertCircle className="h-5 w-5 flex-shrink-0" />
