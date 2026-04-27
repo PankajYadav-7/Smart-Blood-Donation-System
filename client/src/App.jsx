@@ -13,6 +13,7 @@ import ViewRequests from "./pages/ViewRequests";
 import FindBlood from "./pages/FindBlood";
 import Donate from "./pages/Donate";
 import Emergency from "./pages/Emergency";
+import EmergencyTracking from "./pages/EmergencyTracking";
 import About from "./pages/About";
 import Help from "./pages/Help";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -38,6 +39,7 @@ function App() {
         <Route path="/register"                 element={<Register />} />
         <Route path="/forgot-password"          element={<ForgotPassword />} />
         <Route path="/emergency"                element={<Emergency />} />
+        <Route path="/emergency/track/:trackingCode" element={<EmergencyTracking />} />
         <Route path="/find-blood"               element={<FindBlood />} />
         <Route path="/donate"                   element={<Donate />} />
         <Route path="/hospitals"                element={<Hospitals />} />

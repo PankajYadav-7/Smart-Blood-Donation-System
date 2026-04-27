@@ -395,6 +395,210 @@ async function sendPasswordResetEmail({ email, fullName, otp }) {
   await send(email, `🔐 Your Jeevan Saarthi Password Reset Code — ${otp}`, html);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 7 — Emergency Donor Alert
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEmergencyDonorAlert({
+  donorEmail, donorName, bloodGroup, rh, urgencyLevel,
+  hospitalName, location, unitsRequired, requesterName,
+  requesterPhone, medicalCondition, trackingCode, emergencyId,
+}) {
+  const html = wrap(`
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#dc2626;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:16px 24px;text-align:center;">
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:bold;">🚨 EMERGENCY BLOOD REQUEST</p>
+        <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:13px;">Immediate response needed</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#1a1a1a;font-size:16px;">
+      Hi <strong>${donorName}</strong>, someone urgently needs <strong style="color:#dc2626;">${bloodGroup}${rh}</strong> blood right now.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:2px solid #fecaca;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;width:160px;">Blood Needed:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#dc2626;font-size:18px;">${bloodGroup}${rh}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Units Required:</td>
+            <td style="padding:5px 0;font-weight:bold;">${unitsRequired} unit${unitsRequired > 1 ? "s" : ""}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Hospital:</td>
+            <td style="padding:5px 0;font-weight:bold;">${hospitalName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Location:</td>
+            <td style="padding:5px 0;font-weight:bold;">${location}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Urgency:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#dc2626;">${urgencyLevel}</td>
+          </tr>
+          ${medicalCondition ? `<tr>
+            <td style="padding:5px 0;color:#6b7280;">Condition:</td>
+            <td style="padding:5px 0;">${medicalCondition}</td>
+          </tr>` : ""}
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Contact:</td>
+            <td style="padding:5px 0;font-weight:bold;">${requesterName} — ${requesterPhone}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Tracking:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#991b1b;">${trackingCode}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 20px;color:#555555;font-size:14px;">
+      If you are available and willing to donate, please log in to your dashboard and accept this emergency request, or contact the requester directly on <strong>${requesterPhone}</strong>.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:20px;width:100%;">
+      <tr>
+        <td style="background:#dc2626;border-radius:8px;text-align:center;padding:14px 20px;">
+          <a href="${BASE_URL}/donor/dashboard" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            🩸 Accept Emergency Request →
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;color:#999999;font-size:12px;text-align:center;">
+      Nepal Red Cross Emergency: <strong>01-4270650</strong>
+    </p>
+  `);
+
+  await send(donorEmail, `🚨 EMERGENCY: ${bloodGroup}${rh} blood needed NOW at ${hospitalName}`, html);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 8 — Notify emergency requester that donor accepted
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEmergencyAcceptedNotification({
+  requesterEmail, requesterName, donorName, donorPhone,
+  donorEmail, donorBloodGroup, bloodGroup, rh, hospitalName, trackingCode,
+}) {
+  const html = wrap(`
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#16a34a;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:16px 24px;text-align:center;">
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:bold;">✅ A DONOR HAS ACCEPTED!</p>
+        <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:13px;">Contact them immediately</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#1a1a1a;font-size:16px;">
+      Dear <strong>${requesterName}</strong>, a compatible donor has accepted your emergency blood request for <strong style="color:#dc2626;">${bloodGroup}${rh}</strong> at <strong>${hospitalName}</strong>.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;">
+        <p style="margin:0 0 12px;color:#166534;font-size:13px;font-weight:bold;text-transform:uppercase;">Donor Contact Details</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;width:160px;">Donor Name:</td>
+            <td style="padding:5px 0;font-weight:bold;font-size:16px;">${donorName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Phone Number:</td>
+            <td style="padding:5px 0;font-weight:bold;font-size:16px;color:#16a34a;">${donorPhone}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Email:</td>
+            <td style="padding:5px 0;">${donorEmail}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Blood Group:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#dc2626;">${donorBloodGroup}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Tracking Code:</td>
+            <td style="padding:5px 0;font-weight:bold;">${trackingCode}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;">
+      Please contact the donor immediately on <strong>${donorPhone}</strong> and coordinate the blood donation at <strong>${hospitalName}</strong>.
+    </p>
+
+    <p style="margin:0;color:#999999;font-size:12px;text-align:center;">
+      Nepal Red Cross Emergency: <strong>01-4270650</strong>
+    </p>
+  `);
+
+  await send(requesterEmail, `✅ Donor Found! ${donorName} accepted your emergency request — Contact Now`, html);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 9 — Emergency Alert to Hospital / NGO
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEmergencyHospitalAlert({
+  recipientEmail, recipientName, recipientType,
+  bloodGroup, rh, urgencyLevel, hospitalName, location,
+  unitsRequired, requesterName, requesterPhone, trackingCode,
+}) {
+  const html = wrap(`
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#991b1b;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:16px 24px;text-align:center;">
+        <p style="margin:0;color:#ffffff;font-size:18px;font-weight:bold;">🚨 Emergency Blood Alert — ${recipientType} Notification</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#1a1a1a;font-size:15px;">
+      Dear <strong>${recipientName}</strong>, an emergency blood request has been submitted on Jeevan Saarthi that requires immediate attention.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;width:160px;">Blood Needed:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#dc2626;font-size:18px;">${bloodGroup}${rh}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Units:</td>
+            <td style="padding:5px 0;font-weight:bold;">${unitsRequired}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Hospital:</td>
+            <td style="padding:5px 0;font-weight:bold;">${hospitalName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Urgency:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#dc2626;">${urgencyLevel}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Requester:</td>
+            <td style="padding:5px 0;">${requesterName} — ${requesterPhone}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Tracking:</td>
+            <td style="padding:5px 0;font-weight:bold;">${trackingCode}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:20px;width:100%;">
+      <tr>
+        <td style="background:#991b1b;border-radius:8px;text-align:center;padding:14px 20px;">
+          <a href="${BASE_URL}/donor/dashboard" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            View Emergency Alerts Dashboard →
+          </a>
+        </td>
+      </tr>
+    </table>
+  `);
+
+  await send(recipientEmail, `🚨 Emergency Alert: ${bloodGroup}${rh} blood needed at ${hospitalName} — Tracking: ${trackingCode}`, html);
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
@@ -402,4 +606,7 @@ module.exports = {
   notifyRequesterOfNoShow,
   sendOTPEmail,
   sendPasswordResetEmail,
+  sendEmergencyDonorAlert,
+  sendEmergencyAcceptedNotification,
+  sendEmergencyHospitalAlert,
 };
