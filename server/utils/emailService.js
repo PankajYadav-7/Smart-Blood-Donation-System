@@ -461,7 +461,7 @@ async function sendEmergencyDonorAlert({
     <table cellpadding="0" cellspacing="0" style="margin-bottom:20px;width:100%;">
       <tr>
         <td style="background:#dc2626;border-radius:8px;text-align:center;padding:14px 20px;">
-          <a href="${BASE_URL}/donor/dashboard" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+          <a href="${BASE_URL}/login?redirect=/emergency/detail/${emergencyId}" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
             🩸 Accept Emergency Request →
           </a>
         </td>
@@ -588,8 +588,8 @@ async function sendEmergencyHospitalAlert({
     <table cellpadding="0" cellspacing="0" style="margin-bottom:20px;width:100%;">
       <tr>
         <td style="background:#991b1b;border-radius:8px;text-align:center;padding:14px 20px;">
-          <a href="${BASE_URL}/donor/dashboard" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
-            View Emergency Alerts Dashboard →
+          <a href="${BASE_URL}/login?redirect=/emergency/org-detail/${trackingCode}" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            View Emergency Details & Coordinate →
           </a>
         </td>
       </tr>

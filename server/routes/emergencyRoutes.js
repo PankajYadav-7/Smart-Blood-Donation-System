@@ -288,4 +288,17 @@ router.patch("/:id/fulfill", protect, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/emergency/:id — Get single emergency by ID (for detail page)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/:id", protect, async (req, res) => {
+  try {
+    const emergency = await EmergencyRequest.findById(req.params.id);
+    if (!emergency) return res.status(404).json({ message: "Emergency request not found" });
+    return res.status(200).json({ emergency });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;

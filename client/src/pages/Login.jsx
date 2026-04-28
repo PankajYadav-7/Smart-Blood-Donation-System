@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import Navbar from "../components/Navbar";
@@ -7,6 +7,29 @@ import { Droplets, Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
+
+  // ── If already logged in, redirect immediately ───────────────────────────
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user  = JSON.parse(localStorage.getItem("user") || "null");
+    const params   = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
+
+    if (token && user) {
+      if (redirect) {
+        navigate(redirect, { replace: true });
+      } else {
+        const role = user.role;
+        if      (role === "donor")     navigate("/donor/dashboard", { replace: true });
+        else if (role === "admin")     navigate("/admin/dashboard", { replace: true });
+        else if (role === "hospital")  navigate("/hospital/dashboard", { replace: true });
+        else if (role === "ngo")       navigate("/ngo/dashboard", { replace: true });
+        else if (role === "requester") navigate("/patient/dashboard", { replace: true });
+        else                           navigate("/", { replace: true });
+      }
+      return;
+    }
+  }, []);
   const [email,        setEmail]        = useState("");
   const [password,     setPassword]     = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +62,15 @@ const Login = () => {
 
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user",  JSON.stringify(response.data.user));
+
+      // Check if there is a redirect URL in query params
+      const params   = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+
+      if (redirect) {
+        navigate(redirect);
+        return;
+      }
 
       const role = response.data.user.role;
       if      (role === "donor")     navigate("/donor/dashboard");
@@ -98,6 +130,15 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+
+      {/* Emergency redirect notice */}
+      {new URLSearchParams(window.location.search).get("redirect")?.includes("emergency") && (
+        <div className="bg-red-600 text-white text-center py-3 px-4">
+          <p className="text-sm font-semibold">
+            🚨 Please sign in to accept the emergency blood request
+          </p>
+        </div>
+      )}
 
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">

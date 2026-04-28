@@ -28,6 +28,8 @@ import PartnershipApplication from "./pages/PartnershipApplication";
 import RequestDetails from "./pages/RequestDetails";
 import NotFound from "./pages/NotFound";
 import PatientProfile from "./pages/PatientProfile";
+import EmergencyDetail    from "./pages/EmergencyDetail";
+import EmergencyOrgDetail from "./pages/EmergencyOrgDetail";
 
 function App() {
   return (
@@ -46,6 +48,8 @@ function App() {
         <Route path="/about"                    element={<About />} />
         <Route path="/help"                     element={<Help />} />
         <Route path="/partnership-application"  element={<PartnershipApplication />} />
+        <Route path="/emergency/detail/:emergencyId"     element={<EmergencyDetail />} />
+        <Route path="/emergency/org-detail/:trackingCode" element={<EmergencyOrgDetail />} />
 
         {/* Protected — Donor */}
         <Route path="/donor/dashboard"          element={<DonorDashboard />} />
