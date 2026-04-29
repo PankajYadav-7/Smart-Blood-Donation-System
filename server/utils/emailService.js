@@ -481,7 +481,7 @@ async function sendEmergencyDonorAlert({
 // ─────────────────────────────────────────────────────────────────────────────
 async function sendEmergencyAcceptedNotification({
   requesterEmail, requesterName, donorName, donorPhone,
-  donorEmail, donorBloodGroup, bloodGroup, rh, hospitalName, trackingCode,
+  donorEmail, donorBloodGroup, donorGender, bloodGroup, rh, hospitalName, trackingCode,
 }) {
   const html = wrap(`
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#16a34a;border-radius:10px;margin-bottom:24px;">
@@ -505,16 +505,27 @@ async function sendEmergencyAcceptedNotification({
           </tr>
           <tr>
             <td style="padding:5px 0;color:#6b7280;">Phone Number:</td>
-            <td style="padding:5px 0;font-weight:bold;font-size:16px;color:#16a34a;">${donorPhone}</td>
+            <td style="padding:5px 0;font-weight:bold;font-size:18px;">
+              ${donorPhone
+                ? `<a href="tel:${donorPhone}" style="color:#16a34a;text-decoration:none;font-weight:bold;">${donorPhone}</a>`
+                : `<span style="color:#dc2626;">Not provided — contact via email</span>`
+              }
+            </td>
           </tr>
           <tr>
             <td style="padding:5px 0;color:#6b7280;">Email:</td>
-            <td style="padding:5px 0;">${donorEmail}</td>
+            <td style="padding:5px 0;">
+              <a href="mailto:${donorEmail}" style="color:#2563eb;font-weight:bold;">${donorEmail}</a>
+            </td>
           </tr>
           <tr>
             <td style="padding:5px 0;color:#6b7280;">Blood Group:</td>
-            <td style="padding:5px 0;font-weight:bold;color:#dc2626;">${donorBloodGroup}</td>
+            <td style="padding:5px 0;font-weight:bold;color:#dc2626;font-size:16px;">${donorBloodGroup || "Compatible"}</td>
           </tr>
+          ${donorGender ? `<tr>
+            <td style="padding:5px 0;color:#6b7280;">Gender:</td>
+            <td style="padding:5px 0;font-weight:bold;">${donorGender}</td>
+          </tr>` : ""}
           <tr>
             <td style="padding:5px 0;color:#6b7280;">Tracking Code:</td>
             <td style="padding:5px 0;font-weight:bold;">${trackingCode}</td>
@@ -523,8 +534,13 @@ async function sendEmergencyAcceptedNotification({
       </td></tr>
     </table>
 
-    <p style="margin:0 0 16px;color:#555555;font-size:14px;">
-      Please contact the donor immediately on <strong>${donorPhone}</strong> and coordinate the blood donation at <strong>${hospitalName}</strong>.
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;line-height:1.6;">
+      Please contact <strong>${donorName}</strong> immediately to coordinate the blood donation at <strong>${hospitalName}</strong>.
+      ${donorPhone
+        ? `Call them directly on <strong style="color:#16a34a;font-size:16px;">${donorPhone}</strong> or`
+        : `Phone not provided —`
+      }
+      email them at <a href="mailto:${donorEmail}" style="color:#2563eb;font-weight:bold;">${donorEmail}</a>.
     </p>
 
     <p style="margin:0;color:#999999;font-size:12px;text-align:center;">

@@ -30,6 +30,7 @@ import NotFound from "./pages/NotFound";
 import PatientProfile from "./pages/PatientProfile";
 import EmergencyDetail    from "./pages/EmergencyDetail";
 import EmergencyOrgDetail from "./pages/EmergencyOrgDetail";
+import EmergencyFeedback from "./pages/EmergencyFeedback";
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
         <Route path="/partnership-application"  element={<PartnershipApplication />} />
         <Route path="/emergency/detail/:emergencyId"     element={<EmergencyDetail />} />
         <Route path="/emergency/org-detail/:trackingCode" element={<EmergencyOrgDetail />} />
+        <Route path="/emergency/feedback/:emergencyId/:donorEntryId" element={<EmergencyFeedback />} />
 
         {/* Protected — Donor */}
         <Route path="/donor/dashboard"          element={<DonorDashboard />} />

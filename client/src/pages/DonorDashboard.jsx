@@ -68,10 +68,21 @@ const DonorDashboard = () => {
 
   const fetchAcceptedCount = async () => {
     try {
-      const res = await axios.get(`${API}/matches/my-history`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setAcceptedCount(res.data.count || 0);
+      const [regularRes, emergencyRes] = await Promise.all([
+        axios.get(`${API}/matches/my-history`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API}/emergency/my-accepted`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const regularCount   = regularRes.data.count || 0;
+      const emergencyCount = (emergencyRes.data.emergencies || []).filter(
+        em => em.donationStatus === "Donated"
+      ).length;
+
+      setAcceptedCount(regularCount + emergencyCount);
     } catch (err) { console.log(err); }
   };
 
@@ -328,10 +339,17 @@ const DonorDashboard = () => {
               </Card>
             )}
 
-            {emergencies.map((emergency) => {
-              const alreadyAccepted = emergency.acceptedDonors?.some(
+            {emergencies.filter((emergency) => {
+              const myEntry = emergency.acceptedDonors?.find(
                 d => d.donorUserId?.toString() === user?._id?.toString() || d.donorEmail === user?.email
               );
+              return myEntry?.donationStatus !== "Donated";
+            }).map((emergency) => {
+              const myEntry = emergency.acceptedDonors?.find(
+                d => d.donorUserId?.toString() === user?._id?.toString() || d.donorEmail === user?.email
+              );
+              const alreadyAccepted = !!myEntry;
+              const alreadyDonated  = myEntry?.donationStatus === "Donated";
               return (
                 <Card key={emergency._id} className="border-0 shadow-md border-l-4 border-l-red-500">
                   <CardContent className="pt-5 pb-4">
@@ -413,13 +431,23 @@ const DonorDashboard = () => {
                       </div>
                     )}
 
-                    {/* Accept / Already Accepted */}
-                    {alreadyAccepted ? (
-                      <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                        <p className="text-sm text-green-700 font-semibold">
-                          ✅ You accepted this emergency. The requester has your contact details.
-                        </p>
+                    {/* Accept / Already Donated / Already Accepted */}
+                    {alreadyDonated ? (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-blue-700 font-bold">🩸 Donation Confirmed</p>
+                          <p className="text-xs text-blue-500 mt-0.5">You marked this as donated. Check your History tab for the full record.</p>
+                        </div>
+                      </div>
+                    ) : alreadyAccepted ? (
+                      <div className="space-y-2">
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                          <p className="text-sm text-green-700 font-semibold">
+                            ✅ Accepted — Go to details to mark as donated
+                          </p>
+                        </div>
                       </div>
                     ) : (
                       <button
@@ -761,15 +789,19 @@ const HistoryTab = ({ token }) => {
   const [loading,   setLoading]   = useState(true);
   const [expanded,  setExpanded]  = useState(null);
 
+  const [emergencyDonations, setEmergencyDonations] = useState([]);
+
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [confirmedRes, pendingRes] = await Promise.all([
+        const [confirmedRes, pendingRes, emergencyRes] = await Promise.all([
           axios.get("http://localhost:5000/api/matches/my-accepted",          { headers: { Authorization: `Bearer ${token}` } }),
           axios.get("http://localhost:5000/api/matches/pending-confirmation", { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get("http://localhost:5000/api/emergency/my-accepted",        { headers: { Authorization: `Bearer ${token}` } }),
         ]);
-        setConfirmed(confirmedRes.data.matches || []);
-        setPending(pendingRes.data.matches     || []);
+        setConfirmed(confirmedRes.data.matches       || []);
+        setPending(pendingRes.data.matches           || []);
+        setEmergencyDonations(emergencyRes.data.emergencies || []);
       } catch (err) { console.log(err); }
       setLoading(false);
     };
@@ -782,7 +814,7 @@ const HistoryTab = ({ token }) => {
     </div>
   );
 
-  if (confirmed.length === 0 && pending.length === 0) return (
+  if (confirmed.length === 0 && pending.length === 0 && emergencyDonations.length === 0) return (
     <div className="text-center py-10">
       <Calendar className="h-12 w-12 text-gray-200 mx-auto mb-3" />
       <p className="text-gray-500 text-sm font-medium">No donation history yet</p>
@@ -1023,6 +1055,141 @@ const HistoryTab = ({ token }) => {
           </p>
         </div>
       )}
+
+      {/* ── EMERGENCY DONATIONS ── */}
+      {emergencyDonations.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+              Emergency Donations ({emergencyDonations.length})
+            </p>
+          </div>
+          <div className="space-y-3">
+            {emergencyDonations.map((em, i) => {
+              const key    = `emergency-${em.emergencyId || i}`;
+              const isOpen = expanded === key;
+              return (
+                <div key={key} className={`rounded-xl border-l-4 transition-all duration-200 ${
+                  em.donationStatus === "Donated"
+                    ? isOpen ? "border border-green-300 border-l-green-500 shadow-md" : "border border-gray-200 border-l-green-500 bg-white hover:border-green-200"
+                    : isOpen ? "border border-red-300 border-l-red-500 shadow-md" : "border border-red-100 border-l-red-500 bg-red-50 hover:border-red-300"
+                }`}>
+
+                  {/* Card Header — clickable */}
+                  <button className="w-full p-4 text-left" onClick={() => setExpanded(isOpen ? null : key)}>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          em.donationStatus === "Donated" ? "bg-green-100" : "bg-red-100"
+                        }`}>
+                          <span className="text-sm font-bold text-red-600">{em.bloodGroup}{em.rh}</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{em.hospitalName}</p>
+                          <p className="text-xs text-gray-500">{em.trackingCode}</p>
+                          <p className="text-xs text-gray-400">
+                            {em.donatedAt
+                              ? `Donated: ${new Date(em.donatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+                              : `Accepted: ${new Date(em.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">🚨 Emergency</Badge>
+                          {em.donationStatus === "Donated"
+                            ? <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">✅ Donated</Badge>
+                            : <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">⏳ Accepted</Badge>
+                          }
+                        </div>
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                          isOpen ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-400"
+                        }`}>
+                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Expanded Details */}
+                  {isOpen && (
+                    <div className="border-t border-gray-100 p-4 bg-gray-50 rounded-b-xl space-y-3">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Emergency Donation Details</p>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Blood Donated</p>
+                          <p className="text-xl font-bold text-red-600">{em.bloodGroup}{em.rh}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Urgency</p>
+                          <Badge className={
+                            em.urgencyLevel === "Critical" ? "bg-red-100 text-red-700 border-red-200" :
+                            em.urgencyLevel === "Urgent"   ? "bg-orange-100 text-orange-700 border-orange-200" :
+                            "bg-yellow-100 text-yellow-700 border-yellow-200"
+                          }>
+                            {em.urgencyLevel}
+                          </Badge>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100 col-span-2">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Hospital</p>
+                          <p className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+                            <Building className="h-3.5 w-3.5 text-gray-400" />{em.hospitalName}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Tracking Code</p>
+                          <p className="text-sm font-bold text-red-600">{em.trackingCode}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Requester</p>
+                          <p className="text-sm font-semibold text-gray-900">{em.requesterName}</p>
+                        </div>
+                        {em.medicalCondition && (
+                          <div className="bg-red-50 rounded-xl p-3 border border-red-100 col-span-2">
+                            <p className="text-xs text-red-500 uppercase tracking-wider mb-1">Medical Condition</p>
+                            <p className="text-sm text-red-800">{em.medicalCondition}</p>
+                          </div>
+                        )}
+                        {em.donatedAt && (
+                          <div className="bg-green-50 rounded-xl p-3 border border-green-200 col-span-2">
+                            <p className="text-xs text-green-600 uppercase tracking-wider mb-1">Donation Confirmed On</p>
+                            <p className="font-semibold text-green-800 text-sm flex items-center gap-1.5">
+                              <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                              {new Date(em.donatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Thank you message if received */}
+                      {em.thankYouReceived && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                          <p className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">💙 Message from Requester</p>
+                          <p className="text-sm text-blue-800 italic">"{em.thankYouMessage || "Thank you for saving my life!"}"</p>
+                        </div>
+                      )}
+
+                      {/* Motivational footer */}
+                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-xl p-3 flex items-center gap-3">
+                        <Heart className="h-5 w-5 text-red-500 flex-shrink-0" />
+                        <p className="text-xs text-red-700 font-medium">
+                          You responded to an emergency and potentially saved a life. You are a hero! 🩸
+                        </p>
+                      </div>
+
+                    </div>
+                  )}
+
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

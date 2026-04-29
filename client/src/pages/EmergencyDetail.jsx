@@ -21,6 +21,8 @@ const EmergencyDetail = () => {
   const [loading,    setLoading]    = useState(true);
   const [accepting,  setAccepting]  = useState(false);
   const [accepted,   setAccepted]   = useState(false);
+  const [donated,    setDonated]    = useState(false);
+  const [donating,   setDonating]   = useState(false);
   const [error,      setError]      = useState("");
 
   useEffect(() => {
@@ -39,16 +41,34 @@ const EmergencyDetail = () => {
       });
       setEmergency(res.data.emergency);
 
-      // Check if already accepted
-      const alreadyAccepted = res.data.emergency.acceptedDonors?.some(
+      // Check if already accepted or donated
+      const myEntry = res.data.emergency.acceptedDonors?.find(
         d => d.donorEmail === user?.email
       );
-      if (alreadyAccepted) setAccepted(true);
+      if (myEntry) {
+        setAccepted(true);
+        if (myEntry.donationStatus === "Donated") setDonated(true);
+      }
 
     } catch (err) {
       setError(err.response?.data?.message || "Emergency request not found.");
     }
     setLoading(false);
+  };
+
+  const handleMarkDonated = async () => {
+    setDonating(true);
+    setError("");
+    try {
+      await axios.patch(`${API}/emergency/${emergencyId}/mark-donated`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDonated(true);
+      await fetchEmergency();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to confirm. Please try again.");
+    }
+    setDonating(false);
   };
 
   const handleAccept = async () => {
@@ -300,6 +320,64 @@ const EmergencyDetail = () => {
                 </p>
               </div>
             </div>
+
+            {/* I Donated button */}
+            {!donated ? (
+              <div className="space-y-2">
+                <button
+                  onClick={handleMarkDonated}
+                  disabled={donating}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {donating
+                    ? <><Loader className="h-4 w-4 animate-spin" />Confirming...</>
+                    : <>🩸 I Donated — Confirm My Donation</>
+                  }
+                </button>
+                <p className="text-xs text-gray-400 text-center">
+                  Click this after you have physically donated blood to this person
+                </p>
+              </div>
+            ) : (
+              <div className="bg-gradient-to-br from-green-50 to-blue-50 border border-green-200 rounded-2xl p-5">
+                <div className="text-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-green-800">Donation Confirmed! 🩸</h3>
+                  <p className="text-sm text-green-600 mt-1">
+                    You have officially confirmed your donation
+                  </p>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-green-100">
+                    <span className="text-gray-500">Blood Donated</span>
+                    <span className="font-bold text-red-600">{emergency?.bloodGroup}{emergency?.rh}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-green-100">
+                    <span className="text-gray-500">Hospital</span>
+                    <span className="font-semibold text-gray-900">{emergency?.hospitalName}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-green-100">
+                    <span className="text-gray-500">Tracking Code</span>
+                    <span className="font-bold text-red-600 text-xs">{emergency?.trackingCode}</span>
+                  </div>
+                </div>
+                {emergency?.requesterEmail && (
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+                    <p className="text-xs text-blue-700 font-medium">
+                      💙 The requester has been notified. They may send you a thank you.
+                    </p>
+                  </div>
+                )}
+                <div className="mt-3 bg-white border border-gray-100 rounded-xl p-3 text-center">
+                  <p className="text-xs text-gray-500">
+                    This donation is now recorded in your <strong>History tab</strong> with a 🚨 Emergency badge
+                  </p>
+                </div>
+              </div>
+            )}
+
             <button
               onClick={() => navigate("/donor/dashboard")}
               className="w-full border border-gray-300 text-gray-600 font-semibold py-3 rounded-xl text-sm hover:bg-gray-50 transition-all"
