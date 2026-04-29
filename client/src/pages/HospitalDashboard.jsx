@@ -231,12 +231,18 @@ const HospitalDashboard = () => {
                   {/* Header */}
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                      <div
+                        className="w-14 h-14 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 cursor-pointer hover:bg-red-700 transition-colors"
+                        onClick={() => navigate(`/emergency/org-detail/${emergency.trackingCode}`)}
+                      >
                         {emergency.bloodGroup}{emergency.rh}
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-lg font-bold text-gray-900">
+                          <h3
+                            className="text-lg font-bold text-gray-900 hover:text-red-600 cursor-pointer transition-colors"
+                            onClick={() => navigate(`/emergency/org-detail/${emergency.trackingCode}`)}
+                          >
                             {emergency.bloodGroup}{emergency.rh} — {emergency.unitsRequired} unit{emergency.unitsRequired > 1 ? "s" : ""}
                           </h3>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${getUrgencyColor(emergency.urgencyLevel)}`}>
@@ -299,12 +305,12 @@ const HospitalDashboard = () => {
                   )}
 
                   {/* Track link */}
-                  <div className="mt-3 flex justify-end">
+                  <div className="mt-3 flex gap-3 justify-end">
                     <button
-                      onClick={() => navigate(`/emergency/track/${emergency.trackingCode}`)}
-                      className="text-xs text-red-600 hover:underline font-semibold"
+                      onClick={() => navigate(`/emergency/org-detail/${emergency.trackingCode}`)}
+                      className="text-xs text-white bg-red-600 hover:bg-red-700 font-semibold px-3 py-1.5 rounded-lg transition-all"
                     >
-                      View Full Tracking Page →
+                      🔍 View Details & Coordinate →
                     </button>
                   </div>
 

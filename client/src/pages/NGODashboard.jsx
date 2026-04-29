@@ -246,7 +246,10 @@ const NGODashboard = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-lg font-bold text-gray-900">
+                          <h3
+                            className="text-lg font-bold text-gray-900 hover:text-red-600 cursor-pointer transition-colors"
+                            onClick={() => navigate(`/emergency/org-detail/${emergency.trackingCode}`)}
+                          >
                             {emergency.bloodGroup}{emergency.rh} — {emergency.unitsRequired} unit{emergency.unitsRequired > 1 ? "s" : ""}
                           </h3>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${getUrgencyColor(emergency.urgencyLevel)}`}>
@@ -300,12 +303,12 @@ const NGODashboard = () => {
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mt-3">
                     <button
-                      onClick={() => navigate(`/emergency/track/${emergency.trackingCode}`)}
-                      className="text-xs text-red-600 hover:underline font-semibold"
+                      onClick={() => navigate(`/emergency/org-detail/${emergency.trackingCode}`)}
+                      className="text-xs text-white bg-red-600 hover:bg-red-700 font-semibold px-3 py-1.5 rounded-lg transition-all"
                     >
-                      View Full Tracking Page →
+                      🔍 View Details & Coordinate →
                     </button>
                     <p className="text-xs text-gray-400">Nepal Red Cross: 01-4270650</p>
                   </div>
