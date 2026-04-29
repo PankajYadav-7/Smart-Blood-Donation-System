@@ -599,6 +599,90 @@ async function sendEmergencyHospitalAlert({
   await send(recipientEmail, `🚨 Emergency Alert: ${bloodGroup}${rh} blood needed at ${hospitalName} — Tracking: ${trackingCode}`, html);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 10 — Life Saved Email to Requester
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendLifeSavedEmail({
+  requesterEmail, requesterName, donorName, donorEmail,
+  bloodGroup, rh, hospitalName, trackingCode, emergencyId, donorEntryId,
+}) {
+  const thankYouUrl = `${BASE_URL}/emergency/feedback/${emergencyId}/${donorEntryId}`;
+
+  const html = wrap(`
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#16a34a;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;text-align:center;">
+        <p style="margin:0;color:#ffffff;font-size:24px;font-weight:bold;">🩸 Someone Saved Your Life Today</p>
+        <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">A donor responded to your emergency request</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#1a1a1a;font-size:16px;">
+      Dear <strong>${requesterName}</strong>,
+    </p>
+    <p style="margin:0 0 20px;color:#374151;font-size:15px;line-height:1.6;">
+      We are glad to inform you that a blood donor has confirmed they donated <strong style="color:#dc2626;">${bloodGroup}${rh}</strong> blood for your emergency request at <strong>${hospitalName}</strong>.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;">
+        <p style="margin:0 0 12px;color:#166534;font-size:13px;font-weight:bold;text-transform:uppercase;">Donor Details</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;width:140px;">Donor Name:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#111827;">${donorName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Blood Donated:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#dc2626;">${bloodGroup}${rh}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Hospital:</td>
+            <td style="padding:5px 0;font-weight:bold;">${hospitalName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Tracking Code:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#991b1b;">${trackingCode}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 20px;color:#374151;font-size:14px;line-height:1.6;">
+      If this donor truly helped you, a small thank you would mean the world to them and encourage more people to donate blood in the future.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:12px;">
+      <tr>
+        <td style="background:#16a34a;border-radius:8px;text-align:center;padding:14px 20px;">
+          <a href="${thankYouUrl}?action=thanks" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            💙 Send Thank You to Donor
+          </a>
+        </td>
+      </tr>
+    </table>
+    <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:24px;">
+      <tr>
+        <td style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;text-align:center;padding:12px 20px;">
+          <a href="${thankYouUrl}?action=issue" style="color:#6b7280;font-size:13px;font-weight:bold;text-decoration:none;">
+            ⚠️ Something went wrong — Report an Issue
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center;">
+      Nepal Red Cross Emergency: <strong>01-4270650</strong><br/>
+      Jeevan Saarthi — Connecting donors and patients across Nepal
+    </p>
+  `);
+
+  await send(
+    requesterEmail,
+    `💙 ${donorName} donated blood for your emergency — Thank them today`,
+    html
+  );
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
@@ -609,4 +693,5 @@ module.exports = {
   sendEmergencyDonorAlert,
   sendEmergencyAcceptedNotification,
   sendEmergencyHospitalAlert,
+  sendLifeSavedEmail,
 };
