@@ -301,4 +301,149 @@ router.get("/:id", protect, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/emergency/my-accepted — donor's emergency history
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/my-accepted", protect, async (req, res) => {
+  try {
+    const donorUser = await User.findById(req.user.userId).select("email");
+    if (!donorUser) return res.status(404).json({ message: "User not found" });
+
+    const emergencies = await EmergencyRequest.find({
+      "acceptedDonors.donorEmail": donorUser.email,
+    }).sort({ createdAt: -1 });
+
+    // Extract only this donor's entry from each emergency
+    const result = emergencies.map((em) => {
+      const myEntry = em.acceptedDonors.find(
+        (d) => d.donorEmail === donorUser.email
+      );
+      return {
+        emergencyId:      em._id,
+        trackingCode:     em.trackingCode,
+        bloodGroup:       em.bloodGroup,
+        rh:               em.rh,
+        hospitalName:     em.hospitalName,
+        urgencyLevel:     em.urgencyLevel,
+        requesterName:    em.requesterName,
+        medicalCondition: em.medicalCondition,
+        status:           em.status,
+        createdAt:        em.createdAt,
+        // donor's personal entry
+        donationStatus:   myEntry?.donationStatus  || "Accepted",
+        donatedAt:        myEntry?.donatedAt        || null,
+        thankYouReceived: myEntry?.thankYouReceived || false,
+        thankYouMessage:  myEntry?.thankYouMessage  || "",
+        complaintStatus:  myEntry?.complaintStatus  || "none",
+        myDonorEntryId:   myEntry?._id,
+      };
+    });
+
+    return res.status(200).json({ emergencies: result });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/emergency/:id/mark-donated — donor self-confirms donation
+// ─────────────────────────────────────────────────────────────────────────────
+router.patch("/:id/mark-donated", protect, async (req, res) => {
+  try {
+    const emergency = await EmergencyRequest.findById(req.params.id);
+    if (!emergency) return res.status(404).json({ message: "Emergency not found" });
+
+    const donorUser = await User.findById(req.user.userId).select("email fullName");
+
+    const donorEntry = emergency.acceptedDonors.find(
+      (d) => d.donorEmail === donorUser.email
+    );
+
+    if (!donorEntry) {
+      return res.status(400).json({ message: "You have not accepted this emergency" });
+    }
+
+    if (donorEntry.donationStatus === "Donated") {
+      return res.status(400).json({ message: "You have already marked this as donated" });
+    }
+
+    donorEntry.donationStatus = "Donated";
+    donorEntry.donatedAt      = new Date();
+    await emergency.save();
+
+    // Send thank you email to requester if they provided email
+    if (emergency.requesterEmail) {
+      const { sendLifeSavedEmail } = require("../utils/emailService");
+      sendLifeSavedEmail({
+        requesterEmail: emergency.requesterEmail,
+        requesterName:  emergency.requesterName,
+        donorName:      donorUser.fullName,
+        donorEmail:     donorUser.email,
+        bloodGroup:     emergency.bloodGroup,
+        rh:             emergency.rh,
+        hospitalName:   emergency.hospitalName,
+        trackingCode:   emergency.trackingCode,
+        emergencyId:    emergency._id.toString(),
+        donorEntryId:   donorEntry._id.toString(),
+      });
+    }
+
+    return res.status(200).json({
+      message: "Donation confirmed! Thank you for saving a life.",
+      emailSent: !!emergency.requesterEmail,
+    });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/emergency/:id/thank-donor/:donorEntryId — requester sends thanks (no login)
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/:id/thank-donor/:donorEntryId", async (req, res) => {
+  try {
+    const { message } = req.body;
+    const emergency = await EmergencyRequest.findById(req.params.id);
+    if (!emergency) return res.status(404).json({ message: "Emergency not found" });
+
+    const donorEntry = emergency.acceptedDonors.id(req.params.donorEntryId);
+    if (!donorEntry) return res.status(404).json({ message: "Donor entry not found" });
+
+    donorEntry.thankYouReceived = true;
+    donorEntry.thankYouMessage  = message || "Thank you for saving my life!";
+    await emergency.save();
+
+    return res.status(200).json({ message: "Thank you sent successfully!" });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/emergency/:id/report-issue/:donorEntryId — requester reports issue (no login)
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/:id/report-issue/:donorEntryId", async (req, res) => {
+  try {
+    const { complaintText } = req.body;
+    if (!complaintText?.trim()) {
+      return res.status(400).json({ message: "Please describe the issue" });
+    }
+
+    const emergency = await EmergencyRequest.findById(req.params.id);
+    if (!emergency) return res.status(404).json({ message: "Emergency not found" });
+
+    const donorEntry = emergency.acceptedDonors.id(req.params.donorEntryId);
+    if (!donorEntry) return res.status(404).json({ message: "Donor entry not found" });
+
+    donorEntry.complaintText   = complaintText;
+    donorEntry.complaintStatus = "pending";
+    await emergency.save();
+
+    return res.status(200).json({ message: "Issue reported. Our team will review it." });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;

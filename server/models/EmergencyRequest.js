@@ -44,12 +44,18 @@ const emergencyRequestSchema = new mongoose.Schema(
     // Donors who accepted
     acceptedDonors: [
       {
-        donorUserId:   { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        donorName:     { type: String },
-        donorEmail:    { type: String },
-        donorPhone:    { type: String },
+        donorUserId:     { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        donorName:       { type: String },
+        donorEmail:      { type: String },
+        donorPhone:      { type: String },
         donorBloodGroup: { type: String },
-        acceptedAt:    { type: Date, default: Date.now },
+        acceptedAt:      { type: Date, default: Date.now },
+        donationStatus:  { type: String, enum: ["Accepted", "Donated"], default: "Accepted" },
+        donatedAt:       { type: Date, default: null },
+        thankYouReceived: { type: Boolean, default: false },
+        thankYouMessage:  { type: String, default: "" },
+        complaintText:    { type: String, default: "" },
+        complaintStatus:  { type: String, enum: ["none", "pending", "reviewed"], default: "none" },
       }
     ],
 
