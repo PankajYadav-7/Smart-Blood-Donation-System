@@ -296,7 +296,7 @@ router.post("/:id/accept", protect, async (req, res) => {
       donorUserId:     req.user.userId,
       donorName:       donorUser.fullName,
       donorEmail:      donorUser.email,
-      donorPhone:      donorProfile?.phone || donorUser.phone || "",
+      donorPhone: donorUser.phone || donorProfile?.phone || "",
       donorBloodGroup: donorProfile ? `${donorProfile.bloodGroup}${donorProfile.rh}` : "",
       acceptedAt:      new Date(),
     });
@@ -307,7 +307,7 @@ router.post("/:id/accept", protect, async (req, res) => {
         requesterEmail:  emergency.requesterEmail,
         requesterName:   emergency.requesterName,
         donorName:       donorUser.fullName,
-        donorPhone:      donorProfile?.phone || donorUser.phone || "",
+        donorPhone: donorUser.phone || donorProfile?.phone || "",
         donorEmail:      donorUser.email,
         donorBloodGroup: donorProfile ? `${donorProfile.bloodGroup}${donorProfile.rh}` : "",
         donorGender:     donorProfile?.gender || donorUser.gender || "",
