@@ -278,7 +278,13 @@ const EmergencyTracking = () => {
                         </a>
                       </div>
                     )}
-                    <p className="text-xs text-gray-400">Accepted {timeAgo(donor.acceptedAt)}</p>
+                    {donor.donationStatus === "Donated" ? (
+                      <p className="text-xs text-green-600 font-semibold">
+                        ✅ Donated — {donor.donatedAt ? new Date(donor.donatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : ""}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400">Accepted {timeAgo(donor.acceptedAt)}</p>
+                    )}
                   </div>
                 </div>
               ))}

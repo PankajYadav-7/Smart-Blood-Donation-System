@@ -367,6 +367,10 @@ router.patch("/:id/mark-donated", protect, async (req, res) => {
 
     donorEntry.donationStatus = "Donated";
     donorEntry.donatedAt      = new Date();
+
+    // Auto-fulfill the emergency when a donor confirms donation
+    emergency.status = "Fulfilled";
+
     await emergency.save();
 
     if (emergency.requesterEmail) {
