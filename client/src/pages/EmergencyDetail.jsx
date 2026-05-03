@@ -143,7 +143,7 @@ const EmergencyDetail = () => {
         </button>
 
         {/* ── SUCCESS STATE ── */}
-        {accepted && (
+        {accepted && !donated && (
           <div className="bg-green-600 rounded-2xl p-6 text-white text-center mb-6">
             <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
               <CheckCircle className="h-8 w-8 text-white" />
@@ -152,6 +152,18 @@ const EmergencyDetail = () => {
             <p className="text-green-100 text-sm">
               The requester has been notified with your contact details.
               They will reach out to you directly.
+            </p>
+          </div>
+        )}
+
+        {donated && (
+          <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white text-center mb-6">
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold mb-1">Donation Complete! 🩸</h2>
+            <p className="text-green-100 text-sm">
+              You have confirmed your donation. Thank you for saving a life!
             </p>
           </div>
         )}
@@ -240,6 +252,19 @@ const EmergencyDetail = () => {
                 </div>
               </div>
             )}
+            {emergency?.requesterEmail && (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <Mail className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Email</p>
+                  <a href={`mailto:${emergency?.requesterEmail}`} className="font-semibold text-blue-600 hover:underline text-sm">
+                    {emergency?.requesterEmail}
+                  </a>
+                </div>
+              </div>
+            )}
             {emergency?.patientName && (
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
@@ -310,16 +335,18 @@ const EmergencyDetail = () => {
           </button>
         ) : (
           <div className="space-y-3 mb-4">
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
-              <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0" />
-              <div>
-                <p className="font-bold text-green-800">You have accepted this emergency</p>
-                <p className="text-xs text-green-600 mt-0.5">
-                  The requester has been notified with your contact details.
-                  Please call them on <strong>{emergency?.requesterPhone}</strong> to coordinate.
-                </p>
+            {!donated && (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+                <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="font-bold text-green-800">You have accepted this emergency</p>
+                  <p className="text-xs text-green-600 mt-0.5">
+                    The requester has been notified with your contact details.
+                    Please call them on <strong>{emergency?.requesterPhone}</strong> to coordinate.
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* I Donated button */}
             {!donated ? (
