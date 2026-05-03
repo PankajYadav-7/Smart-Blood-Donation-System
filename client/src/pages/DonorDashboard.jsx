@@ -639,137 +639,189 @@ const DonorDashboard = () => {
 
         {/* ── PROFILE & BADGES TAB ── */}
         {activeTab === "profile" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-0 shadow-md">
-              <CardHeader><CardTitle>Donor Profile</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
+          <div className="space-y-6">
+
+            {/* Profile Card */}
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+              <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 pt-6 pb-10 relative">
+                <div className="absolute bottom-0 left-0 right-0 h-6 bg-white rounded-t-3xl" />
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center">
-                    <User className="h-8 w-8 text-red-600" />
+                  <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center border-2 border-white/30">
+                    <User className="h-8 w-8 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{user?.fullName}</h3>
-                    <p className="text-gray-500 text-sm">{user?.email}</p>
-                    <Badge className="mt-1 bg-blue-100 text-blue-700 border-blue-200">Donor</Badge>
+                    <h3 className="text-xl font-bold text-white">{user?.fullName}</h3>
+                    <p className="text-red-100 text-sm">{user?.email}</p>
+                    <span className="inline-block mt-1 bg-white/20 text-white text-xs font-bold px-3 py-0.5 rounded-full">Blood Donor</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">Blood Type</p>
-                    <p className="text-xl font-bold text-red-600 mt-1">{bloodType}</p>
+              </div>
+              <div className="px-6 pb-6">
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-red-50 rounded-xl p-3 text-center">
+                    <p className="text-xs text-red-500 uppercase tracking-wider font-semibold">Blood Type</p>
+                    <p className="text-3xl font-black text-red-600 mt-1">{bloodType}</p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">Location</p>
-                    <p className="text-sm font-semibold text-gray-900 mt-1">{donorProfile?.locationName || "Not set"}</p>
+                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Location</p>
+                    <p className="text-sm font-bold text-gray-900 mt-1">{donorProfile?.locationName || "Not set"}</p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">Total Donations</p>
-                    <p className="text-xl font-bold text-gray-900 mt-1">{acceptedCount}</p>
+                  <div className="bg-green-50 rounded-xl p-3 text-center">
+                    <p className="text-xs text-green-600 uppercase tracking-wider font-semibold">Total Donations</p>
+                    <p className="text-3xl font-black text-green-600 mt-1">{acceptedCount}</p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">Next Eligible</p>
-                    <p className={`text-sm font-bold mt-1 ${eligibility.color.split(" ")[0]}`}>{eligibility.label}</p>
+                  <div className={`rounded-xl p-3 text-center ${eligibility.color}`}>
+                    <p className="text-xs uppercase tracking-wider font-semibold opacity-70">Next Eligible</p>
+                    <p className="text-sm font-bold mt-1">{eligibility.label}</p>
                   </div>
                 </div>
                 <Button className="w-full" variant="outline" onClick={() => navigate("/donor/profile")}>Edit Profile</Button>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md">
-              <CardHeader><CardTitle>Achievements & Badges</CardTitle></CardHeader>
-              <CardContent>
-                {badges.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Award className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">No badges yet</p>
-                    <p className="text-gray-400 text-xs mt-1">Accept your first blood request to earn your first badge!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {badges.map((badge, i) => (
-                      <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${badge.color}`}>
-                        <badge.icon className="h-8 w-8 flex-shrink-0" />
-                        <div>
-                          <p className="font-semibold text-gray-900">{badge.title}</p>
-                          <p className="text-xs text-gray-500">{badge.description}</p>
-                        </div>
-                        <CheckCircle className="h-5 w-5 text-green-500 ml-auto flex-shrink-0" />
+              </div>
+            </div>
+
+            {/* Badges */}
+            <div className="bg-white rounded-2xl shadow-md p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-gray-900">Achievements & Badges</h3>
+                <span className="text-xs text-gray-400 font-medium">{badges.length} earned</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                {[
+                  { title: "First Drop",    desc: "First donation",  icon: Droplets, target: 1,  color: "from-blue-400 to-blue-600",     bg: "bg-blue-50",   text: "text-blue-600"   },
+                  { title: "Life Saver",    desc: "3+ donations",    icon: Heart,    target: 3,  color: "from-red-400 to-red-600",       bg: "bg-red-50",    text: "text-red-600"    },
+                  { title: "Regular Donor", desc: "5+ donations",    icon: Award,    target: 5,  color: "from-yellow-400 to-orange-500", bg: "bg-yellow-50", text: "text-yellow-600" },
+                  { title: "Hero Donor",    desc: "10+ donations",   icon: Trophy,   target: 10, color: "from-purple-400 to-purple-600", bg: "bg-purple-50", text: "text-purple-600" },
+                ].map((badge, i) => {
+                  const earned = acceptedCount >= badge.target;
+                  const pct    = Math.min((acceptedCount / badge.target) * 100, 100);
+                  return (
+                    <div key={i} className={`rounded-xl p-4 border-2 transition-all ${earned ? "border-transparent shadow-md " + badge.bg : "border-gray-100 bg-gray-50"}`}>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${earned ? "bg-gradient-to-br " + badge.color + " shadow-lg" : "bg-gray-200"}`}>
+                        <badge.icon className={`h-6 w-6 ${earned ? "text-white" : "text-gray-400"}`} />
                       </div>
-                    ))}
+                      <p className={`font-bold text-sm ${earned ? "text-gray-900" : "text-gray-400"}`}>{badge.title}</p>
+                      <p className="text-xs text-gray-400 mb-2">{badge.desc}</p>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div className={`h-1.5 rounded-full transition-all ${earned ? "bg-gradient-to-r " + badge.color : "bg-gray-300"}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <p className={`text-xs mt-1 font-semibold ${earned ? badge.text : "text-gray-400"}`}>
+                        {earned ? "✅ Earned" : `${acceptedCount}/${badge.target}`}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              {acceptedCount < 10 && (
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 rounded-xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <Star className="h-5 w-5 text-red-600" />
                   </div>
-                )}
-                {acceptedCount < 10 && (
-                  <div className="mt-4 p-3 border-2 border-dashed border-gray-200 rounded-xl">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Next Badge</p>
-                    {acceptedCount < 1  && <p className="text-sm text-gray-600">Accept your first request to earn <strong>First Drop</strong> badge</p>}
-                    {acceptedCount >= 1 && acceptedCount < 3  && <p className="text-sm text-gray-600">Accept {3 - acceptedCount} more to earn <strong>Life Saver</strong> badge</p>}
-                    {acceptedCount >= 3 && acceptedCount < 5  && <p className="text-sm text-gray-600">Accept {5 - acceptedCount} more to earn <strong>Regular Donor</strong> badge</p>}
-                    {acceptedCount >= 5 && acceptedCount < 10 && <p className="text-sm text-gray-600">Accept {10 - acceptedCount} more to earn <strong>Hero Donor</strong> badge</p>}
+                  <div>
+                    <p className="text-xs font-bold text-red-700 uppercase tracking-wider">Next Badge</p>
+                    {acceptedCount < 1  && <p className="text-sm text-gray-700">Donate once to earn <strong>First Drop</strong></p>}
+                    {acceptedCount >= 1 && acceptedCount < 3  && <p className="text-sm text-gray-700">{3  - acceptedCount} more to earn <strong>Life Saver</strong></p>}
+                    {acceptedCount >= 3 && acceptedCount < 5  && <p className="text-sm text-gray-700">{5  - acceptedCount} more to earn <strong>Regular Donor</strong></p>}
+                    {acceptedCount >= 5 && acceptedCount < 10 && <p className="text-sm text-gray-700">{10 - acceptedCount} more to earn <strong>Hero Donor</strong></p>}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+            </div>
+
           </div>
         )}
 
         {/* ── CERTIFICATES TAB ── */}
         {activeTab === "certificates" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-0 shadow-md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><Award className="h-5 w-5 text-red-600" />Your Certificates</CardTitle></CardHeader>
-              <CardContent>
-                {certificates.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Trophy className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">No certificates yet</p>
-                    <p className="text-gray-400 text-xs mt-1">Accept your first blood request to earn your first certificate!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {certificates.map((cert, i) => (
-                      <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${cert.color}`}>
-                        <div className="flex items-center gap-3">
-                          <cert.icon className="h-6 w-6 flex-shrink-0" />
-                          <div>
-                            <p className="font-semibold text-gray-900">{cert.title}</p>
-                            <p className="text-xs text-gray-500">{cert.level}</p>
+          <div className="space-y-6">
+
+            <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-2xl p-5 text-white">
+              <div className="flex items-center gap-3 mb-1">
+                <Trophy className="h-6 w-6" />
+                <h2 className="text-xl font-bold">Your Certificates</h2>
+              </div>
+              <p className="text-yellow-100 text-sm">
+                Earn certificates by donating blood. Download your official certificate as a PDF.
+              </p>
+            </div>
+
+            {[
+              { title: "First Time Donor",   level: "Bronze Certificate", description: "Awarded for completing your first blood donation",  target: 1,  seal: "🥉", gradient: "from-orange-200 via-yellow-100 to-orange-200", border: "border-orange-300", badge: "bg-orange-100 text-orange-700" },
+              { title: "Regular Contributor", level: "Silver Certificate", description: "Awarded for completing 5 blood donations",           target: 5,  seal: "🥈", gradient: "from-gray-200 via-gray-100 to-gray-200",     border: "border-gray-300",   badge: "bg-gray-100 text-gray-700"     },
+              { title: "Life Saver Champion", level: "Gold Certificate",   description: "Awarded for completing 10 blood donations",          target: 10, seal: "🥇", gradient: "from-yellow-200 via-yellow-50 to-yellow-200",  border: "border-yellow-400", badge: "bg-yellow-100 text-yellow-700" },
+            ].map((cert, i) => {
+              const earned = acceptedCount >= cert.target;
+              const pct    = Math.min((acceptedCount / cert.target) * 100, 100);
+              return (
+                <div key={i} className={`rounded-2xl overflow-hidden shadow-md border-2 ${earned ? cert.border : "border-gray-200"}`}>
+                  <div className={`relative p-6 ${earned ? "bg-gradient-to-r " + cert.gradient : "bg-gray-50"}`}>
+                    {earned && (
+                      <>
+                        <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-yellow-600/40 rounded-tl-lg" />
+                        <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-yellow-600/40 rounded-tr-lg" />
+                        <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-yellow-600/40 rounded-bl-lg" />
+                        <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-yellow-600/40 rounded-br-lg" />
+                      </>
+                    )}
+                    <div className="text-center">
+                      <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Jeevan Saarthi — Blood Donation System</p>
+                      <p className="text-xs text-gray-400 mb-4">Certificate of Recognition</p>
+                      <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-3 ${earned ? "bg-white/60 shadow-lg" : "bg-gray-200"}`}>
+                        <span className="text-3xl">{cert.seal}</span>
+                      </div>
+                      <h3 className={`text-xl font-black mb-1 ${earned ? "text-gray-900" : "text-gray-400"}`}>{cert.title}</h3>
+                      <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${earned ? "text-gray-600" : "text-gray-400"}`}>{cert.level}</p>
+                      {earned ? (
+                        <>
+                          <p className="text-sm text-gray-700 mb-1">This certifies that</p>
+                          <p className="text-lg font-black text-gray-900 mb-1">{user?.fullName}</p>
+                          <p className="text-sm text-gray-600 mb-4">{cert.description}</p>
+                          <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
+                            <span>Donations: <strong className="text-gray-900">{acceptedCount}</strong></span>
+                            <span>•</span>
+                            <span>Blood Type: <strong className="text-red-600">{bloodType}</strong></span>
                           </div>
+                        </>
+                      ) : (
+                        <div className="py-2">
+                          <p className="text-sm text-gray-400 mb-3">Complete {cert.target} donations to unlock</p>
+                          <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
+                            <div className="h-2 rounded-full bg-gradient-to-r from-red-400 to-red-600 transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <p className="text-xs text-gray-400">{acceptedCount}/{cert.target} donations</p>
                         </div>
-                        <Badge className="bg-green-100 text-green-700 border-green-200">Earned</Badge>
-                      </div>
-                    ))}
+                      )}
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-md">
-              <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-red-600" />Progress to Next</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { title: "First Time Donor",    target: 1,  label: "donation"  },
-                    { title: "Regular Contributor", target: 5,  label: "donations" },
-                    { title: "Life Saver Champion", target: 10, label: "donations" },
-                  ].map((item, i) => {
-                    const pct  = Math.min((acceptedCount / item.target) * 100, 100);
-                    const done = acceptedCount >= item.target;
-                    return (
-                      <div key={i} className="p-3 border border-gray-200 rounded-xl">
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="font-semibold text-gray-900 text-sm">{item.title}</h4>
-                          <Badge variant="outline">{acceptedCount}/{item.target}</Badge>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
-                          <div className={`h-2 rounded-full transition-all ${done ? "bg-green-500" : "bg-red-600"}`} style={{ width: `${pct}%` }} />
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          {done ? "✅ Completed!" : `${item.target - acceptedCount} more ${item.label} needed`}
-                        </p>
-                      </div>
-                    );
-                  })}
+                  <div className={`px-6 py-3 flex items-center justify-between ${earned ? "bg-white" : "bg-gray-100"}`}>
+                    {earned ? (
+                      <>
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${cert.badge}`}>✅ Earned</span>
+                        <button
+                          onClick={() => {
+                            const today  = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+                            const certNo = `JS-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+                            const html   = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Georgia,serif;background:#fff;}.page{width:842px;height:595px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff9f0 0%,#ffffff 50%,#fff9f0 100%);position:relative;overflow:hidden;}.border-outer{position:absolute;inset:16px;border:3px solid #b8860b;border-radius:4px;}.border-inner{position:absolute;inset:22px;border:1px solid #d4af37;border-radius:2px;}.corner{position:absolute;width:40px;height:40px;}.tl{top:28px;left:28px;border-top:3px solid #b8860b;border-left:3px solid #b8860b;}.tr{top:28px;right:28px;border-top:3px solid #b8860b;border-right:3px solid #b8860b;}.bl{bottom:28px;left:28px;border-bottom:3px solid #b8860b;border-left:3px solid #b8860b;}.br{bottom:28px;right:28px;border-bottom:3px solid #b8860b;border-right:3px solid #b8860b;}.content{text-align:center;padding:40px 80px;position:relative;z-index:1;}.org{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#b8860b;font-weight:700;margin-bottom:4px;}.sub{font-size:10px;letter-spacing:2px;color:#999;text-transform:uppercase;margin-bottom:16px;}.seal{font-size:48px;margin-bottom:12px;}.title{font-size:32px;font-weight:900;color:#1a1a1a;margin-bottom:4px;}.level{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#b8860b;margin-bottom:16px;font-weight:700;}.divider{width:120px;height:2px;background:linear-gradient(to right,transparent,#b8860b,transparent);margin:0 auto 16px;}.awarded{font-size:12px;color:#666;margin-bottom:6px;}.name{font-size:28px;color:#c0392b;font-weight:700;margin-bottom:8px;}.desc{font-size:12px;color:#555;line-height:1.6;margin-bottom:16px;}.footer{display:flex;justify-content:space-between;margin-top:16px;}.fi{text-align:center;}.fl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:4px;}.fv{font-size:11px;font-weight:700;color:#333;border-top:1px solid #ccc;padding-top:4px;min-width:100px;}.badge{display:inline-block;background:#c0392b;color:white;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;}.wm{position:absolute;font-size:100px;color:rgba(184,134,11,0.04);font-weight:900;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);white-space:nowrap;pointer-events:none;}</style></head><body><div class="page"><div class="border-outer"></div><div class="border-inner"></div><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div><div class="wm">Jeevan Saarthi</div><div class="content"><div class="org">Jeevan Saarthi — Smart Blood Donation System</div><div class="sub">Certificate of Recognition</div><div class="seal">${cert.seal}</div><div class="title">${cert.title}</div><div class="level">${cert.level}</div><div class="divider"></div><div class="awarded">This certificate is proudly awarded to</div><div class="name">${user?.fullName}</div><div class="desc">${cert.description} — contributing to save lives across Nepal with <span class="badge">${bloodType} Blood</span> and ${acceptedCount} confirmed donation${acceptedCount > 1 ? "s" : ""}.</div><div class="footer"><div class="fi"><div class="fl">Date Issued</div><div class="fv">${today}</div></div><div class="fi"><div class="fl">Blood Type</div><div class="fv">${bloodType}</div></div><div class="fi"><div class="fl">Certificate No.</div><div class="fv">${certNo}</div></div><div class="fi"><div class="fl">Total Donations</div><div class="fv">${acceptedCount}</div></div></div></div></div></body></html>`;
+                            const blob = new Blob([html], { type: "text/html" });
+                            const url  = URL.createObjectURL(blob);
+                            const win  = window.open(url, "_blank");
+                            if (win) setTimeout(() => win.print(), 800);
+                          }}
+                          className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm"
+                        >
+                          <Trophy className="h-3.5 w-3.5" />
+                          Download Certificate
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400 font-medium">
+                        🔒 Locked — {cert.target - acceptedCount} more donation{cert.target - acceptedCount > 1 ? "s" : ""} needed
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              );
+            })}
+
           </div>
         )}
 
