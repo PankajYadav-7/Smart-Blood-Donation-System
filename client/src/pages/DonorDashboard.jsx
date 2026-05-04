@@ -745,22 +745,25 @@ const DonorDashboard = () => {
             </div>
 
             {[
-              { title: "First Time Donor",   level: "Bronze Certificate", description: "Awarded for completing your first blood donation",  target: 1,  seal: "🥉", gradient: "from-orange-200 via-yellow-100 to-orange-200", border: "border-orange-300", badge: "bg-orange-100 text-orange-700" },
-              { title: "Regular Contributor", level: "Silver Certificate", description: "Awarded for completing 5 blood donations",           target: 5,  seal: "🥈", gradient: "from-gray-200 via-gray-100 to-gray-200",     border: "border-gray-300",   badge: "bg-gray-100 text-gray-700"     },
-              { title: "Life Saver Champion", level: "Gold Certificate",   description: "Awarded for completing 10 blood donations",          target: 10, seal: "🥇", gradient: "from-yellow-200 via-yellow-50 to-yellow-200",  border: "border-yellow-400", badge: "bg-yellow-100 text-yellow-700" },
+              { title: "First Time Donor",   level: "Bronze Certificate", description: "Awarded for completing your first blood donation",  target: 1,  seal: "🥉", gradient: "from-orange-100 via-amber-50 to-orange-100",   border: "border-2 border-orange-400", badge: "bg-orange-100 text-orange-800", cornerColor: "border-orange-400/50", levelColor: "#cd7f32" },
+              { title: "Regular Contributor", level: "Silver Certificate", description: "Awarded for completing 5 blood donations",           target: 5,  seal: "🥈", gradient: "from-slate-100 via-gray-50 to-slate-100",     border: "border-2 border-slate-400",  badge: "bg-slate-100 text-slate-800",  cornerColor: "border-slate-400/50",  levelColor: "#708090" },
+              { title: "Life Saver Champion", level: "Gold Certificate",   description: "Awarded for completing 10 blood donations",          target: 10, seal: "🥇", gradient: "from-yellow-100 via-amber-50 to-yellow-100",  border: "border-2 border-yellow-500", badge: "bg-yellow-100 text-yellow-800", cornerColor: "border-yellow-500/50", levelColor: "#d4af37" },
             ].map((cert, i) => {
-              const earnedRecord = donorProfile?.certificatesEarned?.find(c => c.level === cert.level);
-              const earned       = !!earnedRecord;
-              const pct          = Math.min((acceptedCount / cert.target) * 100, 100);
+              const earnedRecord  = donorProfile?.certificatesEarned?.find(c => c.level === cert.level);
+              const earned        = earnedRecord ? true : acceptedCount >= cert.target;
+              const pct           = Math.min((acceptedCount / cert.target) * 100, 100);
+              const displayCount  = earnedRecord?.donationCountAtTime || cert.target;
+              const displayDate   = earnedRecord?.earnedAt ? new Date(earnedRecord.earnedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+              const displayCertNo = earnedRecord?.certificateNumber || `JS-${cert.level.toUpperCase().slice(0,2)}-PENDING`;
               return (
                 <div key={i} className={`rounded-2xl overflow-hidden shadow-md border-2 ${earned ? cert.border : "border-gray-200"}`}>
                   <div className={`relative p-6 ${earned ? "bg-gradient-to-r " + cert.gradient : "bg-gray-50"}`}>
                     {earned && (
                       <>
-                        <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-yellow-600/40 rounded-tl-lg" />
-                        <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-yellow-600/40 rounded-tr-lg" />
-                        <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-yellow-600/40 rounded-bl-lg" />
-                        <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-yellow-600/40 rounded-br-lg" />
+                        <div className={`absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 ${cert.cornerColor} rounded-tl-lg`} />
+                        <div className={`absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 ${cert.cornerColor} rounded-tr-lg`} />
+                        <div className={`absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 ${cert.cornerColor} rounded-bl-lg`} />
+                        <div className={`absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 ${cert.cornerColor} rounded-br-lg`} />
                       </>
                     )}
                     <div className="text-center">
@@ -770,18 +773,18 @@ const DonorDashboard = () => {
                         <span className="text-3xl">{cert.seal}</span>
                       </div>
                       <h3 className={`text-xl font-black mb-1 ${earned ? "text-gray-900" : "text-gray-400"}`}>{cert.title}</h3>
-                      <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${earned ? "text-gray-600" : "text-gray-400"}`}>{cert.level}</p>
+                      <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${earned ? "" : "text-gray-400"}`} style={earned ? { color: cert.levelColor } : {}}>{cert.level}</p>
                       {earned ? (
                         <>
                           <p className="text-sm text-gray-700 mb-1">This certifies that</p>
                           <p className="text-lg font-black text-gray-900 mb-1">{user?.fullName}</p>
                           <p className="text-sm text-gray-600 mb-4">{cert.description}</p>
-                          <div className="flex items-center justify-center gap-4 text-xs text-gray-500 flex-wrap gap-y-2">
-                            <span>Donations at milestone: <strong className="text-gray-900">{earnedRecord.donationCountAtTime}</strong></span>
+                          <div className="flex items-center justify-center gap-4 text-xs text-gray-500 flex-wrap">
+                            <span>Milestone: <strong className="text-gray-900">{displayCount} donation{displayCount > 1 ? "s" : ""}</strong></span>
                             <span>•</span>
                             <span>Blood Type: <strong className="text-red-600">{bloodType}</strong></span>
                             <span>•</span>
-                            <span>Earned: <strong className="text-gray-900">{new Date(earnedRecord.earnedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</strong></span>
+                            <span>Earned: <strong className="text-gray-900">{displayDate}</strong></span>
                           </div>
                         </>
                       ) : (
@@ -801,14 +804,143 @@ const DonorDashboard = () => {
                         <span className={`text-xs font-bold px-3 py-1 rounded-full ${cert.badge}`}>✅ Earned</span>
                         <button
                           onClick={() => {
-                            const today = earnedDate;
-                            const certNo      = earnedRecord.certificateNumber;
-                            const earnedDate  = new Date(earnedRecord.earnedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-                            const html   = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Georgia,serif;background:#fff;}.page{width:842px;height:595px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff9f0 0%,#ffffff 50%,#fff9f0 100%);position:relative;overflow:hidden;}.border-outer{position:absolute;inset:16px;border:3px solid #b8860b;border-radius:4px;}.border-inner{position:absolute;inset:22px;border:1px solid #d4af37;border-radius:2px;}.corner{position:absolute;width:40px;height:40px;}.tl{top:28px;left:28px;border-top:3px solid #b8860b;border-left:3px solid #b8860b;}.tr{top:28px;right:28px;border-top:3px solid #b8860b;border-right:3px solid #b8860b;}.bl{bottom:28px;left:28px;border-bottom:3px solid #b8860b;border-left:3px solid #b8860b;}.br{bottom:28px;right:28px;border-bottom:3px solid #b8860b;border-right:3px solid #b8860b;}.content{text-align:center;padding:40px 80px;position:relative;z-index:1;}.org{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#b8860b;font-weight:700;margin-bottom:4px;}.sub{font-size:10px;letter-spacing:2px;color:#999;text-transform:uppercase;margin-bottom:16px;}.seal{font-size:48px;margin-bottom:12px;}.title{font-size:32px;font-weight:900;color:#1a1a1a;margin-bottom:4px;}.level{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#b8860b;margin-bottom:16px;font-weight:700;}.divider{width:120px;height:2px;background:linear-gradient(to right,transparent,#b8860b,transparent);margin:0 auto 16px;}.awarded{font-size:12px;color:#666;margin-bottom:6px;}.name{font-size:28px;color:#c0392b;font-weight:700;margin-bottom:8px;}.desc{font-size:12px;color:#555;line-height:1.6;margin-bottom:16px;}.footer{display:flex;justify-content:space-between;margin-top:16px;}.fi{text-align:center;}.fl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:4px;}.fv{font-size:11px;font-weight:700;color:#333;border-top:1px solid #ccc;padding-top:4px;min-width:100px;}.badge{display:inline-block;background:#c0392b;color:white;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;}.wm{position:absolute;font-size:100px;color:rgba(184,134,11,0.04);font-weight:900;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);white-space:nowrap;pointer-events:none;}</style></head><body><div class="page"><div class="border-outer"></div><div class="border-inner"></div><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div><div class="wm">Jeevan Saarthi</div><div class="content"><div class="org">Jeevan Saarthi — Smart Blood Donation System</div><div class="sub">Certificate of Recognition</div><div class="seal">${cert.seal}</div><div class="title">${cert.title}</div><div class="level">${cert.level}</div><div class="divider"></div><div class="awarded">This certificate is proudly awarded to</div><div class="name">${user?.fullName}</div><div class="desc">${cert.description} — contributing to save lives across Nepal with <span class="badge">${bloodType} Blood</span> and ${earnedRecord.donationCountAtTime} confirmed donation${earnedRecord.donationCountAtTime > 1 ? "s" : ""}.</div><div class="footer"><div class="fi"><div class="fl">Date Issued</div><div class="fv">${today}</div></div><div class="fi"><div class="fl">Blood Type</div><div class="fv">${bloodType}</div></div><div class="fi"><div class="fl">Certificate No.</div><div class="fv">${certNo}</div></div><div class="fi"><div class="fl">Total Donations</div><div class="fv">${acceptedCount}</div></div></div></div></div></body></html>`;
+                            const certNo     = displayCertNo;
+                            const earnedDate = displayDate;
+                            const bgColor    = cert.levelColor === "#cd7f32"
+                              ? "linear-gradient(135deg, #fdf6e3 0%, #fffdf7 50%, #fdf6e3 100%)"
+                              : cert.levelColor === "#708090"
+                              ? "linear-gradient(135deg, #f4f6f8 0%, #ffffff 50%, #f4f6f8 100%)"
+                              : "linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fffbeb 100%)";
+                            const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Lato', Georgia, serif; background: #fff; }
+  .page {
+    width: 842px; height: 595px;
+    display: flex; align-items: center; justify-content: center;
+    background: ${bgColor};
+    position: relative; overflow: hidden;
+  }
+  .border-outer { position: absolute; inset: 12px; border: 3px solid ${cert.levelColor}; border-radius: 6px; }
+  .border-inner  { position: absolute; inset: 18px; border: 1px solid ${cert.levelColor}88; border-radius: 4px; }
+  .corner { position: absolute; width: 48px; height: 48px; }
+  .tl { top: 24px; left: 24px; border-top: 3px solid ${cert.levelColor}; border-left: 3px solid ${cert.levelColor}; }
+  .tr { top: 24px; right: 24px; border-top: 3px solid ${cert.levelColor}; border-right: 3px solid ${cert.levelColor}; }
+  .bl { bottom: 24px; left: 24px; border-bottom: 3px solid ${cert.levelColor}; border-left: 3px solid ${cert.levelColor}; }
+  .br { bottom: 24px; right: 24px; border-bottom: 3px solid ${cert.levelColor}; border-right: 3px solid ${cert.levelColor}; }
+  .watermark {
+    position: absolute; font-size: 130px; font-family: 'Playfair Display', serif;
+    color: ${cert.levelColor}08; font-weight: 900;
+    top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-25deg);
+    white-space: nowrap; pointer-events: none; letter-spacing: 8px;
+  }
+  .content { text-align: center; padding: 32px 72px; position: relative; z-index: 1; width: 100%; }
+  .header-line {
+    display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 6px;
+  }
+  .header-dot { width: 6px; height: 6px; border-radius: 50%; background: ${cert.levelColor}; }
+  .org {
+    font-family: 'Lato', sans-serif; font-size: 10px; letter-spacing: 5px;
+    text-transform: uppercase; color: ${cert.levelColor}; font-weight: 700;
+  }
+  .sub { font-size: 9px; letter-spacing: 3px; color: #aaa; text-transform: uppercase; margin-bottom: 14px; font-family: 'Lato', sans-serif; }
+  .seal-wrap {
+    width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 12px;
+    background: ${cert.levelColor}18; border: 2px solid ${cert.levelColor}44;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .seal { font-size: 40px; line-height: 1; }
+  .title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px; font-weight: 900; color: #1a1a1a; margin-bottom: 3px; letter-spacing: 1px;
+  }
+  .level { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: ${cert.levelColor}; margin-bottom: 14px; font-weight: 700; }
+  .divider-wrap { display: flex; align-items: center; gap: 10px; margin: 0 auto 14px; width: 260px; }
+  .divider-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, ${cert.levelColor}88); }
+  .divider-line.right { background: linear-gradient(to left, transparent, ${cert.levelColor}88); }
+  .divider-diamond { width: 6px; height: 6px; background: ${cert.levelColor}; transform: rotate(45deg); flex-shrink: 0; }
+  .awarded { font-size: 11px; color: #888; letter-spacing: 1px; margin-bottom: 5px; font-style: italic; }
+  .name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 26px; color: #c0392b; font-weight: 700; margin-bottom: 6px; letter-spacing: 1px;
+  }
+  .desc { font-size: 11px; color: #666; line-height: 1.65; margin-bottom: 16px; max-width: 560px; margin-left: auto; margin-right: auto; }
+  .blood-badge {
+    display: inline-block; background: #c0392b; color: white;
+    font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; letter-spacing: 0.5px;
+  }
+  .footer { display: flex; justify-content: center; gap: 40px; margin-top: 4px; padding-top: 14px; border-top: 1px solid ${cert.levelColor}33; }
+  .fi { text-align: center; min-width: 90px; }
+  .fl { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #bbb; margin-bottom: 5px; font-family: 'Lato', sans-serif; }
+  .fv { font-size: 11px; font-weight: 700; color: #333; font-family: 'Lato', sans-serif; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="border-outer"></div>
+  <div class="border-inner"></div>
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+  <div class="watermark">JS</div>
+  <div class="content">
+    <div class="header-line">
+      <div class="header-dot"></div>
+      <div class="org">Jeevan Saarthi — Smart Blood Donation System — Nepal</div>
+      <div class="header-dot"></div>
+    </div>
+    <div class="sub">Certificate of Recognition</div>
+    <div class="seal-wrap"><div class="seal">${cert.seal}</div></div>
+    <div class="title">${cert.title}</div>
+    <div class="level">${cert.level}</div>
+    <div class="divider-wrap">
+      <div class="divider-line"></div>
+      <div class="divider-diamond"></div>
+      <div class="divider-line right"></div>
+    </div>
+    <div class="awarded">This certificate is proudly awarded to</div>
+    <div class="name">${user?.fullName}</div>
+    <div class="desc">
+      ${cert.description} — contributing to save lives across Nepal
+      with <span class="blood-badge">${bloodType} Blood</span>
+      and <strong>${displayCount}</strong> confirmed donation${displayCount > 1 ? "s" : ""}.
+    </div>
+    <div class="footer">
+      <div class="fi">
+        <div class="fl">Date Issued</div>
+        <div class="fv">${earnedDate}</div>
+      </div>
+      <div class="fi">
+        <div class="fl">Blood Type</div>
+        <div class="fv">${bloodType}</div>
+      </div>
+      <div class="fi">
+        <div class="fl">Certificate No.</div>
+        <div class="fv">${certNo}</div>
+      </div>
+      <div class="fi">
+        <div class="fl">Milestone</div>
+        <div class="fv">${displayCount} Donation${displayCount > 1 ? "s" : ""}</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
                             const blob = new Blob([html], { type: "text/html" });
                             const url  = URL.createObjectURL(blob);
-                            const win  = window.open(url, "_blank");
-                            if (win) setTimeout(() => win.print(), 800);
+                            const a    = document.createElement("a");
+                            a.href     = url;
+                            a.download = `Jeevan-Saarthi-${cert.title.replace(/ /g, "-")}-Certificate.html`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
                           }}
                           className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm"
                         >
@@ -818,7 +950,7 @@ const DonorDashboard = () => {
                       </>
                     ) : (
                       <span className="text-xs text-gray-400 font-medium">
-                        🔒 Locked — {cert.target - acceptedCount} more donation{cert.target - acceptedCount > 1 ? "s" : ""} needed
+                        🔒 Locked — {cert.target - acceptedCount > 0 ? `${cert.target - acceptedCount} more donation${cert.target - acceptedCount > 1 ? "s" : ""} needed` : "Processing..."}
                       </span>
                     )}
                   </div>

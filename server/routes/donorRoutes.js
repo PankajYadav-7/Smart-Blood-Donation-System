@@ -74,7 +74,39 @@ router.get("/profile", protect, async (req, res) => {
   try {
     const profile = await DonorProfile.findOne({ userId: req.user.userId });
     if (!profile) return res.status(404).json({ message: "Profile not found" });
-    return res.status(200).json({ profile });
+
+    // ── Auto-award any missing certificates based on current donation count ──
+    // This handles donors who had donations before the certificate system was added
+    try {
+      const Match            = require("../models/Match");
+      const EmergencyRequest = require("../models/EmergencyRequest");
+      const donorUser        = await User.findById(req.user.userId).select("email");
+
+      const regularCount = await Match.countDocuments({
+        donorUserId: req.user.userId,
+        status:      "Donated",
+      });
+      const emergencyCount = await EmergencyRequest.countDocuments({
+        "acceptedDonors": {
+          $elemMatch: {
+            donorEmail:     donorUser?.email,
+            donationStatus: "Donated",
+          },
+        },
+      });
+      const totalCount = regularCount + emergencyCount;
+
+      if (totalCount > 0) {
+        const { checkAndAwardCertificates } = require("../utils/certificateService");
+        await checkAndAwardCertificates(req.user.userId, totalCount);
+      }
+    } catch (certErr) {
+      console.error("Auto-award certificate error:", certErr.message);
+    }
+
+    // Re-fetch profile to include any newly awarded certificates
+    const updatedProfile = await DonorProfile.findOne({ userId: req.user.userId });
+    return res.status(200).json({ profile: updatedProfile });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }

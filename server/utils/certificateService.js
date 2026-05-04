@@ -22,8 +22,12 @@ function generateCertNumber(level) {
 // ─────────────────────────────────────────────────────────────────────────────
 async function checkAndAwardCertificates(userId, newDonationCount) {
   try {
+    console.log(`🏆 Certificate check — userId: ${userId}, count: ${newDonationCount}`);
     const profile  = await DonorProfile.findOne({ userId });
     const donorUser = await User.findById(userId).select("fullName email");
+
+    console.log(`🏆 Profile found: ${!!profile}, User found: ${!!donorUser}`);
+    console.log(`🏆 Existing certificates: ${JSON.stringify(profile?.certificatesEarned)}`);
 
     if (!profile || !donorUser) return;
 
