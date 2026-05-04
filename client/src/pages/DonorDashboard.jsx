@@ -754,7 +754,7 @@ const DonorDashboard = () => {
               const pct           = Math.min((acceptedCount / cert.target) * 100, 100);
               const displayCount  = earnedRecord?.donationCountAtTime || cert.target;
               const displayDate   = earnedRecord?.earnedAt ? new Date(earnedRecord.earnedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-              const certPrefix    = cert.level === "bronze" ? "BR" : cert.level === "silver" ? "SL" : "GD";
+              const certPrefix    = cert.level === "Bronze Certificate" ? "BR" : cert.level === "Silver Certificate" ? "SL" : "GD";
               const displayCertNo = earnedRecord?.certificateNumber || `JS-${certPrefix}-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
               return (
                 <div key={i} className={`rounded-2xl overflow-hidden shadow-md border-2 ${earned ? cert.border : "border-gray-200"}`}>
