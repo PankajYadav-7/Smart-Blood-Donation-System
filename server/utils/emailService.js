@@ -699,6 +699,83 @@ async function sendLifeSavedEmail({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 11 — Certificate Earned Congratulations
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendCertificateEarnedEmail({
+  donorEmail, donorName, certTitle, certLevel,
+  earnedAt, donationCount, certificateNumber,
+}) {
+  const sealEmoji  = certLevel === "bronze" ? "🥉" : certLevel === "silver" ? "🥈" : "🥇";
+  const levelColor = certLevel === "bronze" ? "#cd7f32" : certLevel === "silver" ? "#a8a9ad" : "#d4af37";
+  const earnedDate = new Date(earnedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+  const html = `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#c0392b,#922b21);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0;">
+      <p style="color:rgba(255,255,255,0.8);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px;">Jeevan Saarthi — Blood Donation System</p>
+      <h1 style="color:#ffffff;font-size:26px;margin:0;font-weight:800;">🎉 Certificate Earned!</h1>
+    </div>
+
+    <!-- Certificate Preview -->
+    <div style="background:linear-gradient(135deg,#fff9f0,#ffffff,#fff9f0);border:3px solid ${levelColor};margin:24px;border-radius:12px;padding:32px;text-align:center;">
+      <div style="border:1px solid ${levelColor};border-radius:8px;padding:24px;">
+        <p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${levelColor};font-weight:700;margin:0 0 4px;">Certificate of Recognition</p>
+        <p style="font-size:48px;margin:16px 0;">${sealEmoji}</p>
+        <h2 style="font-size:28px;color:#1a1a1a;margin:0 0 6px;font-weight:900;">${certTitle}</h2>
+        <p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${levelColor};font-weight:700;margin:0 0 20px;">${certLevel.charAt(0).toUpperCase() + certLevel.slice(1)} Certificate</p>
+        <div style="width:80px;height:2px;background:linear-gradient(to right,transparent,${levelColor},transparent);margin:0 auto 20px;"></div>
+        <p style="font-size:13px;color:#666;margin:0 0 6px;">This certificate is proudly awarded to</p>
+        <p style="font-size:24px;color:#c0392b;font-weight:800;margin:0 0 12px;">${donorName}</p>
+        <p style="font-size:12px;color:#555;margin:0 0 20px;line-height:1.6;">For completing <strong>${donationCount} blood donation${donationCount > 1 ? "s" : ""}</strong> and contributing to save lives across Nepal.</p>
+        <div style="display:flex;justify-content:center;gap:32px;font-size:11px;color:#888;">
+          <div><p style="margin:0;letter-spacing:2px;text-transform:uppercase;">Date Earned</p><p style="margin:4px 0 0;font-weight:700;color:#333;border-top:1px solid #ddd;padding-top:4px;">${earnedDate}</p></div>
+          <div><p style="margin:0;letter-spacing:2px;text-transform:uppercase;">Certificate No.</p><p style="margin:4px 0 0;font-weight:700;color:#333;border-top:1px solid #ddd;padding-top:4px;">${certificateNumber}</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message -->
+    <div style="padding:0 24px 24px;">
+      <p style="font-size:15px;color:#333;line-height:1.7;">
+        Dear <strong>${donorName}</strong>,<br><br>
+        Congratulations! You have officially earned your <strong>${certTitle}</strong> from Jeevan Saarthi.
+        Your dedication to saving lives is truly inspiring. Every donation you make gives someone another chance at life.
+      </p>
+      <div style="background:#f8f9fa;border-left:4px solid ${levelColor};border-radius:4px;padding:16px;margin:16px 0;">
+        <p style="margin:0;font-size:13px;color:#555;line-height:1.6;">
+          🩸 <strong>Donations completed:</strong> ${donationCount}<br>
+          ❤️ <strong>Lives potentially saved:</strong> up to ${donationCount * 3}<br>
+          📅 <strong>Certificate earned on:</strong> ${earnedDate}<br>
+          🔖 <strong>Certificate number:</strong> ${certificateNumber}
+        </p>
+      </div>
+      <p style="font-size:14px;color:#555;line-height:1.6;">
+        Log in to your Jeevan Saarthi dashboard to download your official certificate and keep saving lives!
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align:center;margin:24px 0;">
+        <a href="http://localhost:5173/donor/dashboard"
+          style="display:inline-block;background:linear-gradient(135deg,#c0392b,#922b21);color:white;font-weight:700;font-size:14px;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;">
+          🏆 View & Download Certificate
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#1a1a1a;padding:20px 24px;text-align:center;border-radius:0 0 12px 12px;">
+      <p style="color:#999;font-size:11px;margin:0;">Jeevan Saarthi — Connecting donors, patients and hospitals across Nepal</p>
+      <p style="color:#666;font-size:10px;margin:8px 0 0;">Nepal Red Cross Emergency: 01-4270650</p>
+    </div>
+
+  </div>`;
+
+  await send(donorEmail, `🎉 Congratulations ${donorName}! You earned your ${certTitle} — Jeevan Saarthi`, html);
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
@@ -710,4 +787,5 @@ module.exports = {
   sendEmergencyAcceptedNotification,
   sendEmergencyHospitalAlert,
   sendLifeSavedEmail,
+  sendCertificateEarnedEmail,
 };

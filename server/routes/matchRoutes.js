@@ -382,6 +382,27 @@ router.patch("/:matchId/confirm-donation", protect, async (req, res) => {
       });
     }
 
+    // ── Check and award certificates ──────────────────────────────────────
+    try {
+      const { checkAndAwardCertificates } = require("../utils/certificateService");
+      const regularCount = await Match.countDocuments({
+        donorUserId: match.donorUserId,
+        status:      "Donated",
+      });
+      const EmergencyRequest = require("../models/EmergencyRequest");
+      const emergencyCount   = await EmergencyRequest.countDocuments({
+        "acceptedDonors": {
+          $elemMatch: {
+            donorEmail:     donorUser?.email,
+            donationStatus: "Donated",
+          },
+        },
+      });
+      await checkAndAwardCertificates(match.donorUserId, regularCount + emergencyCount);
+    } catch (certErr) {
+      console.error("Certificate check error:", certErr.message);
+    }
+
     return res.status(200).json({
       message: "Donation confirmed! Donor profile has been updated automatically.",
       match,

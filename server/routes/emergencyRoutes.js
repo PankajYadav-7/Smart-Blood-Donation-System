@@ -373,6 +373,27 @@ router.patch("/:id/mark-donated", protect, async (req, res) => {
 
     await emergency.save();
 
+    // ── Check and award certificates ──────────────────────────────────────
+    try {
+      const { checkAndAwardCertificates } = require("../utils/certificateService");
+      const Match        = require("../models/Match");
+      const regularCount = await Match.countDocuments({
+        donorUserId: req.user.userId,
+        status:      "Donated",
+      });
+      const emergencyCount = await EmergencyRequest.countDocuments({
+        "acceptedDonors": {
+          $elemMatch: {
+            donorEmail:     donorUser.email,
+            donationStatus: "Donated",
+          },
+        },
+      });
+      await checkAndAwardCertificates(req.user.userId, regularCount + emergencyCount);
+    } catch (certErr) {
+      console.error("Certificate check error:", certErr.message);
+    }
+
     if (emergency.requesterEmail) {
       const { sendLifeSavedEmail } = require("../utils/emailService");
       sendLifeSavedEmail({

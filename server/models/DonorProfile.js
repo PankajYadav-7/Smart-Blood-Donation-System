@@ -36,7 +36,7 @@ const donorProfileSchema = new mongoose.Schema(
       type: Date,
     },
     weight: {
-      type: Number,  // in kg
+      type: Number,
     },
     hasIllness: {
       type: Boolean,
@@ -50,6 +50,19 @@ const donorProfileSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    // ── Certificate milestones — stored permanently when earned ───────────
+    // Each entry records the exact moment a milestone was achieved
+    // This ensures certificates always show correct historical data
+    certificatesEarned: [
+      {
+        level:               { type: String, enum: ["bronze", "silver", "gold"] },
+        title:               { type: String },
+        earnedAt:            { type: Date },
+        donationCountAtTime: { type: Number },
+        certificateNumber:   { type: String },
+      },
+    ],
   },
   { timestamps: true }
 );
