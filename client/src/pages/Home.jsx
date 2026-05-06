@@ -34,6 +34,13 @@ const [stats, setStats] = useState([
         ]);
       })
       .catch(() => {});
+
+    // Fetch real upcoming events
+    axios.get("http://localhost:5000/api/events/upcoming")
+      .then(res => {
+        setUpcomingEvents(res.data.events || []);
+      })
+      .catch(() => {});
   }, []);
 
   const features = [
@@ -51,26 +58,7 @@ const [stats, setStats] = useState([
     { icon: MapPin,   title: "Find a Donor Nearby", description: "Connect with verified donors in your area who match your blood type requirements." },
   ];
 
-  const upcomingEvents = [
-    {
-      id: 1, title: "Community Blood Drive", organizer: "Bir Hospital",
-      date: "Kathmandu", time: "9:00 AM - 4:00 PM",
-      location: "Kathmandu Community Center", address: "Bagbazar, Kathmandu",
-      bloodTypes: ["A+", "O+", "B+", "AB+"], icon: Building2, status: "Open",
-    },
-    {
-      id: 2, title: "Emergency Blood Collection", organizer: "Nepal Red Cross",
-      date: "Lalitpur", time: "10:00 AM - 6:00 PM",
-      location: "Patan Hospital", address: "Lagankhel, Lalitpur",
-      bloodTypes: ["O-", "A-", "B-"], icon: Heart, status: "Urgent",
-    },
-    {
-      id: 3, title: "Campus Blood Campaign", organizer: "Hope Medical NGO",
-      date: "Kirtipur", time: "8:00 AM - 5:00 PM",
-      location: "Tribhuvan University Campus", address: "Kirtipur, Kathmandu",
-      bloodTypes: ["All Types"], icon: Users, status: "Upcoming",
-    },
-  ];
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
 
   const bloodCompatibility = [
     { type: "O-",  canDonateTo: ["O-","O+","A-","A+","B-","B+","AB-","AB+"], canReceiveFrom: ["O-"],                                label: "Universal Donor",    color: "bg-red-600"    },
@@ -333,62 +321,90 @@ const [stats, setStats] = useState([
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900">Blood Donation Events</h2>
             <p className="text-lg text-gray-500 max-w-2xl mx-auto">Join community blood drives organised by trusted hospitals and NGOs near you</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {upcomingEvents.map((event) => (
-              <Card key={event.id} className="enhanced-card overflow-hidden group border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 group-hover:bg-red-600 transition-all duration-300">
-                        <event.icon className="h-6 w-6 text-red-600 group-hover:text-white transition-all duration-300" />
+
+          {upcomingEvents.length === 0 ? (
+            <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 max-w-2xl mx-auto">
+              <Calendar className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-gray-700 mb-2">No upcoming events right now</h3>
+              <p className="text-gray-500 text-sm mb-6">
+                Hospitals and NGOs will post blood donation drives here as they are scheduled. Check back soon!
+              </p>
+              <p className="text-xs text-gray-400">
+                Are you a hospital or NGO? <Link to="/register" className="text-red-600 font-semibold hover:underline">Register</Link> to organize events.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {upcomingEvents.slice(0, 3).map((event) => {
+                const eventDay = new Date(event.eventDate).getDate();
+                const eventMonth = new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" });
+                const daysUntil = Math.ceil((new Date(event.eventDate) - new Date()) / (1000 * 60 * 60 * 24));
+                const daysLabel = daysUntil === 0 ? "Today" : daysUntil === 1 ? "Tomorrow" : `In ${daysUntil} days`;
+                return (
+                  <Link
+                    key={event._id}
+                    to={`/events/${event._id}`}
+                    className="bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-red-200 overflow-hidden transition-all duration-300 group"
+                  >
+                    <div className="bg-gradient-to-r from-red-600 to-red-700 p-5 text-white">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-4xl font-black leading-none">{eventDay}</p>
+                          <p className="text-xs uppercase tracking-wider mt-1 opacity-90">{eventMonth}</p>
+                        </div>
+                        <span className="bg-white/20 text-xs font-bold px-3 py-1 rounded-full">
+                          {daysLabel}
+                        </span>
                       </div>
-                      <Badge className={
-                        event.status === "Urgent"   ? "bg-red-100 text-red-700 border-red-200" :
-                        event.status === "Open"     ? "bg-blue-100 text-blue-700 border-blue-200" :
-                        "bg-gray-100 text-gray-700 border-gray-200"
-                      }>{event.status}</Badge>
                     </div>
-                  </div>
-                  <h3 className="font-bold text-xl text-gray-900 leading-tight mb-4">{event.title}</h3>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                      <Building className="h-4 w-4 text-red-400 flex-shrink-0" />
-                      <span className="font-medium">{event.organizer}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                      <MapPin className="h-4 w-4 text-red-400 flex-shrink-0" />
-                      <span>{event.date}</span>
-                    </div>
-                    <div className="flex items-start gap-3 text-sm text-gray-500">
-                      <MapPin className="h-4 w-4 mt-0.5 text-red-400 flex-shrink-0" />
-                      <div>
-                        <div className="font-medium text-gray-700">{event.location}</div>
-                        <div className="text-xs text-gray-400">{event.address}</div>
+                    <div className="p-6">
+                      <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">{event.eventCode}</p>
+                      <h3 className="font-bold text-lg text-gray-900 leading-tight mb-3">{event.title}</h3>
+                      <div className="space-y-2 mb-4 text-sm">
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Building className="h-4 w-4 text-red-400 flex-shrink-0" />
+                          <span className="truncate">{event.organizerName}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <MapPin className="h-4 w-4 text-red-400 flex-shrink-0" />
+                          <span className="truncate">{event.venueName}, {event.city}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Clock className="h-4 w-4 text-red-400 flex-shrink-0" />
+                          <span>{event.startTime} — {event.endTime}</span>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <p className="text-xs font-bold text-gray-500 mb-2">Blood Types Needed:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {event.bloodTypesNeeded?.slice(0, 4).map((type) => (
+                            <span key={type} className="bg-red-50 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full border border-red-100">
+                              {type}
+                            </span>
+                          ))}
+                          {event.bloodTypesNeeded?.length > 4 && (
+                            <span className="text-xs text-gray-400 px-2 py-0.5">+{event.bloodTypesNeeded.length - 4}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="border-t border-gray-100 pt-3 flex items-center justify-between">
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <Users className="h-3.5 w-3.5" />
+                          {event.registeredDonors?.length || 0} / {event.targetDonors} registered
+                        </span>
+                        <span className="text-xs font-bold text-red-600 flex items-center gap-1 group-hover:gap-2 transition-all">
+                          View Details <ArrowRight className="h-3 w-3" />
+                        </span>
                       </div>
                     </div>
-                  </div>
-                  <div className="pt-2 mb-6">
-                    <p className="text-sm font-semibold mb-2 text-gray-700">Blood Types Needed:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {event.bloodTypes.map((type, i) => (
-                        <Badge key={i} variant="outline" className="text-xs font-medium border-red-200 text-red-600">{type}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex gap-3 border-t border-gray-100 pt-4">
-                    <Link to="/register" className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-all duration-200">
-                      <Heart className="h-4 w-4" />Join Event
-                    </Link>
-                    <Link to="/help" className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                      Learn More
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
           <div className="text-center mt-16">
-            <Link to="/donate" className="inline-flex items-center gap-2 border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-bold px-10 py-3 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
+            <Link to="/events" className="inline-flex items-center gap-2 border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-bold px-10 py-3 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
               View All Events<ArrowRight className="h-5 w-5" />
             </Link>
           </div>
