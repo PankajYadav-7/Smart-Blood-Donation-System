@@ -776,6 +776,118 @@ async function sendCertificateEarnedEmail({
   await send(donorEmail, `🎉 Congratulations ${donorName}! You earned your ${certTitle} — Jeevan Saarthi`, html);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 12 — Event RSVP Confirmation
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEventRSVPConfirmation({
+  donorEmail, donorName, eventTitle, eventDate, startTime, endTime,
+  venueName, address, city, organizerName, eventCode, contactPhone,
+}) {
+  const formattedDate = new Date(eventDate).toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+
+  const html = `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#c0392b,#922b21);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0;">
+      <p style="color:rgba(255,255,255,0.8);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px;">Jeevan Saarthi — Blood Donation Events</p>
+      <h1 style="color:#ffffff;font-size:24px;margin:0;font-weight:800;">🩸 You're Registered!</h1>
+      <p style="color:rgba(255,255,255,0.9);font-size:14px;margin:8px 0 0;">See you at the event</p>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:28px 24px;">
+      <p style="font-size:15px;color:#333;line-height:1.7;margin:0 0 16px;">
+        Dear <strong>${donorName}</strong>,<br><br>
+        Thank you for registering to attend our blood donation event. Your participation can help save lives across Nepal.
+      </p>
+
+      <!-- Event Card -->
+      <div style="background:#fef2f2;border:2px solid #fecaca;border-radius:12px;padding:20px;margin:20px 0;">
+        <h2 style="margin:0 0 12px;color:#991b1b;font-size:18px;font-weight:800;">${eventTitle}</h2>
+
+        <div style="border-top:1px solid #fecaca;padding-top:12px;">
+          <table style="width:100%;font-size:13px;color:#444;">
+            <tr>
+              <td style="padding:6px 0;color:#888;width:120px;">📅 Date</td>
+              <td style="padding:6px 0;font-weight:600;">${formattedDate}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#888;">⏰ Time</td>
+              <td style="padding:6px 0;font-weight:600;">${startTime} — ${endTime}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#888;">📍 Venue</td>
+              <td style="padding:6px 0;font-weight:600;">${venueName}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#888;">🏙️ Location</td>
+              <td style="padding:6px 0;">${address}, ${city}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#888;">🏥 Organized by</td>
+              <td style="padding:6px 0;font-weight:600;">${organizerName}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#888;">🔖 Event Code</td>
+              <td style="padding:6px 0;font-weight:bold;color:#c0392b;">${eventCode}</td>
+            </tr>
+            ${contactPhone ? `<tr>
+              <td style="padding:6px 0;color:#888;">📞 Contact</td>
+              <td style="padding:6px 0;"><a href="tel:${contactPhone}" style="color:#c0392b;font-weight:600;text-decoration:none;">${contactPhone}</a></td>
+            </tr>` : ""}
+          </table>
+        </div>
+      </div>
+
+      <!-- Preparation Tips -->
+      <div style="background:#f0f9ff;border-left:4px solid #0284c7;border-radius:4px;padding:16px;margin:20px 0;">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#075985;">💡 Before You Come</p>
+        <ul style="margin:0;padding-left:20px;color:#0c4a6e;font-size:13px;line-height:1.7;">
+          <li>Eat a healthy meal 3 hours before donating</li>
+          <li>Drink plenty of water — stay well hydrated</li>
+          <li>Bring a valid government-issued ID</li>
+          <li>Get a good night's sleep</li>
+          <li>Avoid alcohol 24 hours before donation</li>
+          <li>Wear comfortable clothing with sleeves you can roll up</li>
+        </ul>
+      </div>
+
+      <!-- What to expect -->
+      <div style="background:#f8f9fa;border-radius:8px;padding:16px;margin:20px 0;">
+        <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#444;">⏱ What to expect</p>
+        <p style="margin:0;font-size:13px;color:#666;line-height:1.6;">
+          The full process takes about 45-60 minutes. The actual blood donation only takes 8-10 minutes.
+          You will be screened first, then donate, then rest with refreshments before leaving.
+        </p>
+      </div>
+
+      <p style="font-size:14px;color:#555;line-height:1.6;margin:20px 0 0;">
+        If you cannot attend, please cancel your RSVP from your dashboard so another donor can take your slot.
+      </p>
+
+      <!-- CTA -->
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="http://localhost:5173/donor/dashboard"
+          style="display:inline-block;background:linear-gradient(135deg,#c0392b,#922b21);color:white;font-weight:700;font-size:14px;padding:12px 28px;border-radius:10px;text-decoration:none;">
+          View My Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#1a1a1a;padding:18px 24px;text-align:center;border-radius:0 0 12px 12px;">
+      <p style="color:#999;font-size:11px;margin:0;">Jeevan Saarthi — Connecting donors and patients across Nepal</p>
+      <p style="color:#666;font-size:10px;margin:8px 0 0;">Nepal Red Cross Emergency: 01-4270650</p>
+    </div>
+
+  </div>`;
+
+  await send(donorEmail, `🩸 Registration Confirmed: ${eventTitle} — ${formattedDate}`, html);
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
@@ -788,4 +900,5 @@ module.exports = {
   sendEmergencyHospitalAlert,
   sendLifeSavedEmail,
   sendCertificateEarnedEmail,
+  sendEventRSVPConfirmation,
 };
