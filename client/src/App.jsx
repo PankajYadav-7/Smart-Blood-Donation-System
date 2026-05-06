@@ -31,6 +31,7 @@ import PatientProfile from "./pages/PatientProfile";
 import EmergencyDetail    from "./pages/EmergencyDetail";
 import EmergencyOrgDetail from "./pages/EmergencyOrgDetail";
 import EmergencyFeedback from "./pages/EmergencyFeedback";
+import CreateEvent from "./pages/CreateEvent";
 
 function App() {
   return (
@@ -81,6 +82,7 @@ function App() {
         <Route path="/certificates"             element={<Certificates />} />
         <Route path="/verify-pending"           element={<VerifyPending />} />
         <Route path="/request-details/:id"      element={<RequestDetails />} />
+        <Route path="/events/create" element={<CreateEvent />} />
 
         {/* 404 */}
         <Route path="*"                         element={<NotFound />} />
