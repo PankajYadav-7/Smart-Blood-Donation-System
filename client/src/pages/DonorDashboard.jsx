@@ -33,6 +33,10 @@ const DonorDashboard = () => {
   const [emergencyLoading, setEmergencyLoading] = useState(false);
   const [acceptingId,      setAcceptingId]      = useState(null);
 
+  const [myRsvpEvents,    setMyRsvpEvents]    = useState([]);
+  const [allEvents,       setAllEvents]       = useState([]);
+  const [eventsLoading,   setEventsLoading]   = useState(false);
+
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
     fetchAll();
@@ -97,8 +101,22 @@ const DonorDashboard = () => {
     setEmergencyLoading(false);
   };
 
+  const fetchEventsData = async () => {
+    setEventsLoading(true);
+    try {
+      const [rsvpRes, allRes] = await Promise.all([
+        axios.get(`${API}/events/my-rsvps`,   { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/events/upcoming`),
+      ]);
+      setMyRsvpEvents(rsvpRes.data.events || []);
+      setAllEvents(allRes.data.events     || []);
+    } catch (err) { console.log(err); }
+    setEventsLoading(false);
+  };
+
   useEffect(() => {
     if (activeTab === "emergency") fetchEmergencies();
+    if (activeTab === "events")    fetchEventsData();
   }, [activeTab]);
 
   const handleAcceptEmergency = async (emergencyId) => {
@@ -194,6 +212,7 @@ const DonorDashboard = () => {
   const tabs = [
     { id: "requests",     label: "🔔 Nearby Requests" },
     { id: "emergency",    label: "🚨 Emergency"        },
+    { id: "events",       label: "🩸 Events"            },
     { id: "history",      label: "📋 History"          },
     { id: "profile",      label: "👤 Profile & Badges" },
     { id: "certificates", label: "🏆 Certificates"     },
@@ -622,6 +641,157 @@ const DonorDashboard = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* ── EVENTS TAB ── */}
+        {activeTab === "events" && (
+          <div className="space-y-4">
+
+            <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-5 text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <Heart className="h-6 w-6" />
+                <h2 className="text-xl font-bold">🩸 Blood Donation Events</h2>
+              </div>
+              <p className="text-purple-100 text-sm">
+                Browse upcoming blood drives and register to attend. Hospitals and NGOs organize these community events to collect blood donations.
+              </p>
+            </div>
+
+            {eventsLoading && (
+              <div className="text-center py-12">
+                <Loader className="h-8 w-8 text-purple-600 animate-spin mx-auto" />
+              </div>
+            )}
+
+            {/* My RSVP'd Events */}
+            {!eventsLoading && myRsvpEvents.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                    My Registrations ({myRsvpEvents.length})
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {myRsvpEvents.map((event) => {
+                    const eventDay   = new Date(event.eventDate).getDate();
+                    const eventMonth = new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" });
+                    const isPast     = new Date(event.eventDate) < new Date();
+                    return (
+                      <Card key={event._id} className="border-0 shadow-md cursor-pointer hover:shadow-lg transition-all border-l-4 border-l-green-500"
+                        onClick={() => navigate(`/events/${event._id}`)}>
+                        <CardContent className="pt-5 pb-4">
+                          <div className="flex items-start gap-4">
+                            <div className="bg-gradient-to-br from-green-600 to-green-700 text-white rounded-xl w-14 h-14 flex flex-col items-center justify-center flex-shrink-0">
+                              <p className="text-lg font-black leading-none">{eventDay}</p>
+                              <p className="text-xs uppercase mt-0.5">{eventMonth}</p>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                <h3 className="font-bold text-gray-900 text-base truncate">{event.title}</h3>
+                                <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">✅ Registered</Badge>
+                              </div>
+                              <p className="text-xs text-purple-600 font-bold mb-2">{event.eventCode}</p>
+                              <div className="space-y-1 text-sm text-gray-600">
+                                <div className="flex items-center gap-2">
+                                  <Building className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                                  <span className="truncate">{event.organizerName}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                                  <span className="truncate">{event.venueName}, {event.city}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                                  <span>{event.startTime} — {event.endTime}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* All Upcoming Events */}
+            {!eventsLoading && (
+              <div>
+                <div className="flex items-center justify-between mb-3 mt-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-500" />
+                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                      All Upcoming Events ({allEvents.length})
+                    </p>
+                  </div>
+                  <button onClick={() => navigate("/events")} className="text-xs text-purple-600 hover:underline font-bold">
+                    Browse All →
+                  </button>
+                </div>
+
+                {allEvents.length === 0 ? (
+                  <Card className="border-0 shadow-md">
+                    <CardContent className="py-12 text-center">
+                      <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">No upcoming events</h3>
+                      <p className="text-gray-500 text-sm">Hospitals and NGOs will post events here as they are scheduled.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {allEvents.slice(0, 5).map((event) => {
+                      const eventDay     = new Date(event.eventDate).getDate();
+                      const eventMonth   = new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" });
+                      const alreadyRsvp  = event.registeredDonors?.find(d => d.donorEmail === user?.email);
+                      const daysUntil    = Math.ceil((new Date(event.eventDate) - new Date()) / (1000 * 60 * 60 * 24));
+                      const daysLabel    = daysUntil === 0 ? "Today" : daysUntil === 1 ? "Tomorrow" : `In ${daysUntil} days`;
+                      return (
+                        <Card key={event._id} className="border-0 shadow-md cursor-pointer hover:shadow-lg transition-all"
+                          onClick={() => navigate(`/events/${event._id}`)}>
+                          <CardContent className="pt-5 pb-4">
+                            <div className="flex items-start gap-4">
+                              <div className="bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-xl w-14 h-14 flex flex-col items-center justify-center flex-shrink-0">
+                                <p className="text-lg font-black leading-none">{eventDay}</p>
+                                <p className="text-xs uppercase mt-0.5">{eventMonth}</p>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                  <h3 className="font-bold text-gray-900 text-base truncate">{event.title}</h3>
+                                  {alreadyRsvp
+                                    ? <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">✅ Registered</Badge>
+                                    : <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">{daysLabel}</Badge>
+                                  }
+                                </div>
+                                <p className="text-xs text-purple-600 font-bold mb-2">{event.eventCode}</p>
+                                <div className="space-y-1 text-sm text-gray-600">
+                                  <div className="flex items-center gap-2">
+                                    <Building className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                                    <span className="truncate">{event.organizerName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                                    <span className="truncate">{event.venueName}, {event.city}</span>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {event.bloodTypesNeeded?.slice(0, 4).map(t => (
+                                    <span key={t} className="bg-red-50 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{t}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         )}
 
