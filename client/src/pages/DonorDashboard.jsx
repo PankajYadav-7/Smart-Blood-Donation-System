@@ -687,26 +687,59 @@ const DonorDashboard = () => {
               </div>
               <div className="grid grid-cols-2 gap-3 mb-5">
                 {[
-                  { title: "First Drop",    desc: "First donation",  icon: Droplets, target: 1,  color: "from-blue-400 to-blue-600",     bg: "bg-blue-50",   text: "text-blue-600"   },
-                  { title: "Life Saver",    desc: "3+ donations",    icon: Heart,    target: 3,  color: "from-red-400 to-red-600",       bg: "bg-red-50",    text: "text-red-600"    },
-                  { title: "Regular Donor", desc: "5+ donations",    icon: Award,    target: 5,  color: "from-yellow-400 to-orange-500", bg: "bg-yellow-50", text: "text-yellow-600" },
-                  { title: "Hero Donor",    desc: "10+ donations",   icon: Trophy,   target: 10, color: "from-purple-400 to-purple-600", bg: "bg-purple-50", text: "text-purple-600" },
+                  { title: "First Drop",    story: "You donated blood for the first time. One person's life changed forever because of you.",           icon: Droplets, target: 1,  color: "from-blue-400 to-blue-600",     bg: "bg-blue-50",   text: "text-blue-600",   border: "border-blue-200"   },
+                  { title: "Life Saver",    story: "You have donated 3 times. Up to 9 lives have been touched by your generosity.",                     icon: Heart,    target: 3,  color: "from-red-400 to-red-600",       bg: "bg-red-50",    text: "text-red-600",    border: "border-red-200"    },
+                  { title: "Regular Donor", story: "5 donations completed. You are now one of the most reliable donors on Jeevan Saarthi.",             icon: Award,    target: 5,  color: "from-yellow-400 to-orange-500", bg: "bg-yellow-50", text: "text-yellow-600", border: "border-yellow-200" },
+                  { title: "Hero Donor",    story: "10 donations. Up to 30 lives saved. You are not just a donor — you are someone's reason to live.",  icon: Trophy,   target: 10, color: "from-purple-400 to-purple-600", bg: "bg-purple-50", text: "text-purple-600", border: "border-purple-200" },
                 ].map((badge, i) => {
-                  const earned = acceptedCount >= badge.target;
-                  const pct    = Math.min((acceptedCount / badge.target) * 100, 100);
+                  const earned      = acceptedCount >= badge.target;
+                  const pct         = Math.min((acceptedCount / badge.target) * 100, 100);
+                  const livesSaved  = badge.target * 3;
+                  const bronzeCert  = donorProfile?.certificatesEarned?.find(c => c.level === "bronze");
+                  const silverCert  = donorProfile?.certificatesEarned?.find(c => c.level === "silver");
+                  const goldCert    = donorProfile?.certificatesEarned?.find(c => c.level === "gold");
+                  const badgeDateMap = {
+                    1:  bronzeCert?.earnedAt,
+                    3:  silverCert?.earnedAt || bronzeCert?.earnedAt,
+                    5:  silverCert?.earnedAt,
+                    10: goldCert?.earnedAt,
+                  };
+                  const earnedDate  = badgeDateMap[badge.target] && earned
+                    ? new Date(badgeDateMap[badge.target]).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+                    : earned ? new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
                   return (
-                    <div key={i} className={`rounded-xl p-4 border-2 transition-all ${earned ? "border-transparent shadow-md " + badge.bg : "border-gray-100 bg-gray-50"}`}>
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${earned ? "bg-gradient-to-br " + badge.color + " shadow-lg" : "bg-gray-200"}`}>
+                    <div key={i} className={`rounded-xl p-4 border-2 transition-all ${
+                      earned ? `${badge.border} shadow-md ${badge.bg}` : "border-gray-100 bg-gray-50"
+                    }`}>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${
+                        earned ? `bg-gradient-to-br ${badge.color} shadow-lg` : "bg-gray-200"
+                      }`}>
                         <badge.icon className={`h-6 w-6 ${earned ? "text-white" : "text-gray-400"}`} />
                       </div>
-                      <p className={`font-bold text-sm ${earned ? "text-gray-900" : "text-gray-400"}`}>{badge.title}</p>
-                      <p className="text-xs text-gray-400 mb-2">{badge.desc}</p>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5">
-                        <div className={`h-1.5 rounded-full transition-all ${earned ? "bg-gradient-to-r " + badge.color : "bg-gray-300"}`} style={{ width: `${pct}%` }} />
-                      </div>
-                      <p className={`text-xs mt-1 font-semibold ${earned ? badge.text : "text-gray-400"}`}>
-                        {earned ? "✅ Earned" : `${acceptedCount}/${badge.target}`}
+                      <p className={`font-bold text-sm mb-1 ${earned ? "text-gray-900" : "text-gray-400"}`}>
+                        {badge.title}
                       </p>
+                      {earned ? (
+                        <>
+                          <p className="text-xs text-gray-600 leading-relaxed mb-2">{badge.story}</p>
+                          <div className="flex items-center gap-1 mb-2">
+                            <Heart className="h-3 w-3 text-red-500 flex-shrink-0" />
+                            <p className="text-xs font-semibold text-red-600">Up to {livesSaved} lives saved</p>
+                          </div>
+                          {earnedDate && (
+                            <p className="text-xs text-gray-400">Earned {earnedDate}</p>
+                          )}
+                          <p className={`text-xs mt-1 font-semibold ${badge.text}`}>✅ Earned</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs text-gray-400 mb-2">{badge.target} donations needed</p>
+                          <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div className={`h-1.5 rounded-full transition-all bg-gradient-to-r ${badge.color} opacity-40`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <p className="text-xs mt-1 text-gray-400">{acceptedCount}/{badge.target}</p>
+                        </>
+                      )}
                     </div>
                   );
                 })}
