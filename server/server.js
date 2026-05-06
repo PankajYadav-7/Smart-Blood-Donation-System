@@ -38,6 +38,9 @@ app.use("/api/patient", patientRoutes);
 const emergencyRoutes = require("./routes/emergencyRoutes");
 app.use("/api/emergency", emergencyRoutes);
 
+const eventRoutes = require("./routes/eventRoutes");
+app.use("/api/events", eventRoutes);
+
 app.get("/", (req, res) => {
   res.send("Smart Blood Donation API is running");
 });
