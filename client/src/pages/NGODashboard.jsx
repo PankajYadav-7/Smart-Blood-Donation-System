@@ -29,6 +29,10 @@ const NGODashboard = () => {
   const [emergencies,      setEmergencies]      = useState([]);
   const [emergencyLoading, setEmergencyLoading] = useState(false);
 
+  // Events state
+  const [myEvents,         setMyEvents]         = useState([]);
+  const [eventsLoading,    setEventsLoading]    = useState(false);
+
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
     fetchRequests();
@@ -36,6 +40,7 @@ const NGODashboard = () => {
 
   useEffect(() => {
     if (activeTab === "emergency") fetchEmergencies();
+    if (activeTab === "drives")    fetchMyEvents();
   }, [activeTab]);
 
   const showToast = (message, type = "success") => {
@@ -82,6 +87,15 @@ const NGODashboard = () => {
       setEmergencies(res.data.emergencies || []);
     } catch (err) { console.log(err); }
     setEmergencyLoading(false);
+  };
+
+  const fetchMyEvents = async () => {
+    setEventsLoading(true);
+    try {
+      const res = await axios.get(`${API}/events/my-events`, { headers: { Authorization: `Bearer ${token}` } });
+      setMyEvents(res.data.events || []);
+    } catch (err) { console.log(err); }
+    setEventsLoading(false);
   };
 
   const handleFindDonors = async (requestId) => {
@@ -132,11 +146,6 @@ const NGODashboard = () => {
     return `${Math.floor(hrs / 24)}d ago`;
   };
 
-  const bloodDrives = [
-    { name: "Community Blood Drive", date: "April 10, 2026", location: "Kathmandu Community Center", target: 50, registered: 34, status: "Active" },
-    { name: "Emergency Response Drive", date: "April 20, 2026", location: "Patan Hospital", target: 30, registered: 8, status: "Upcoming" },
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -158,8 +167,11 @@ const NGODashboard = () => {
             <h1 className="text-3xl font-bold text-gray-900">🤝 NGO Dashboard</h1>
             <p className="text-gray-500 mt-1">Welcome, {user?.fullName} — coordinate blood donation drives</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <Button onClick={() => navigate("/create-request")}><Plus className="h-4 w-4 mr-2" />New Request</Button>
+            <Button onClick={() => navigate("/events/create")} className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Plus className="h-4 w-4 mr-2" />Create Event
+            </Button>
             <Button variant="outline" onClick={handleLogout} className="text-red-600 border-red-200 hover:bg-red-50">Logout</Button>
           </div>
         </div>
@@ -448,40 +460,98 @@ const NGODashboard = () => {
         {/* ── BLOOD DRIVES ── */}
         {activeTab === "drives" && (
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">Blood Donation Drives</h2>
-              <Button onClick={() => navigate("/create-request")}><Plus className="h-4 w-4 mr-2" />Create Drive</Button>
+
+            <div className="bg-purple-600 rounded-2xl p-5 text-white">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Heart className="h-6 w-6" />
+                    <h2 className="text-xl font-bold">❤️ Your Blood Donation Drives</h2>
+                  </div>
+                  <p className="text-purple-100 text-sm">
+                    Organize community blood drives. Donors will see your events on the public Events page and can RSVP directly.
+                  </p>
+                </div>
+                <Button onClick={() => navigate("/events/create")} className="bg-white text-purple-600 hover:bg-purple-50 font-bold flex-shrink-0">
+                  <Plus className="h-4 w-4 mr-2" />New Event
+                </Button>
+              </div>
             </div>
-            {bloodDrives.map((drive, i) => (
-              <Card key={i} className="border-0 shadow-md hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6 pb-5">
-                  <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
-                        <Heart className="h-6 w-6 text-red-600" />
+
+            {eventsLoading && (
+              <div className="text-center py-12">
+                <Loader className="h-8 w-8 text-purple-600 animate-spin mx-auto" />
+              </div>
+            )}
+
+            {!eventsLoading && myEvents.length === 0 && (
+              <Card className="border-0 shadow-md">
+                <CardContent className="py-12 text-center">
+                  <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">No drives yet</h3>
+                  <p className="text-gray-500 text-sm mb-4">Create your first blood donation drive to start collecting RSVPs from donors.</p>
+                  <Button onClick={() => navigate("/events/create")} className="bg-purple-600 hover:bg-purple-700">
+                    <Plus className="h-4 w-4 mr-2" />Create First Drive
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {myEvents.map((event) => {
+              const eventDay   = new Date(event.eventDate).getDate();
+              const eventMonth = new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" });
+              const isPast     = new Date(event.eventDate) < new Date();
+              const statusColor = event.status === "cancelled" ? "bg-red-100 text-red-700" :
+                                  event.status === "completed" ? "bg-gray-100 text-gray-700" :
+                                  isPast                       ? "bg-orange-100 text-orange-700" :
+                                  "bg-green-100 text-green-700";
+              const statusLabel = event.status === "cancelled" ? "Cancelled" :
+                                  event.status === "completed" ? "Completed" :
+                                  isPast                       ? "Past Event" :
+                                  "Upcoming";
+              const pct = (event.registeredDonors?.length / event.targetDonors) * 100;
+              return (
+                <Card key={event._id} className="border-0 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() => navigate(`/events/${event._id}`)}>
+                  <CardContent className="pt-5 pb-4">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-xl w-16 h-16 flex flex-col items-center justify-center flex-shrink-0">
+                        <p className="text-xl font-black leading-none">{eventDay}</p>
+                        <p className="text-xs uppercase mt-0.5">{eventMonth}</p>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900">{drive.name}</h3>
-                        <div className="flex items-center gap-3 mt-1">
-                          <p className="text-sm text-gray-500 flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{drive.date}</p>
-                          <p className="text-sm text-gray-500 flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{drive.location}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                          <h3 className="font-bold text-gray-900 text-base hover:text-purple-600 transition-colors truncate">
+                            {event.title}
+                          </h3>
+                          <Badge className={statusColor}>{statusLabel}</Badge>
+                        </div>
+                        <p className="text-xs text-purple-600 font-bold mb-2">{event.eventCode}</p>
+                        <div className="space-y-1 text-sm text-gray-600 mb-3">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{event.venueName}, {event.city}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                            <span>{event.startTime} — {event.endTime}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Registration Progress</span>
+                            <span className="font-semibold text-gray-700">{event.registeredDonors?.length || 0} / {event.targetDonors} donors</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="bg-purple-600 h-2 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <Badge className={drive.status === "Active" ? "bg-green-100 text-green-700 border-green-200" : "bg-blue-100 text-blue-700 border-blue-200"}>{drive.status}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Registration Progress</span>
-                      <span className="font-semibold text-gray-700">{drive.registered} / {drive.target} donors</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-red-600 h-2 rounded-full transition-all" style={{ width: `${(drive.registered / drive.target) * 100}%` }} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
