@@ -28,6 +28,10 @@ const HospitalDashboard = () => {
   const [emergencies,      setEmergencies]      = useState([]);
   const [emergencyLoading, setEmergencyLoading] = useState(false);
 
+  // Events state
+  const [myEvents,         setMyEvents]         = useState([]);
+  const [eventsLoading,    setEventsLoading]    = useState(false);
+
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
     fetchMyRequests();
@@ -35,6 +39,7 @@ const HospitalDashboard = () => {
 
   useEffect(() => {
     if (activeTab === "emergency") fetchEmergencies();
+    if (activeTab === "events")    fetchMyEvents();
   }, [activeTab]);
 
   const fetchMyRequests = async () => {
@@ -77,6 +82,15 @@ const HospitalDashboard = () => {
     setEmergencyLoading(false);
   };
 
+  const fetchMyEvents = async () => {
+    setEventsLoading(true);
+    try {
+      const res = await axios.get(`${API}/events/my-events`, { headers: { Authorization: `Bearer ${token}` } });
+      setMyEvents(res.data.events || []);
+    } catch (err) { console.log(err); }
+    setEventsLoading(false);
+  };
+
   const handleFindDonors = async (requestId) => {
     try {
       const res = await axios.post(`${API}/matches/find/${requestId}`, {}, { headers: { Authorization: `Bearer ${token}` } });
@@ -105,6 +119,7 @@ const HospitalDashboard = () => {
   const tabs = [
     { id: "requests",  label: "📋 My Requests"      },
     { id: "emergency", label: "🚨 Emergency Alerts"  },
+    { id: "events",    label: "🩸 My Events"          },
     { id: "closed",    label: "✅ Closed Requests"   },
   ];
 
@@ -134,9 +149,12 @@ const HospitalDashboard = () => {
             <h1 className="text-3xl font-bold text-gray-900">🏥 Hospital Dashboard</h1>
             <p className="text-gray-500 mt-1">Welcome, {user?.fullName} — manage your blood requests</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <Button onClick={() => navigate("/create-request")}>
               <Plus className="h-4 w-4 mr-2" />New Blood Request
+            </Button>
+            <Button onClick={() => navigate("/events/create")} className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Plus className="h-4 w-4 mr-2" />Create Event
             </Button>
             <Button variant="outline" onClick={handleLogout} className="text-red-600 border-red-200 hover:bg-red-50">
               Logout
@@ -419,6 +437,105 @@ const HospitalDashboard = () => {
                         <Button size="sm" variant="outline" onClick={() => handleClose(request._id)} className="text-red-600 border-red-200 hover:bg-red-50">
                           <X className="h-4 w-4 mr-1" />Close
                         </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── EVENTS TAB ── */}
+        {activeTab === "events" && (
+          <div className="space-y-4">
+
+            <div className="bg-purple-600 rounded-2xl p-5 text-white">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Heart className="h-6 w-6" />
+                    <h2 className="text-xl font-bold">🩸 Your Blood Donation Events</h2>
+                  </div>
+                  <p className="text-purple-100 text-sm">
+                    Organize community blood drives. Donors will see your events on the public Events page and can RSVP directly.
+                  </p>
+                </div>
+                <Button onClick={() => navigate("/events/create")} className="bg-white text-purple-600 hover:bg-purple-50 font-bold flex-shrink-0">
+                  <Plus className="h-4 w-4 mr-2" />New Event
+                </Button>
+              </div>
+            </div>
+
+            {eventsLoading && (
+              <div className="text-center py-12">
+                <Loader className="h-8 w-8 text-purple-600 animate-spin mx-auto" />
+              </div>
+            )}
+
+            {!eventsLoading && myEvents.length === 0 && (
+              <Card className="border-0 shadow-md">
+                <CardContent className="py-12 text-center">
+                  <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">No events yet</h3>
+                  <p className="text-gray-500 text-sm mb-4">Create your first blood donation event to start collecting RSVPs from donors.</p>
+                  <Button onClick={() => navigate("/events/create")} className="bg-purple-600 hover:bg-purple-700">
+                    <Plus className="h-4 w-4 mr-2" />Create First Event
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {myEvents.map((event) => {
+              const eventDay   = new Date(event.eventDate).getDate();
+              const eventMonth = new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" });
+              const isPast     = new Date(event.eventDate) < new Date();
+              const statusColor = event.status === "cancelled" ? "bg-red-100 text-red-700" :
+                                  event.status === "completed" ? "bg-gray-100 text-gray-700" :
+                                  isPast                       ? "bg-orange-100 text-orange-700" :
+                                  "bg-green-100 text-green-700";
+              const statusLabel = event.status === "cancelled" ? "Cancelled" :
+                                  event.status === "completed" ? "Completed" :
+                                  isPast                       ? "Past Event" :
+                                  "Upcoming";
+              return (
+                <Card key={event._id} className="border-0 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() => navigate(`/events/${event._id}`)}>
+                  <CardContent className="pt-5 pb-4">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-xl w-16 h-16 flex flex-col items-center justify-center flex-shrink-0">
+                        <p className="text-xl font-black leading-none">{eventDay}</p>
+                        <p className="text-xs uppercase mt-0.5">{eventMonth}</p>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                          <h3 className="font-bold text-gray-900 text-base hover:text-purple-600 transition-colors truncate">
+                            {event.title}
+                          </h3>
+                          <Badge className={statusColor}>{statusLabel}</Badge>
+                        </div>
+                        <p className="text-xs text-purple-600 font-bold mb-2">{event.eventCode}</p>
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{event.venueName}, {event.city}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                            <span>{event.startTime} — {event.endTime}</span>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-3 text-xs">
+                          <span className="bg-blue-50 text-blue-700 font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {event.registeredDonors?.length || 0} / {event.targetDonors} registered
+                          </span>
+                          {event.bloodTypesNeeded?.slice(0, 4).map((type) => (
+                            <span key={type} className="bg-red-50 text-red-700 font-bold px-2 py-1 rounded-full">
+                              {type}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
