@@ -887,6 +887,162 @@ async function sendEventRSVPConfirmation({
 
   await send(donorEmail, `🩸 Registration Confirmed: ${eventTitle} — ${formattedDate}`, html);
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 13 — Event Updated Notification (sent to all registered donors)
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEventUpdateEmail({
+  donorEmail, donorName, eventTitle, eventDate, startTime, endTime,
+  venueName, address, city, organizerName, eventCode, changes,
+}) {
+  const formattedDate = new Date(eventDate).toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+
+  const html = `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
+    <div style="background:linear-gradient(135deg,#d97706,#b45309);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0;">
+      <p style="color:rgba(255,255,255,0.8);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px;">Jeevan Saarthi — Event Update</p>
+      <h1 style="color:#ffffff;font-size:24px;margin:0;font-weight:800;">⚠️ Event Details Updated</h1>
+      <p style="color:rgba(255,255,255,0.9);font-size:14px;margin:8px 0 0;">An event you registered for has been updated</p>
+    </div>
+    <div style="padding:28px 24px;">
+      <p style="font-size:15px;color:#333;line-height:1.7;margin:0 0 16px;">
+        Dear <strong>${donorName}</strong>,<br><br>
+        The organizer has updated the details for an event you are registered for.
+        Please review the new information below.
+      </p>
+      <div style="background:#fffbeb;border:2px solid #fcd34d;border-radius:12px;padding:20px;margin:20px 0;">
+        <h2 style="margin:0 0 12px;color:#92400e;font-size:18px;font-weight:800;">${eventTitle}</h2>
+        <table style="width:100%;font-size:13px;color:#444;">
+          <tr><td style="padding:6px 0;color:#888;width:120px;">📅 Date</td><td style="padding:6px 0;font-weight:600;">${formattedDate}</td></tr>
+          <tr><td style="padding:6px 0;color:#888;">⏰ Time</td><td style="padding:6px 0;font-weight:600;">${startTime} — ${endTime}</td></tr>
+          <tr><td style="padding:6px 0;color:#888;">📍 Venue</td><td style="padding:6px 0;font-weight:600;">${venueName}</td></tr>
+          <tr><td style="padding:6px 0;color:#888;">🏙️ Location</td><td style="padding:6px 0;">${address}, ${city}</td></tr>
+          <tr><td style="padding:6px 0;color:#888;">🏥 Organizer</td><td style="padding:6px 0;font-weight:600;">${organizerName}</td></tr>
+          <tr><td style="padding:6px 0;color:#888;">🔖 Event Code</td><td style="padding:6px 0;font-weight:bold;color:#d97706;">${eventCode}</td></tr>
+        </table>
+      </div>
+      ${changes ? `<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:4px;padding:16px;margin:16px 0;">
+        <p style="margin:0;font-size:13px;font-weight:700;color:#92400e;">What changed:</p>
+        <p style="margin:8px 0 0;font-size:13px;color:#78350f;">${changes}</p>
+      </div>` : ""}
+      <p style="font-size:13px;color:#555;margin:16px 0;">
+        Your registration is still active. If the new details no longer work for you, you can cancel your RSVP from your dashboard.
+      </p>
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="http://localhost:5173/events/${eventCode}"
+          style="display:inline-block;background:linear-gradient(135deg,#d97706,#b45309);color:white;font-weight:700;font-size:14px;padding:12px 28px;border-radius:10px;text-decoration:none;">
+          View Updated Event
+        </a>
+      </div>
+    </div>
+    <div style="background:#1a1a1a;padding:18px 24px;text-align:center;border-radius:0 0 12px 12px;">
+      <p style="color:#999;font-size:11px;margin:0;">Jeevan Saarthi — Connecting donors and patients across Nepal</p>
+      <p style="color:#666;font-size:10px;margin:8px 0 0;">Nepal Red Cross Emergency: 01-4270650</p>
+    </div>
+  </div>`;
+
+  await send(donorEmail, `⚠️ Event Updated: ${eventTitle} — Please Check New Details`, html);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 14 — Event Cancelled Notification (sent to all registered donors)
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEventCancelledEmail({
+  donorEmail, donorName, eventTitle, eventDate, organizerName, eventCode,
+}) {
+  const formattedDate = new Date(eventDate).toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+
+  const html = `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
+    <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0;">
+      <p style="color:rgba(255,255,255,0.8);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px;">Jeevan Saarthi — Event Cancelled</p>
+      <h1 style="color:#ffffff;font-size:24px;margin:0;font-weight:800;">❌ Event Cancelled</h1>
+      <p style="color:rgba(255,255,255,0.9);font-size:14px;margin:8px 0 0;">An event you registered for has been cancelled</p>
+    </div>
+    <div style="padding:28px 24px;">
+      <p style="font-size:15px;color:#333;line-height:1.7;margin:0 0 16px;">
+        Dear <strong>${donorName}</strong>,<br><br>
+        We are sorry to inform you that the following event has been cancelled by the organizer.
+        Your RSVP has been automatically removed.
+      </p>
+      <div style="background:#fef2f2;border:2px solid #fecaca;border-radius:12px;padding:20px;margin:20px 0;text-align:center;">
+        <p style="font-size:11px;color:#dc2626;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">Cancelled Event</p>
+        <h2 style="margin:0 0 8px;color:#991b1b;font-size:20px;font-weight:800;">${eventTitle}</h2>
+        <p style="margin:0;font-size:13px;color:#666;">📅 ${formattedDate}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#666;">🏥 Organized by ${organizerName}</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#999;">Event Code: ${eventCode}</p>
+      </div>
+      <div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:4px;padding:16px;margin:16px 0;">
+        <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
+          💚 Thank you for your willingness to donate blood. Your generosity matters.
+          Please check our Events page for other upcoming blood donation drives near you.
+        </p>
+      </div>
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="http://localhost:5173/events"
+          style="display:inline-block;background:linear-gradient(135deg,#c0392b,#922b21);color:white;font-weight:700;font-size:14px;padding:12px 28px;border-radius:10px;text-decoration:none;">
+          Browse Other Events
+        </a>
+      </div>
+    </div>
+    <div style="background:#1a1a1a;padding:18px 24px;text-align:center;border-radius:0 0 12px 12px;">
+      <p style="color:#999;font-size:11px;margin:0;">Jeevan Saarthi — Connecting donors and patients across Nepal</p>
+      <p style="color:#666;font-size:10px;margin:8px 0 0;">Nepal Red Cross Emergency: 01-4270650</p>
+    </div>
+  </div>`;
+
+  await send(donorEmail, `❌ Event Cancelled: ${eventTitle} — ${formattedDate}`, html);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 15 — RSVP Cancellation Confirmation (sent to donor when they cancel)
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendRSVPCancelledEmail({
+  donorEmail, donorName, eventTitle, eventDate, organizerName, eventCode,
+}) {
+  const formattedDate = new Date(eventDate).toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+
+  const html = `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
+    <div style="background:linear-gradient(135deg,#6b7280,#4b5563);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0;">
+      <p style="color:rgba(255,255,255,0.8);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px;">Jeevan Saarthi — RSVP Cancelled</p>
+      <h1 style="color:#ffffff;font-size:24px;margin:0;font-weight:800;">RSVP Cancelled</h1>
+      <p style="color:rgba(255,255,255,0.9);font-size:14px;margin:8px 0 0;">Your registration has been removed</p>
+    </div>
+    <div style="padding:28px 24px;">
+      <p style="font-size:15px;color:#333;line-height:1.7;margin:0 0 16px;">
+        Dear <strong>${donorName}</strong>,<br><br>
+        Your RSVP for the following event has been successfully cancelled.
+      </p>
+      <div style="background:#f9fafb;border:2px solid #e5e7eb;border-radius:12px;padding:20px;margin:20px 0;">
+        <h2 style="margin:0 0 8px;color:#374151;font-size:18px;font-weight:800;">${eventTitle}</h2>
+        <p style="margin:0;font-size:13px;color:#666;">📅 ${formattedDate}</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#666;">🏥 Organized by ${organizerName}</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#999;">Event Code: ${eventCode}</p>
+      </div>
+      <p style="font-size:13px;color:#555;margin:16px 0;">
+        Your slot has been freed up for another donor. If you change your mind, you can re-register from the Events page as long as the event is not full.
+      </p>
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="http://localhost:5173/events"
+          style="display:inline-block;background:linear-gradient(135deg,#c0392b,#922b21);color:white;font-weight:700;font-size:14px;padding:12px 28px;border-radius:10px;text-decoration:none;">
+          Browse Events
+        </a>
+      </div>
+    </div>
+    <div style="background:#1a1a1a;padding:18px 24px;text-align:center;border-radius:0 0 12px 12px;">
+      <p style="color:#999;font-size:11px;margin:0;">Jeevan Saarthi — Connecting donors and patients across Nepal</p>
+      <p style="color:#666;font-size:10px;margin:8px 0 0;">Nepal Red Cross Emergency: 01-4270650</p>
+    </div>
+  </div>`;
+
+  await send(donorEmail, `RSVP Cancelled: ${eventTitle} — ${formattedDate}`, html);
+}
 
 module.exports = {
   notifyDonorOfRequest,
@@ -901,4 +1057,7 @@ module.exports = {
   sendLifeSavedEmail,
   sendCertificateEarnedEmail,
   sendEventRSVPConfirmation,
+  sendEventUpdateEmail,
+  sendEventCancelledEmail,
+  sendRSVPCancelledEmail,
 };

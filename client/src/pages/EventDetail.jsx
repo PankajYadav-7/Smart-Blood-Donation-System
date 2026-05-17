@@ -258,7 +258,9 @@ const EventDetail = () => {
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{event.organizerName}</p>
-                <p className="text-xs text-gray-500 uppercase tracking-wider">{event.organizerType}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">
+                  {event.organizerType === "hospital" ? "Hospital" : event.organizerType === "ngo" ? "NGO" : event.organizerType}
+                </p>
               </div>
             </div>
             {event.contactPerson && (
@@ -375,15 +377,26 @@ const EventDetail = () => {
             {!isPastEvent && event.status !== "cancelled" && (
               <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
                 <h3 className="font-bold text-gray-900 mb-3">Event Management</h3>
-                <button
-                  onClick={handleCancelEvent}
-                  className="w-full border-2 border-red-200 text-red-600 hover:bg-red-50 font-bold py-3 rounded-xl transition-all"
-                >
-                  ❌ Cancel This Event
-                </button>
-                <p className="text-xs text-gray-400 mt-2 text-center">
-                  Cancelling will mark the event as cancelled and registered donors will see the status updated.
-                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => navigate(`/events/${id}/edit`)}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    ✏️ Edit Event Details
+                  </button>
+                  <p className="text-xs text-gray-400 text-center">
+                    Editing will notify all registered donors about any changes via email.
+                  </p>
+                  <button
+                    onClick={handleCancelEvent}
+                    className="w-full border-2 border-red-200 text-red-600 hover:bg-red-50 font-bold py-3 rounded-xl transition-all"
+                  >
+                    ❌ Cancel This Event
+                  </button>
+                  <p className="text-xs text-gray-400 text-center">
+                    Cancelling will notify all registered donors by email immediately.
+                  </p>
+                </div>
               </div>
             )}
 

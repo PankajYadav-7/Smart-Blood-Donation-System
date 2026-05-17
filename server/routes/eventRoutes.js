@@ -233,7 +233,9 @@ router.delete("/:id/rsvp", protect, async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    const donorUser = await User.findById(req.user.userId).select("email");
+    const donorUser = await User.findById(req.user.userId).select("email fullName");
+
+    const donorEntry = event.registeredDonors.find(d => d.donorEmail === donorUser.email);
 
     event.registeredDonors = event.registeredDonors.filter(
       d => d.donorEmail !== donorUser.email
@@ -241,7 +243,24 @@ router.delete("/:id/rsvp", protect, async (req, res) => {
 
     await event.save();
 
-    return res.status(200).json({ message: "Your RSVP has been cancelled" });
+    // Send RSVP cancellation confirmation to donor
+    if (donorEntry) {
+      try {
+        const { sendRSVPCancelledEmail } = require("../utils/emailService");
+        sendRSVPCancelledEmail({
+          donorEmail:    donorUser.email,
+          donorName:     donorUser.fullName,
+          eventTitle:    event.title,
+          eventDate:     event.eventDate,
+          organizerName: event.organizerName,
+          eventCode:     event.eventCode,
+        });
+      } catch (emailErr) {
+        console.error("RSVP cancel email error:", emailErr.message);
+      }
+    }
+
+    return res.status(200).json({ message: "Your RSVP has been cancelled. A confirmation email has been sent." });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -259,10 +278,49 @@ router.patch("/:id", protect, async (req, res) => {
       return res.status(403).json({ message: "You can only update your own events" });
     }
 
+    // Track what changed for the email
+    const changes = [];
+    if (req.body.eventDate && req.body.eventDate !== event.eventDate?.toISOString()?.split("T")[0]) changes.push("Date updated");
+    if (req.body.startTime && req.body.startTime !== event.startTime) changes.push("Start time updated");
+    if (req.body.endTime   && req.body.endTime   !== event.endTime)   changes.push("End time updated");
+    if (req.body.venueName && req.body.venueName !== event.venueName) changes.push("Venue updated");
+    if (req.body.address   && req.body.address   !== event.address)   changes.push("Address updated");
+    if (req.body.city      && req.body.city      !== event.city)      changes.push("City updated");
+
     Object.assign(event, req.body);
     await event.save();
 
-    return res.status(200).json({ message: "Event updated", event });
+    // Send update email to all registered donors
+    if (event.registeredDonors?.length > 0 && changes.length > 0) {
+      const { sendEventUpdateEmail } = require("../utils/emailService");
+      for (const donor of event.registeredDonors) {
+        if (donor.donorEmail) {
+          try {
+            sendEventUpdateEmail({
+              donorEmail:    donor.donorEmail,
+              donorName:     donor.donorName,
+              eventTitle:    event.title,
+              eventDate:     event.eventDate,
+              startTime:     event.startTime,
+              endTime:       event.endTime,
+              venueName:     event.venueName,
+              address:       event.address,
+              city:          event.city,
+              organizerName: event.organizerName,
+              eventCode:     event.eventCode,
+              changes:       changes.join(", "),
+            });
+          } catch (emailErr) {
+            console.error("Update email error:", emailErr.message);
+          }
+        }
+      }
+    }
+
+    return res.status(200).json({
+      message: `Event updated successfully${changes.length > 0 ? `. ${event.registeredDonors?.length || 0} donor(s) notified.` : ""}`,
+      event,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -283,7 +341,31 @@ router.patch("/:id/cancel", protect, async (req, res) => {
     event.status = "cancelled";
     await event.save();
 
-    return res.status(200).json({ message: "Event cancelled", event });
+    // Send cancellation email to all registered donors
+    if (event.registeredDonors?.length > 0) {
+      const { sendEventCancelledEmail } = require("../utils/emailService");
+      for (const donor of event.registeredDonors) {
+        if (donor.donorEmail) {
+          try {
+            sendEventCancelledEmail({
+              donorEmail:    donor.donorEmail,
+              donorName:     donor.donorName,
+              eventTitle:    event.title,
+              eventDate:     event.eventDate,
+              organizerName: event.organizerName,
+              eventCode:     event.eventCode,
+            });
+          } catch (emailErr) {
+            console.error("Cancel email error:", emailErr.message);
+          }
+        }
+      }
+    }
+
+    return res.status(200).json({
+      message: `Event cancelled. ${event.registeredDonors?.length || 0} registered donor(s) have been notified.`,
+      event,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }

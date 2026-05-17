@@ -679,7 +679,7 @@ const DonorDashboard = () => {
                     const eventMonth = new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" });
                     const isPast     = new Date(event.eventDate) < new Date();
                     return (
-                      <Card key={event._id} className="border-0 shadow-md cursor-pointer hover:shadow-lg transition-all border-l-4 border-l-green-500"
+                      <Card key={event._id} className={`border-0 shadow-md cursor-pointer hover:shadow-lg transition-all border-l-4 ${event.status === "cancelled" ? "border-l-red-500 opacity-75" : "border-l-green-500"}`}
                         onClick={() => navigate(`/events/${event._id}`)}>
                         <CardContent className="pt-5 pb-4">
                           <div className="flex items-start gap-4">
@@ -760,10 +760,15 @@ const DonorDashboard = () => {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
                                   <h3 className="font-bold text-gray-900 text-base truncate">{event.title}</h3>
-                                  {alreadyRsvp
-                                    ? <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">✅ Registered</Badge>
-                                    : <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">{daysLabel}</Badge>
-                                  }
+                                  {alreadyRsvp ? (
+                                    event.status === "cancelled" ? (
+                                      <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">❌ Cancelled</Badge>
+                                    ) : (
+                                      <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">✅ Registered</Badge>
+                                    )
+                                  ) : (
+                                    <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">{daysLabel}</Badge>
+                                  )}
                                 </div>
                                 <p className="text-xs text-purple-600 font-bold mb-2">{event.eventCode}</p>
                                 <div className="space-y-1 text-sm text-gray-600">
