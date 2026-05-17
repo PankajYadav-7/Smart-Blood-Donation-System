@@ -690,7 +690,11 @@ const DonorDashboard = () => {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
                                 <h3 className="font-bold text-gray-900 text-base truncate">{event.title}</h3>
-                                <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">✅ Registered</Badge>
+                                {event.status === "cancelled" ? (
+                                  <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">❌ Cancelled</Badge>
+                                ) : (
+                                  <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">✅ Registered</Badge>
+                                )}
                               </div>
                               <p className="text-xs text-purple-600 font-bold mb-2">{event.eventCode}</p>
                               <div className="space-y-1 text-sm text-gray-600">
