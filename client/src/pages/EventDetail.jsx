@@ -78,6 +78,19 @@ const EventDetail = () => {
     setRsvping(false);
   };
 
+  const handleCancelEvent = async () => {
+    if (!window.confirm("Are you sure you want to cancel this event? All registered donors will be notified.")) return;
+    try {
+      await axios.patch(`${API}/events/${id}/cancel`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      showToast("Event cancelled successfully");
+      fetchEvent();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to cancel event", "error");
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -110,6 +123,9 @@ const EventDetail = () => {
     d => d.donorEmail === user?.email
   );
 
+  const isOrganizer = user && event.organizerId === user?.id;
+  const isDonor     = user?.role === "donor";
+
   const formattedDate = new Date(event.eventDate).toLocaleDateString("en-GB", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
@@ -132,8 +148,8 @@ const EventDetail = () => {
 
       <div className="max-w-3xl mx-auto px-4 py-8">
 
-        <button onClick={() => navigate("/events")} className="flex items-center gap-2 text-gray-500 hover:text-gray-800 mb-5 text-sm font-medium">
-          <ArrowLeft className="h-4 w-4" />Back to Events
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-800 mb-5 text-sm font-medium">
+          <ArrowLeft className="h-4 w-4" />Back
         </button>
 
         {/* RSVP Success Banner */}
@@ -291,8 +307,103 @@ const EventDetail = () => {
           </div>
         )}
 
-        {/* RSVP Button */}
-        {!isPastEvent && event.status !== "cancelled" && (
+        {/* ── ORGANIZER VIEW ── */}
+        {isOrganizer && (
+          <div className="space-y-4">
+
+            {/* Organizer banner */}
+            <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-5 text-white">
+              <div className="flex items-center gap-3 mb-1">
+                <Building className="h-6 w-6" />
+                <h3 className="text-lg font-bold">Organizer View</h3>
+              </div>
+              <p className="text-purple-100 text-sm">You created this event. You can manage registrations and event details below.</p>
+            </div>
+
+            {/* Registered Donors List */}
+            <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  Registered Donors ({event.registeredDonors?.length || 0})
+                </h3>
+                <span className="text-xs text-gray-400">{event.registeredDonors?.length || 0} / {event.targetDonors} target</span>
+              </div>
+              {event.registeredDonors?.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-sm">
+                  No donors registered yet. Donors will appear here when they RSVP.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {event.registeredDonors.map((donor, i) => (
+                    <div key={i} className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <User className="h-4 w-4 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900 text-sm">{donor.donorName}</p>
+                            <p className="text-xs text-gray-500">
+                              Registered {new Date(donor.registeredAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          {donor.donorBloodGroup && (
+                            <span className="bg-red-50 text-red-700 font-bold px-2 py-1 rounded-full">{donor.donorBloodGroup}</span>
+                          )}
+                          {donor.donorPhone && (
+                            <a href={`tel:${donor.donorPhone}`} className="text-green-600 font-bold hover:underline flex items-center gap-1">
+                              <Phone className="h-3 w-3" />{donor.donorPhone}
+                            </a>
+                          )}
+                          {donor.donorEmail && (
+                            <a href={`mailto:${donor.donorEmail}`} className="text-blue-600 hover:underline flex items-center gap-1">
+                              <Mail className="h-3 w-3" />Email
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Organizer Actions */}
+            {!isPastEvent && event.status !== "cancelled" && (
+              <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+                <h3 className="font-bold text-gray-900 mb-3">Event Management</h3>
+                <button
+                  onClick={handleCancelEvent}
+                  className="w-full border-2 border-red-200 text-red-600 hover:bg-red-50 font-bold py-3 rounded-xl transition-all"
+                >
+                  ❌ Cancel This Event
+                </button>
+                <p className="text-xs text-gray-400 mt-2 text-center">
+                  Cancelling will mark the event as cancelled and registered donors will see the status updated.
+                </p>
+              </div>
+            )}
+
+            {event.status === "cancelled" && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+                <p className="font-bold text-red-700">This event has been cancelled</p>
+              </div>
+            )}
+
+            {isPastEvent && event.status !== "cancelled" && (
+              <div className="bg-gray-100 rounded-2xl p-4 text-center">
+                <p className="font-bold text-gray-700">This event has already taken place</p>
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* ── DONOR VIEW ── */}
+        {!isOrganizer && !isPastEvent && event.status !== "cancelled" && (
           <>
             {alreadyRSVPed ? (
               <div className="space-y-3">
@@ -338,13 +449,13 @@ const EventDetail = () => {
           </>
         )}
 
-        {isPastEvent && (
+        {!isOrganizer && isPastEvent && (
           <div className="bg-gray-100 rounded-2xl p-4 text-center">
             <p className="font-bold text-gray-700">This event has already taken place</p>
           </div>
         )}
 
-        {event.status === "cancelled" && (
+        {!isOrganizer && event.status === "cancelled" && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
             <p className="font-bold text-red-700">This event has been cancelled</p>
           </div>

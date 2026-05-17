@@ -732,7 +732,7 @@ const DonorDashboard = () => {
                   </button>
                 </div>
 
-                {allEvents.length === 0 ? (
+                {allEvents.filter(e => !e.registeredDonors?.find(d => d.donorEmail === user?.email)).length === 0 ? (
                   <Card className="border-0 shadow-md">
                     <CardContent className="py-12 text-center">
                       <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -742,7 +742,7 @@ const DonorDashboard = () => {
                   </Card>
                 ) : (
                   <div className="space-y-3">
-                    {allEvents.slice(0, 5).map((event) => {
+                    {allEvents.filter(e => !e.registeredDonors?.find(d => d.donorEmail === user?.email)).slice(0, 5).map((event) => {
                       const eventDay     = new Date(event.eventDate).getDate();
                       const eventMonth   = new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" });
                       const alreadyRsvp  = event.registeredDonors?.find(d => d.donorEmail === user?.email);
