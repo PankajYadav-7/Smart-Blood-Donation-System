@@ -271,13 +271,13 @@ const Hospitals = () => {
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button size="lg" asChild>
-                      <Link to="/register">
-                        <Building2 className="h-5 w-5 mr-2" />Apply for Partnership
+                      <Link to="/partnership-application">
+                        <Building2 className="h-5 w-5 mr-2" />Learn About Partnership
                       </Link>
                     </Button>
                     <Button size="lg" variant="outline" asChild>
-                      <Link to="/help">
-                        <Phone className="h-5 w-5 mr-2" />Contact Us
+                      <Link to="/register">
+                        <Phone className="h-5 w-5 mr-2" />Register Organisation
                       </Link>
                     </Button>
                   </div>
