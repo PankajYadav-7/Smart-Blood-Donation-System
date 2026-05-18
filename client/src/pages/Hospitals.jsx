@@ -18,6 +18,7 @@ const Hospitals = () => {
   const [activeTab,   setActiveTab]   = useState("directory");
   const [hospitals,   setHospitals]   = useState([]);
   const [loading,     setLoading]     = useState(true);
+  const [typeFilter,  setTypeFilter]  = useState("all");
 
   useEffect(() => {
     axios.get(`${API}/auth/hospitals`)
@@ -26,10 +27,13 @@ const Hospitals = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = hospitals.filter(h =>
-    h.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    h.address?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = hospitals.filter(h => {
+    const matchSearch = !searchTerm ||
+      h.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      h.address?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchType = typeFilter === "all" || h.role === typeFilter;
+    return matchSearch && matchType;
+  });
 
   const partnerBenefits = [
     { title: "Verified Partnership",   description: "Official verification badge and trusted status on the platform",          icon: Shield      },
@@ -77,14 +81,25 @@ const Hospitals = () => {
             {/* Search */}
             <Card className="border-0 shadow-md">
               <CardContent className="pt-4 pb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    placeholder="Search by name or location..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      placeholder="Search by name or location..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+                  >
+                    <option value="all">All Organisations</option>
+                    <option value="hospital">🏥 Hospitals Only</option>
+                    <option value="ngo">🤝 NGOs Only</option>
+                  </select>
                 </div>
               </CardContent>
             </Card>
