@@ -125,4 +125,15 @@ router.patch("/:requestId", protect, async (req, res) => {
   }
 });
 
+// Get ALL requests including closed — Admin
+router.get("/all", protect, async (req, res) => {
+  try {
+    const requests = await BloodRequest.find()
+      .sort({ createdAt: -1 });
+    return res.status(200).json({ requests });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;

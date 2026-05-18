@@ -23,6 +23,7 @@ const AdminDashboard = () => {
   const [loading,     setLoading]     = useState(true);
   const [activeTab,   setActiveTab]   = useState("users");
   const [searchTerm,  setSearchTerm]  = useState("");
+  const [roleFilter,  setRoleFilter]  = useState("all");
   const [expandedOrg,  setExpandedOrg]  = useState(null);
   const [events,       setEvents]       = useState([]);
   const [emergencies,  setEmergencies]  = useState([]);
@@ -49,7 +50,7 @@ const AdminDashboard = () => {
   const fetchRequests = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/requests",
+        "http://localhost:5000/api/requests/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setRequests(res.data.requests);
@@ -60,7 +61,7 @@ const AdminDashboard = () => {
   const fetchEvents = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/events/upcoming",
+        "http://localhost:5000/api/events/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEvents(res.data.events || []);
@@ -106,11 +107,13 @@ const AdminDashboard = () => {
     navigate("/login");
   };
 
-  const filteredUsers = users.filter(u =>
-    u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.role?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+    const matchSearch = !searchTerm ||
+      u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchRole = roleFilter === "all" || u.role === roleFilter;
+    return matchSearch && matchRole;
+  });
 
   const pendingVerification = users.filter(
     u => (u.role === "hospital" || u.role === "ngo") && !u.isVerified && u.status === "active"
@@ -420,15 +423,29 @@ const AdminDashboard = () => {
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
               <h2 className="text-xl font-bold text-gray-900">All Users ({users.length})</h2>
-              <div className="relative w-full md:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
+              <div className="flex gap-2 w-full md:w-auto">
+                <div className="relative flex-1 md:w-72">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="donor">Donors</option>
+                  <option value="hospital">Hospitals</option>
+                  <option value="ngo">NGOs</option>
+                  <option value="requester">Patients</option>
+                  <option value="admin">Admin</option>
+                </select>
               </div>
             </div>
 
@@ -557,7 +574,17 @@ const AdminDashboard = () => {
         {/* ── REQUESTS TAB ── */}
         {activeTab === "requests" && (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-900">Blood Requests ({requests.length})</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Blood Requests ({requests.length})</h2>
+              <div className="flex gap-2 text-sm">
+                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+                  {requests.filter(r => r.status === "Open").length} Open
+                </span>
+                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">
+                  {requests.filter(r => r.status === "Closed").length} Closed
+                </span>
+              </div>
+            </div>
             {requests.length === 0 && (
               <Card className="border-0 shadow-md">
                 <CardContent className="py-12 text-center">
