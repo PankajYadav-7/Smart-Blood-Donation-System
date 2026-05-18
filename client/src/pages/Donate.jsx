@@ -51,32 +51,6 @@ const Donate = () => {
     { step: 4, title: "Recovery", description: "Rest and enjoy refreshments while your body recovers", duration: "15 min", icon: Star },
   ];
 
-  const upcomingDrives = [
-    {
-      id: 1,
-      title: "Community Center Blood Drive",
-      organizer: "Red Cross Society Nepal",
-      date: "April 10, 2026",
-      time: "9:00 AM - 5:00 PM",
-      location: "Kathmandu Community Center",
-      address: "Bagbazar, Kathmandu",
-      registered: 45,
-      capacity: 100,
-      incentives: ["Free health checkup", "Refreshments", "Certificate"]
-    },
-    {
-      id: 2,
-      title: "New Year Blood Donation Camp",
-      organizer: "Bir Hospital",
-      date: "April 15, 2026",
-      time: "10:00 AM - 4:00 PM",
-      location: "Bir Hospital",
-      address: "Mahaboudha, Kathmandu",
-      registered: 78,
-      capacity: 150,
-      incentives: ["Blood typing", "Free consultation", "Donor card"]
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
