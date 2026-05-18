@@ -104,6 +104,18 @@ const Hospitals = () => {
               </CardContent>
             </Card>
 
+            {/* Count */}
+            {!loading && hospitals.length > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-500 font-medium">
+                  {filtered.length} verified organisation{filtered.length !== 1 ? "s" : ""} found
+                </p>
+                <p className="text-xs text-gray-400">
+                  All organisations are verified by our admin team before listing
+                </p>
+              </div>
+            )}
+
             {/* Loading */}
             {loading && (
               <div className="text-center py-12">
