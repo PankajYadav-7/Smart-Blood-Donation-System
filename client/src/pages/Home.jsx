@@ -334,9 +334,14 @@ const [stats, setStats] = useState([
               <p className="text-gray-500 text-sm mb-6">
                 Hospitals and NGOs will post blood donation drives here as they are scheduled. Check back soon!
               </p>
-              <p className="text-xs text-gray-400">
-                Are you a hospital or NGO? <Link to="/register" className="text-red-600 font-semibold hover:underline">Register</Link> to organize events.
-              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link to="/events" className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-all">
+                  Browse Events Page
+                </Link>
+                <Link to="/register" className="inline-flex items-center justify-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 text-sm font-bold px-6 py-2.5 rounded-xl transition-all">
+                  Register as Hospital/NGO
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
