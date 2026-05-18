@@ -28,7 +28,7 @@ const [stats, setStats] = useState([
       .then(res => {
         setStats([
           { number: res.data.donors,        label: "Registered Donors",      sub: ""                   },
-          { number: "24/7",                 label: "Active Donor Network",   sub: ""                   },
+          { number: "24/7",                 label: "Emergency Response",      sub: ""                   },
           { number: res.data.organisations, label: "Verified Organisations", sub: "(Hospitals / NGOs)" },
           { number: res.data.openRequests,  label: "Open Blood Requests",    sub: ""                   },
         ]);
@@ -39,6 +39,11 @@ const [stats, setStats] = useState([
     axios.get("http://localhost:5000/api/events/upcoming")
       .then(res => {
         setUpcomingEvents(res.data.events || []);
+
+        // Update events count in stats
+        setStats(prev => prev.map((s, i) =>
+          i === 1 ? { ...s, number: res.data.events?.length || 0, label: "Upcoming Events", sub: "(Blood Drives)" } : s
+        ));
       })
       .catch(() => {});
   }, []);
