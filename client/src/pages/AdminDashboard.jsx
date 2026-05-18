@@ -23,12 +23,16 @@ const AdminDashboard = () => {
   const [loading,     setLoading]     = useState(true);
   const [activeTab,   setActiveTab]   = useState("users");
   const [searchTerm,  setSearchTerm]  = useState("");
-  const [expandedOrg, setExpandedOrg] = useState(null); // which org is expanded
+  const [expandedOrg,  setExpandedOrg]  = useState(null);
+  const [events,       setEvents]       = useState([]);
+  const [emergencies,  setEmergencies]  = useState([]);
 
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
     fetchUsers();
     fetchRequests();
+    fetchEvents();
+    fetchEmergencies();
   }, []);
 
   const fetchUsers = async () => {
