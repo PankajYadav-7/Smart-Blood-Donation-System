@@ -1,31 +1,27 @@
 const express = require("express");
-const router = express.Router();
-const User = require("../models/User");
-const jwt = require("jsonwebtoken");
+const router  = express.Router();
+const User    = require("../models/User");
+const jwt     = require("jsonwebtoken");
 
-// Middleware
+// ── Middleware ────────────────────────────────────────────────────────────────
 const protect = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized" });
-  }
+  if (!token) return res.status(401).json({ message: "Not authorized" });
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ message: "Token invalid" });
   }
 };
 
 const adminOnly = (req, res, next) => {
-  if (req.user.role !== "admin") {
+  if (req.user.role !== "admin")
     return res.status(403).json({ message: "Admin access only" });
-  }
   next();
 };
 
-// Get all users
+// ── GET all users ─────────────────────────────────────────────────────────────
 router.get("/users", protect, adminOnly, async (req, res) => {
   try {
     const users = await User.find().select("-passwordHash");
@@ -35,7 +31,7 @@ router.get("/users", protect, adminOnly, async (req, res) => {
   }
 });
 
-// Update user status
+// ── PATCH suspend / activate user ────────────────────────────────────────────
 router.patch("/users/:id/status", protect, adminOnly, async (req, res) => {
   try {
     const { status } = req.body;
@@ -50,7 +46,7 @@ router.patch("/users/:id/status", protect, adminOnly, async (req, res) => {
   }
 });
 
-// Verify hospital or NGO
+// ── PATCH approve organisation ────────────────────────────────────────────────
 router.patch("/users/:userId/verify", protect, adminOnly, async (req, res) => {
   try {
     const { verified } = req.body;
@@ -60,8 +56,58 @@ router.patch("/users/:userId/verify", protect, adminOnly, async (req, res) => {
       { new: true }
     );
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Send approval email when verified = true
+    if (verified && (user.role === "hospital" || user.role === "ngo")) {
+      try {
+        const { sendOrgApprovedEmail } = require("../utils/emailService");
+        sendOrgApprovedEmail({
+          orgEmail: user.email,
+          orgName:  user.fullName,
+          orgRole:  user.role,
+        });
+      } catch (emailErr) {
+        console.error("Approval email error:", emailErr.message);
+      }
+    }
+
     return res.status(200).json({
-      message: verified ? "User verified" : "Verification removed",
+      message: verified ? "Organisation approved — email sent" : "Verification removed",
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// ── PATCH reject organisation ─────────────────────────────────────────────────
+router.patch("/users/:userId/reject", protect, adminOnly, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { status: "suspended", isVerified: false },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Send rejection email with reason
+    if (user.role === "hospital" || user.role === "ngo") {
+      try {
+        const { sendOrgRejectedEmail } = require("../utils/emailService");
+        sendOrgRejectedEmail({
+          orgEmail: user.email,
+          orgName:  user.fullName,
+          orgRole:  user.role,
+          reason:   reason || "Your application did not meet our verification requirements.",
+        });
+      } catch (emailErr) {
+        console.error("Rejection email error:", emailErr.message);
+      }
+    }
+
+    return res.status(200).json({
+      message: "Organisation rejected — email sent with reason",
       user,
     });
   } catch (error) {

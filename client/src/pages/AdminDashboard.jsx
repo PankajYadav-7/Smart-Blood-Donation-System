@@ -25,7 +25,8 @@ const AdminDashboard = () => {
   const [searchTerm,  setSearchTerm]  = useState("");
   const [roleFilter,  setRoleFilter]  = useState("all");
   const [expandedOrg,  setExpandedOrg]  = useState(null);
-  const [events,       setEvents]       = useState([]);
+  const [events,        setEvents]        = useState([]);
+  const [requestFilter, setRequestFilter] = useState("all");
   const [emergencies,  setEmergencies]  = useState([]);
 
   useEffect(() => {
@@ -99,6 +100,24 @@ const AdminDashboard = () => {
       setExpandedOrg(null);
       fetchUsers();
     } catch { alert("Failed to update verification status"); }
+  };
+
+  const handleReject = async (userId, orgName) => {
+    const reason = window.prompt(
+      `Rejecting application for: ${orgName}\n\nEnter reason for rejection (this will be sent to them by email):\n`,
+      "We could not verify your organisation's registration documents."
+    );
+    if (reason === null) return; // cancelled
+    try {
+      await axios.patch(
+        `http://localhost:5000/api/admin/users/${userId}/reject`,
+        { reason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setExpandedOrg(null);
+      fetchUsers();
+      alert(`Rejection email sent to ${orgName} with reason.`);
+    } catch { alert("Failed to reject organisation"); }
   };
 
   const handleLogout = () => {
@@ -199,7 +218,7 @@ const AdminDashboard = () => {
                     size="sm"
                     variant="outline"
                     className="text-red-600 border-red-200 hover:bg-red-50"
-                    onClick={() => handleSuspend(org._id, "active")}
+                    onClick={() => handleReject(org._id, org.fullName)}
                   >
                     <AlertCircle className="h-4 w-4 mr-1" />Reject
                   </Button>
@@ -345,7 +364,7 @@ const AdminDashboard = () => {
                   <Button
                     variant="outline"
                     className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                    onClick={() => handleSuspend(org._id, "active")}
+                    onClick={() => handleReject(org._id, org.fullName)}
                   >
                     <AlertCircle className="h-4 w-4 mr-2" />
                     Reject Application
@@ -581,15 +600,26 @@ const AdminDashboard = () => {
         {/* ── REQUESTS TAB ── */}
         {activeTab === "requests" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
               <h2 className="text-xl font-bold text-gray-900">Blood Requests ({requests.length})</h2>
-              <div className="flex gap-2 text-sm">
-                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+              <div className="flex gap-2 flex-wrap items-center">
+                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium text-sm">
                   {requests.filter(r => r.status === "Open").length} Open
                 </span>
-                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">
+                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium text-sm">
                   {requests.filter(r => r.status === "Closed").length} Closed
                 </span>
+                <select
+                  value={requestFilter}
+                  onChange={(e) => setRequestFilter(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+                >
+                  <option value="all">All Requests</option>
+                  <option value="Open">Open Only</option>
+                  <option value="Closed">Closed Only</option>
+                  <option value="Emergency">Emergency Only</option>
+                  <option value="Normal">Normal Only</option>
+                </select>
               </div>
             </div>
             {requests.length === 0 && (
@@ -600,7 +630,11 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             )}
-            {requests.map((r) => (
+            {requests.filter(r => {
+              if (requestFilter === "all") return true;
+              if (requestFilter === "Open" || requestFilter === "Closed") return r.status === requestFilter;
+              return r.urgency === requestFilter;
+            }).map((r) => (
               <Card key={r._id} className="border-0 shadow-md hover:shadow-lg transition-shadow">
                 <CardContent className="py-4 px-6">
                   <div className="flex items-center justify-between gap-4 flex-wrap">

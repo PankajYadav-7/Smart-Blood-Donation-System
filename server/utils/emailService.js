@@ -1044,6 +1044,130 @@ async function sendRSVPCancelledEmail({
   await send(donorEmail, `RSVP Cancelled: ${eventTitle} — ${formattedDate}`, html);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 16 — Organisation Approved by Admin
+// Triggered: PATCH /api/admin/users/:userId/verify  (verified = true)
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendOrgApprovedEmail({ orgEmail, orgName, orgRole }) {
+  const roleLabel = orgRole === "hospital" ? "Hospital" : "NGO";
+  const dashboardUrl = orgRole === "hospital"
+    ? `${BASE_URL}/hospital/dashboard`
+    : `${BASE_URL}/ngo/dashboard`;
+
+  const html = wrap(`
+    <h2 style="margin:0 0 8px;color:#1a1a1a;font-size:20px;">Your Account Has Been Approved! 🎉</h2>
+    <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.6;">
+      Congratulations, <strong>${orgName}</strong>! Your ${roleLabel} account on Jeevan Saarthi
+      has been verified and approved by our admin team. You can now log in and use all platform features.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;margin-bottom:28px;">
+      <tr><td style="padding:24px;">
+        <p style="margin:0 0 12px;color:#166534;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;">
+          ✅ Account Activated
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;width:160px;">Organisation:</td>
+            <td style="padding:5px 0;font-weight:bold;">${orgName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Type:</td>
+            <td style="padding:5px 0;font-weight:bold;">${roleLabel}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Status:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#16a34a;">Verified ✅</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;line-height:1.6;">
+      You can now log in with your registered email and password. As a verified ${roleLabel} on Jeevan Saarthi you can:
+    </p>
+    <ul style="margin:0 0 24px;padding-left:20px;color:#555555;font-size:14px;line-height:1.8;">
+      <li>Post blood requests and get matched with compatible donors</li>
+      <li>Receive emergency blood request alerts in real time</li>
+      <li>Organise community blood donation drives and events</li>
+      <li>Access your organisation dashboard with full platform features</li>
+    </ul>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;width:100%;">
+      <tr>
+        <td style="background:#16a34a;border-radius:8px;text-align:center;padding:14px 20px;">
+          <a href="${dashboardUrl}" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            Go to My Dashboard →
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;color:#999999;font-size:13px;">
+      If you have any questions, please contact us at info@jeevansaarthi.com.
+      Welcome to the Jeevan Saarthi network!
+    </p>
+  `);
+
+  await send(orgEmail, `✅ Your ${roleLabel} account on Jeevan Saarthi has been approved — Login Now`, html);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 17 — Organisation Rejected by Admin
+// Triggered: PATCH /api/admin/users/:userId/reject
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendOrgRejectedEmail({ orgEmail, orgName, orgRole, reason }) {
+  const roleLabel = orgRole === "hospital" ? "Hospital" : "NGO";
+
+  const html = wrap(`
+    <h2 style="margin:0 0 8px;color:#1a1a1a;font-size:20px;">Update on Your Account Application</h2>
+    <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.6;">
+      Dear <strong>${orgName}</strong>, thank you for applying to join Jeevan Saarthi as a verified ${roleLabel}.
+      After reviewing your application, our admin team was unable to approve it at this time.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:2px solid #fecaca;border-radius:10px;margin-bottom:28px;">
+      <tr><td style="padding:24px;">
+        <p style="margin:0 0 12px;color:#991b1b;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;">
+          Application Status
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;width:160px;">Organisation:</td>
+            <td style="padding:5px 0;font-weight:bold;">${orgName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Type:</td>
+            <td style="padding:5px 0;font-weight:bold;">${roleLabel}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Decision:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#dc2626;">Not Approved</td>
+          </tr>
+          ${reason ? `<tr>
+            <td style="padding:5px 0;color:#6b7280;vertical-align:top;">Reason:</td>
+            <td style="padding:5px 0;color:#dc2626;font-weight:bold;">${reason}</td>
+          </tr>` : ""}
+        </table>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;line-height:1.6;">
+      If you believe this decision was made in error, or if you have additional documentation
+      to support your application, please contact us at
+      <a href="mailto:info@jeevansaarthi.com" style="color:#991b1b;">info@jeevansaarthi.com</a>
+      and we will be happy to review your case.
+    </p>
+
+    <p style="margin:0;color:#999999;font-size:13px;">
+      Thank you for your interest in joining the Jeevan Saarthi network.
+      We hope to work with you in the future.
+    </p>
+  `);
+
+  await send(orgEmail, `Update on your Jeevan Saarthi ${roleLabel} application`, html);
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
@@ -1060,4 +1184,6 @@ module.exports = {
   sendEventUpdateEmail,
   sendEventCancelledEmail,
   sendRSVPCancelledEmail,
+  sendOrgApprovedEmail,
+  sendOrgRejectedEmail,
 };
