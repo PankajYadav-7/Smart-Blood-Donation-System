@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -25,7 +26,7 @@ const Donate = () => {
   const token = localStorage.getItem("token");
   const user  = JSON.parse(localStorage.getItem("user") || "null");
 
-  useState(() => {
+  useEffect(() => {
     axios.get("http://localhost:5000/api/events/upcoming")
       .then(res => setUpcomingEvents(res.data.events || []))
       .catch(() => {})
