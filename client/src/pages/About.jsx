@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import Navbar from "../components/Navbar";
@@ -40,12 +42,25 @@ const About = () => {
     },
   ];
 
-  const stats = [
-    { number: "7,528", label: "Registered Donors" },
-    { number: "3,902", label: "Lives Saved" },
-    { number: "500+", label: "Partner Hospitals" },
-    { number: "102", label: "Cities Covered" },
-  ];
+  const [stats, setStats] = useState([
+    { number: "...", label: "Registered Donors"      },
+    { number: "...", label: "Lives Impacted"          },
+    { number: "...", label: "Verified Organisations"  },
+    { number: "...", label: "Open Blood Requests"     },
+  ]);
+
+  useEffect(() => {
+    axios.get("http://localhost:5000/api/stats")
+      .then(res => {
+        setStats([
+          { number: res.data.donors,                       label: "Registered Donors"     },
+          { number: (res.data.donors * 3).toString(),      label: "Lives Potentially Saved" },
+          { number: res.data.organisations,                label: "Verified Organisations" },
+          { number: res.data.openRequests,                 label: "Open Blood Requests"    },
+        ]);
+      })
+      .catch(() => {});
+  }, []);
 
   const howItWorks = [
     {
@@ -283,7 +298,7 @@ const About = () => {
             Ready to Save Lives?
           </h2>
           <p className="text-red-100 mb-8 text-lg">
-            Join thousands of donors and hospitals making a difference every day
+            Register as a donor or organisation and start saving lives across Nepal today
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
