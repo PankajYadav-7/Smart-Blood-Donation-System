@@ -216,8 +216,10 @@ const Hospitals = () => {
                       </Link>
                     </Button>
                     {org.phone && (
-                      <Button variant="outline">
-                        <Phone className="h-4 w-4 mr-2" />{org.phone}
+                      <Button variant="outline" asChild>
+                        <a href={`tel:${org.phone}`}>
+                          <Phone className="h-4 w-4 mr-2" />{org.phone}
+                        </a>
                       </Button>
                     )}
                   </div>
