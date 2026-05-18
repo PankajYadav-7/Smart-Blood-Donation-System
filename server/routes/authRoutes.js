@@ -509,4 +509,21 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/auth/hospitals — Public list of verified hospitals and NGOs
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/hospitals", async (req, res) => {
+  try {
+    const hospitals = await User.find({
+      role:       { $in: ["hospital", "ngo"] },
+      isVerified: true,
+      status:     "active",
+    }).select("fullName email phone address role createdAt").sort({ fullName: 1 });
+
+    return res.status(200).json({ hospitals });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;
