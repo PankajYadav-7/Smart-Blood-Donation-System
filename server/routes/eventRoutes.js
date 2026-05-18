@@ -371,4 +371,15 @@ router.patch("/:id/cancel", protect, async (req, res) => {
   }
 });
 
+// GET all events including past and cancelled — Admin
+router.get("/all", protect, async (req, res) => {
+  try {
+    const events = await Event.find()
+      .sort({ createdAt: -1 });
+    return res.status(200).json({ events });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
