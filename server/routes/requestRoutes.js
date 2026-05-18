@@ -58,6 +58,18 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
+// Get all open requests — PUBLIC (no login required)
+router.get("/open-public", async (req, res) => {
+  try {
+    const requests = await BloodRequest.find({ status: "Open" })
+      .select("bloodGroup rh unitsRequired urgency hospitalName createdAt status")
+      .sort({ createdAt: -1 });
+    return res.status(200).json({ requests });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 // Get all open requests
 router.get("/", protect, async (req, res) => {
   try {
