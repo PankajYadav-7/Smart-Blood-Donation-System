@@ -90,17 +90,30 @@ const Donate = () => {
             Your blood donation can save up to three lives. Join our community of heroes who regularly donate blood.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild className="text-lg px-8 py-4 rounded-xl hover:scale-105 transition-transform">
-              <Link to="/register">
-                <Heart className="h-5 w-5 mr-2" />
-                Register as Donor
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild className="text-lg px-8 py-4 rounded-xl border-white/30 text-white hover:bg-white/10">
-              <Link to="/donor/dashboard">
-                View My Dashboard
-              </Link>
-            </Button>
+            {!token ? (
+              <>
+                <Button size="lg" asChild className="text-lg px-8 py-4 rounded-xl hover:scale-105 transition-transform">
+                  <Link to="/register">
+                    <Heart className="h-5 w-5 mr-2" />Register as Donor
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="text-lg px-8 py-4 rounded-xl border-white/30 text-white hover:bg-white/10">
+                  <Link to="/login">Sign In</Link>
+                </Button>
+              </>
+            ) : user?.role === "donor" ? (
+              <Button size="lg" asChild className="text-lg px-8 py-4 rounded-xl hover:scale-105 transition-transform">
+                <Link to="/donor/dashboard">
+                  <Heart className="h-5 w-5 mr-2" />Go to My Dashboard
+                </Link>
+              </Button>
+            ) : (
+              <Button size="lg" asChild className="text-lg px-8 py-4 rounded-xl hover:scale-105 transition-transform">
+                <Link to="/register">
+                  <Heart className="h-5 w-5 mr-2" />Register as Donor
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </section>
