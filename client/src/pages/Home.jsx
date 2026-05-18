@@ -48,8 +48,8 @@ const [stats, setStats] = useState([
     { icon: Shield,     title: "Verified Requests",             description: "Only verified hospitals and NGOs can post emergency requests" },
     { icon: UserCheck,  title: "Consent-First Contact Sharing", description: "Donor contact shared only after consent is given" },
     { icon: ToggleLeft, title: "Donor Availability Control",    description: "Toggle availability and control when you can donate" },
-    { icon: Award,      title: "Donor Badges & Impact Stats",   description: "Track your donations and earn recognition badges" },
-    { icon: Heart,      title: "Privacy First",                 description: "Complete privacy protection for all users" },
+    { icon: Award,      title: "Donor Badges & Certificates",   description: "Track donations, earn recognition badges and download official certificates" },
+    { icon: Calendar,   title: "Community Blood Drive Events",  description: "Hospitals and NGOs organize blood drives. Donors browse and register to attend nearby events." },
   ];
 
   const howItWorks = [

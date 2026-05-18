@@ -153,13 +153,24 @@ const EventDetail = () => {
         </button>
 
         {/* RSVP Success Banner */}
-        {alreadyRSVPed && (
+        {alreadyRSVPed && event.status !== "cancelled" && (
           <div className="bg-green-600 rounded-2xl p-5 text-white text-center mb-6">
             <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
               <CheckCircle className="h-7 w-7 text-white" />
             </div>
             <h2 className="text-xl font-bold mb-1">You're Registered! 🩸</h2>
             <p className="text-green-100 text-sm">Check your email for the confirmation and event details.</p>
+          </div>
+        )}
+
+        {/* Cancelled Banner for registered donor */}
+        {alreadyRSVPed && event.status === "cancelled" && (
+          <div className="bg-red-600 rounded-2xl p-5 text-white text-center mb-6">
+            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
+              <AlertCircle className="h-7 w-7 text-white" />
+            </div>
+            <h2 className="text-xl font-bold mb-1">This Event Was Cancelled</h2>
+            <p className="text-red-100 text-sm">The organizer cancelled this event. You received an email notification.</p>
           </div>
         )}
 
