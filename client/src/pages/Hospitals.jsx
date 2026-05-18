@@ -233,7 +233,7 @@ const Hospitals = () => {
 
                   <div className="border-t border-gray-100 pt-4 flex flex-col sm:flex-row gap-3">
                     <Button className="flex-1 bg-red-600 hover:bg-red-700" asChild>
-                      <Link to="/create-request">
+                      <Link to={localStorage.getItem("token") ? "/create-request" : "/login"}>
                         <Heart className="h-4 w-4 mr-2" />Request Blood
                       </Link>
                     </Button>
@@ -242,7 +242,7 @@ const Hospitals = () => {
                         <Calendar className="h-4 w-4 mr-2" />View Their Events
                       </Link>
                     </Button>
-                    {org.phone && (
+                    {org.phone && !org.email && (
                       <Button variant="outline" asChild>
                         <a href={`tel:${org.phone}`}>
                           <Phone className="h-4 w-4 mr-2" />{org.phone}
