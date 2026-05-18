@@ -376,12 +376,14 @@ const AdminDashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {[
-            { label: "Total Users",    value: users.length,                                   icon: Users,    color: "text-blue-600 bg-blue-50"    },
-            { label: "Blood Requests", value: requests.length,                                icon: Droplets, color: "text-red-600 bg-red-50"      },
-            { label: "Active Users",   value: users.filter(u => u.status === "active").length, icon: Activity, color: "text-green-600 bg-green-50" },
-            { label: "Pending Verify", value: pendingVerification.length,                     icon: Shield,   color: "text-orange-600 bg-orange-50" },
+            { label: "Total Users",    value: users.length,                                    icon: Users,       color: "text-blue-600 bg-blue-50"    },
+            { label: "Blood Requests", value: requests.length,                                 icon: Droplets,    color: "text-red-600 bg-red-50"      },
+            { label: "Active Users",   value: users.filter(u => u.status === "active").length, icon: Activity,    color: "text-green-600 bg-green-50"  },
+            { label: "Pending Verify", value: pendingVerification.length,                      icon: Shield,      color: "text-orange-600 bg-orange-50" },
+            { label: "Events",         value: events.length,                                   icon: Activity,    color: "text-purple-600 bg-purple-50" },
+            { label: "Emergencies",    value: emergencies.length,                              icon: AlertCircle, color: "text-red-800 bg-red-100"      },
           ].map((stat, i) => (
             <Card key={i} className="border-0 shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="pt-6">
@@ -482,6 +484,11 @@ const AdminDashboard = () => {
                             )}
                           </div>
                           <p className="text-sm text-gray-500">{u.email}</p>
+                          {u.role === "donor" && u.bloodGroup && (
+                            <p className="text-xs text-red-600 font-semibold">
+                              🩸 {u.bloodGroup}{u.rh}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -607,9 +614,28 @@ const AdminDashboard = () => {
                         <p className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge className={r.urgency === "Emergency" ? "bg-red-100 text-red-700 border-red-200" : "bg-gray-100 text-gray-700 border-gray-200"}>{r.urgency}</Badge>
                       <Badge className={r.status === "Open" ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-gray-100 text-gray-700 border-gray-200"}>{r.status}</Badge>
+                      {r.status === "Open" && (
+                        <Button size="sm" variant="outline"
+                          className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
+                          onClick={async () => {
+                            if (window.confirm("Close this blood request?")) {
+                              try {
+                                await axios.patch(
+                                  `http://localhost:5000/api/requests/${r._id}/close`,
+                                  {},
+                                  { headers: { Authorization: `Bearer ${token}` } }
+                                );
+                                fetchRequests();
+                              } catch { alert("Failed to close request"); }
+                            }
+                          }}
+                        >
+                          Close Request
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -749,7 +775,7 @@ const AdminDashboard = () => {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-0 shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -768,6 +794,33 @@ const AdminDashboard = () => {
                           <span className="text-sm text-gray-500">{count} users</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-red-600 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Droplets className="h-5 w-5 text-red-600" />Blood Types Requested
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {["A+","A-","B+","B-","O+","O-","AB+","AB-"].map((type) => {
+                    const count = requests.filter(r => `${r.bloodGroup}${r.rh}` === type).length;
+                    const pct   = requests.length > 0 ? (count / requests.length) * 100 : 0;
+                    return (
+                      <div key={type}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-bold text-gray-700">{type}</span>
+                          <span className="text-xs text-gray-500">{count} requests</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2">
                           <div className="bg-red-600 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
