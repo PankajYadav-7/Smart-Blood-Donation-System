@@ -190,78 +190,108 @@ const Donate = () => {
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Upcoming Blood Drives</h2>
+            <Link to="/events" className="text-sm text-red-600 font-semibold hover:underline flex items-center gap-1">
+              View All Events <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <div className="space-y-6">
-            {upcomingDrives.map((drive) => (
-              <Card key={drive.id} className="border-0 shadow-md hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">{drive.title}</h3>
-                      <p className="text-gray-500 text-sm">Organized by {drive.organizer}</p>
-                    </div>
-                    <Badge className="bg-green-100 text-green-700 border-green-200 self-start">
-                      {Math.round((drive.registered / drive.capacity) * 100)}% Full
-                    </Badge>
-                  </div>
 
-                  <div className="grid md:grid-cols-3 gap-4 mb-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        {drive.date}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                        {drive.time}
-                      </div>
-                      <div className="flex items-start gap-2 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="font-medium">{drive.location}</p>
-                          <p className="text-xs text-gray-400">{drive.address}</p>
-                        </div>
-                      </div>
-                    </div>
+          {eventsLoading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto" />
+            </div>
+          )}
 
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-2 text-sm">Registration</h4>
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>Registered</span>
-                          <span>{drive.registered}/{drive.capacity}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-red-600 h-2 rounded-full"
-                            style={{ width: `${(drive.registered / drive.capacity) * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-2 text-sm">Benefits</h4>
-                      <div className="space-y-1">
-                        {drive.incentives.map((incentive, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            {incentive}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button className="w-full" asChild>
-                    <Link to="/register">
-                      <Users className="h-4 w-4 mr-2" />
-                      Register to Join This Drive
-                    </Link>
+          {!eventsLoading && upcomingEvents.length === 0 && (
+            <Card className="border-0 shadow-md">
+              <CardContent className="py-12 text-center">
+                <Calendar className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">No upcoming blood drives right now</h3>
+                <p className="text-gray-500 text-sm mb-6">
+                  Hospitals and NGOs will post community blood drives here. Check the Events page regularly.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button asChild className="bg-red-600 hover:bg-red-700">
+                    <Link to="/events">Browse Events Page</Link>
                   </Button>
-                </CardContent>
-              </Card>
-            ))}
+                  <Button asChild variant="outline">
+                    <Link to="/emergency">Submit Emergency Request</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="space-y-6">
+            {upcomingEvents.slice(0, 3).map((event) => {
+              const pct = Math.round((event.registeredDonors?.length / event.targetDonors) * 100) || 0;
+              const formattedDate = new Date(event.eventDate).toLocaleDateString("en-GB", {
+                weekday: "long", day: "numeric", month: "long", year: "numeric",
+              });
+              return (
+                <Card key={event._id} className="border-0 shadow-md hover:shadow-lg transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">{event.title}</h3>
+                        <p className="text-gray-500 text-sm">Organized by {event.organizerName}</p>
+                        <p className="text-xs text-red-600 font-bold mt-1">{event.eventCode}</p>
+                      </div>
+                      <Badge className="bg-green-100 text-green-700 border-green-200 self-start">
+                        {pct}% Full
+                      </Badge>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-4 mb-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="h-4 w-4 text-gray-400" />{formattedDate}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Clock className="h-4 w-4 text-gray-400" />{event.startTime} — {event.endTime}
+                        </div>
+                        <div className="flex items-start gap-2 text-sm text-gray-600">
+                          <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="font-medium">{event.venueName}</p>
+                            <p className="text-xs text-gray-400">{event.address}, {event.city}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-2 text-sm">Registration</h4>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Registered</span>
+                            <span>{event.registeredDonors?.length || 0}/{event.targetDonors}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="bg-red-600 h-2 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-2 text-sm">Blood Types Needed</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {event.bloodTypesNeeded?.map(type => (
+                            <span key={type} className="bg-red-50 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full border border-red-100">
+                              {type}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button className="w-full bg-red-600 hover:bg-red-700" asChild>
+                      <Link to={`/events/${event._id}`}>
+                        <Users className="h-4 w-4 mr-2" />View Event & Register
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
