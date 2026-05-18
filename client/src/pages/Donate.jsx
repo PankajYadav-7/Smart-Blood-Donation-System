@@ -20,6 +20,17 @@ import {
 
 const Donate = () => {
   const [selectedBloodType, setSelectedBloodType] = useState("");
+  const [upcomingEvents,    setUpcomingEvents]    = useState([]);
+  const [eventsLoading,     setEventsLoading]     = useState(true);
+  const token = localStorage.getItem("token");
+  const user  = JSON.parse(localStorage.getItem("user") || "null");
+
+  useState(() => {
+    axios.get("http://localhost:5000/api/events/upcoming")
+      .then(res => setUpcomingEvents(res.data.events || []))
+      .catch(() => {})
+      .finally(() => setEventsLoading(false));
+  }, []);
 
   const bloodTypeInfo = [
     { type: "O-", compatibility: "Universal Donor", demand: 95, color: "bg-red-600" },
