@@ -53,9 +53,9 @@ const [stats, setStats] = useState([
   ];
 
   const howItWorks = [
-    { icon: Droplets, title: "Request Blood",       description: "Post your blood requirement with patient details and get matched with compatible donors instantly." },
-    { icon: Clock,    title: "Get Instant Alerts",  description: "Verified donors receive instant notifications and can respond to urgent requests immediately." },
-    { icon: MapPin,   title: "Find a Donor Nearby", description: "Connect with verified donors in your area who match your blood type requirements." },
+    { icon: Droplets, title: "Request Blood or Join a Drive",  description: "Post an emergency blood request or browse upcoming community blood donation drives organised by hospitals and NGOs near you." },
+    { icon: Clock,    title: "Get Instantly Matched",          description: "Our system automatically matches compatible donors and sends real-time notifications so donors can respond immediately." },
+    { icon: MapPin,   title: "Donate & Save Lives",            description: "Connect with the requester, attend a blood drive, or respond to an emergency — every donation is tracked and recognised." },
   ];
 
   const [upcomingEvents, setUpcomingEvents] = useState([]);
