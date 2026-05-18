@@ -167,10 +167,12 @@ const AdminDashboard = () => {
   };
 
   const tabs = [
-    { id: "users",    label: "👥 All Users" },
-    { id: "verify",   label: `🏥 Verify Orgs${pendingVerification.length > 0 ? ` (${pendingVerification.length})` : ""}` },
-    { id: "requests", label: "🩸 Blood Requests" },
-    { id: "overview", label: "📊 Overview" },
+    { id: "users",      label: "👥 All Users" },
+    { id: "verify",     label: `🏥 Verify Orgs${pendingVerification.length > 0 ? ` (${pendingVerification.length})` : ""}` },
+    { id: "requests",   label: "🩸 Blood Requests" },
+    { id: "events",     label: `📅 Events (${events.length})` },
+    { id: "emergency",  label: `🚨 Emergencies (${emergencies.length})` },
+    { id: "overview",   label: "📊 Overview" },
   ];
 
   // ── Org Detail Card (expandable) ──
@@ -620,6 +622,120 @@ const AdminDashboard = () => {
                     <div className="flex items-center gap-2">
                       <Badge className={r.urgency === "Emergency" ? "bg-red-100 text-red-700 border-red-200" : "bg-gray-100 text-gray-700 border-gray-200"}>{r.urgency}</Badge>
                       <Badge className={r.status === "Open" ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-gray-100 text-gray-700 border-gray-200"}>{r.status}</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* ── EVENTS TAB ── */}
+        {activeTab === "events" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-bold text-gray-900">Blood Donation Events ({events.length})</h2>
+              <p className="text-sm text-gray-500">All upcoming events created by hospitals and NGOs</p>
+            </div>
+            {events.length === 0 && (
+              <Card className="border-0 shadow-md">
+                <CardContent className="py-12 text-center">
+                  <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No upcoming events found</p>
+                </CardContent>
+              </Card>
+            )}
+            {events.map((event) => (
+              <Card key={event._id} className={`border-0 shadow-md hover:shadow-lg transition-shadow border-l-4 ${
+                event.status === "cancelled" ? "border-l-red-400" : "border-l-green-400"
+              }`}>
+                <CardContent className="py-4 px-6">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                        <p className="text-red-600 font-bold text-sm">
+                          {new Date(event.eventDate).getDate()}<br/>
+                          <span className="text-xs">{new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" })}</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">{event.title}</p>
+                        <p className="text-sm text-gray-500">
+                          {event.organizerName} • {event.venueName}, {event.city}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {event.startTime} — {event.endTime} • {event.registeredDonors?.length || 0}/{event.targetDonors} registered
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={event.organizerType === "hospital"
+                        ? "bg-purple-100 text-purple-700 border-purple-200"
+                        : "bg-green-100 text-green-700 border-green-200"
+                      }>
+                        {event.organizerType === "hospital" ? "🏥 Hospital" : "🤝 NGO"}
+                      </Badge>
+                      <Badge className={event.status === "cancelled"
+                        ? "bg-red-100 text-red-700 border-red-200"
+                        : "bg-green-100 text-green-700 border-green-200"
+                      }>
+                        {event.status === "cancelled" ? "Cancelled" : "Active"}
+                      </Badge>
+                      <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                        {event.eventCode}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* ── EMERGENCY TAB ── */}
+        {activeTab === "emergency" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-bold text-gray-900">Emergency Requests ({emergencies.length})</h2>
+              <p className="text-sm text-gray-500">All emergency blood requests submitted through the system</p>
+            </div>
+            {emergencies.length === 0 && (
+              <Card className="border-0 shadow-md">
+                <CardContent className="py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No emergency requests found</p>
+                </CardContent>
+              </Card>
+            )}
+            {emergencies.map((em) => (
+              <Card key={em._id} className={`border-0 shadow-md hover:shadow-lg transition-shadow border-l-4 ${
+                em.status === "Active" ? "border-l-red-500" : "border-l-green-400"
+              }`}>
+                <CardContent className="py-4 px-6">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-bold text-sm">{em.bloodGroup}{em.rh}</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">{em.bloodGroup}{em.rh} — {em.unitsRequired} unit{em.unitsRequired > 1 ? "s" : ""}</p>
+                        <p className="text-sm text-gray-500">🏥 {em.hospitalName} • {em.requesterName}</p>
+                        <p className="text-xs text-gray-400">
+                          {em.trackingCode} • {new Date(em.createdAt).toLocaleDateString()} • {em.donors?.filter(d => d.status === "accepted").length || 0} donors accepted
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={em.status === "Active"
+                        ? "bg-red-100 text-red-700 border-red-200"
+                        : "bg-green-100 text-green-700 border-green-200"
+                      }>
+                        {em.status}
+                      </Badge>
+                      <Button size="sm" variant="outline"
+                        onClick={() => navigate(`/emergency/track/${em.trackingCode}`)}>
+                        View Tracking
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
