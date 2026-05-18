@@ -56,6 +56,66 @@ const AdminDashboard = () => {
     } catch (err) { console.log(err); }
   };
 
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/events/upcoming",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEvents(res.data.events || []);
+    } catch (err) { console.log(err); }
+  };
+
+  const fetchEmergencies = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/emergency",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEmergencies(res.data.emergencies || []);
+    } catch (err) { console.log(err); }
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/events/upcoming",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEvents(res.data.events || []);
+    } catch (err) { console.log(err); }
+  };
+
+  const fetchEmergencies = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/emergency",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEmergencies(res.data.emergencies || []);
+    } catch (err) { console.log(err); }
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/events/upcoming",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEvents(res.data.events || []);
+    } catch (err) { console.log(err); }
+  };
+
+  const fetchEmergencies = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/emergency",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEmergencies(res.data.emergencies || []);
+    } catch (err) { console.log(err); }
+  };
+
   const handleSuspend = async (userId, currentStatus) => {
     try {
       await axios.patch(
