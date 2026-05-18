@@ -56,45 +56,6 @@ const AdminDashboard = () => {
     } catch (err) { console.log(err); }
   };
 
-  const fetchEvents = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/events/upcoming",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setEvents(res.data.events || []);
-    } catch (err) { console.log(err); }
-  };
-
-  const fetchEmergencies = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/emergency",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setEmergencies(res.data.emergencies || []);
-    } catch (err) { console.log(err); }
-  };
-
-  const fetchEvents = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/events/upcoming",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setEvents(res.data.events || []);
-    } catch (err) { console.log(err); }
-  };
-
-  const fetchEmergencies = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/emergency",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setEmergencies(res.data.emergencies || []);
-    } catch (err) { console.log(err); }
-  };
 
   const fetchEvents = async () => {
     try {
@@ -746,7 +707,22 @@ const AdminDashboard = () => {
 
         {/* ── OVERVIEW TAB ── */}
         {activeTab === "overview" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            {/* Platform summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Total Donors",      value: users.filter(u => u.role === "donor").length,     color: "bg-blue-50 text-blue-700"    },
+                { label: "Total Events",       value: events.length,                                    color: "bg-purple-50 text-purple-700" },
+                { label: "Emergencies",        value: emergencies.length,                               color: "bg-red-50 text-red-700"       },
+                { label: "Verified Orgs",      value: verifiedOrgs.length,                              color: "bg-green-50 text-green-700"   },
+              ].map((s, i) => (
+                <div key={i} className={`${s.color} rounded-2xl p-4 text-center`}>
+                  <p className="text-2xl font-bold">{s.value}</p>
+                  <p className="text-xs font-semibold mt-1 uppercase tracking-wider">{s.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="border-0 shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -783,10 +759,11 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="space-y-3">
                   {[
-                    { label: "View All Users",        action: () => setActiveTab("users"),    icon: Users,    color: "bg-blue-50 text-blue-700 hover:bg-blue-100"      },
-                    { label: "Verify Organisations",  action: () => setActiveTab("verify"),   icon: Shield,   color: "bg-orange-50 text-orange-700 hover:bg-orange-100" },
-                    { label: "View All Requests",     action: () => setActiveTab("requests"), icon: Droplets, color: "bg-red-50 text-red-700 hover:bg-red-100"         },
-                    { label: "View Requests Page",    action: () => navigate("/view-requests"), icon: Activity, color: "bg-green-50 text-green-700 hover:bg-green-100" },
+                    { label: "View All Users",        action: () => setActiveTab("users"),     icon: Users,    color: "bg-blue-50 text-blue-700 hover:bg-blue-100"      },
+                    { label: "Verify Organisations",  action: () => setActiveTab("verify"),    icon: Shield,   color: "bg-orange-50 text-orange-700 hover:bg-orange-100" },
+                    { label: "View Blood Requests",   action: () => setActiveTab("requests"),  icon: Droplets, color: "bg-red-50 text-red-700 hover:bg-red-100"         },
+                    { label: "View Events",           action: () => setActiveTab("events"),    icon: Activity, color: "bg-purple-50 text-purple-700 hover:bg-purple-100" },
+                    { label: "View Emergencies",      action: () => setActiveTab("emergency"), icon: AlertCircle, color: "bg-red-50 text-red-800 hover:bg-red-100"      },
                   ].map((action, i) => (
                     <button
                       key={i}
@@ -800,6 +777,7 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
           </div>
         )}
 

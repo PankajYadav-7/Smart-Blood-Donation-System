@@ -467,5 +467,15 @@ router.post("/:id/report-issue/:donorEntryId", async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+// GET all emergencies — Admin only
+router.get("/", protect, async (req, res) => {
+  try {
+    const emergencies = await EmergencyRequest.find()
+      .sort({ createdAt: -1 });
+    return res.status(200).json({ emergencies });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 module.exports = router;
