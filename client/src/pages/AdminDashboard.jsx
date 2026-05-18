@@ -386,30 +386,29 @@ const AdminDashboard = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">🛡️ Admin Dashboard</h1>
-            <p className="text-gray-500 mt-1">Welcome, {user?.fullName} — manage the entire platform</p>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-500 mt-1">Welcome back, <strong>{user?.fullName}</strong> — manage the entire platform</p>
+            </div>
           </div>
-          <Button variant="outline" onClick={handleLogout} className="text-red-600 border-red-200 hover:bg-red-50">
-            Logout
-          </Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {[
-            { label: "Total Users",    value: users.length,                                    icon: Users,       color: "text-blue-600 bg-blue-50"    },
-            { label: "Blood Requests", value: requests.length,                                 icon: Droplets,    color: "text-red-600 bg-red-50"      },
-            { label: "Active Users",   value: users.filter(u => u.status === "active").length, icon: Activity,    color: "text-green-600 bg-green-50"  },
-            { label: "Pending Verify", value: pendingVerification.length,                      icon: Shield,      color: "text-orange-600 bg-orange-50" },
-            { label: "Events",         value: events.length,                                   icon: Activity,    color: "text-purple-600 bg-purple-50" },
-            { label: "Emergencies",    value: emergencies.length,                              icon: AlertCircle, color: "text-red-800 bg-red-100"      },
+            { label: "Users",      value: users.length,                                    icon: Users,       color: "text-blue-600 bg-blue-50"    },
+            { label: "Requests",   value: requests.length,                                 icon: Droplets,    color: "text-red-600 bg-red-50"      },
+            { label: "Active",     value: users.filter(u => u.status === "active").length, icon: Activity,    color: "text-green-600 bg-green-50"  },
+            { label: "Pending",    value: pendingVerification.length,                      icon: Shield,      color: "text-orange-600 bg-orange-50" },
+            { label: "Events",     value: events.length,                                   icon: Activity,    color: "text-purple-600 bg-purple-50" },
+            { label: "Emergencies",value: emergencies.length,                              icon: AlertCircle, color: "text-red-800 bg-red-100"      },
           ].map((stat, i) => (
             <Card key={i} className="border-0 shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider leading-tight">{stat.label}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
                   </div>
                   <div className={`w-12 h-12 rounded-xl ${stat.color} flex items-center justify-center`}>
                     <stat.icon className="h-6 w-6" />
