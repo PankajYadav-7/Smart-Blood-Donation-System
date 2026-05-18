@@ -129,11 +129,11 @@ const EmergencyOrgDetail = () => {
 
         {/* Back button */}
         <button
-          onClick={() => navigate(isHospital ? "/hospital/dashboard" : "/ngo/dashboard")}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-800 mb-5 text-sm font-medium transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to {isHospital ? "Hospital" : "NGO"} Dashboard
+          Back
         </button>
 
         {/* ── TOP HEADER BAR ── */}
@@ -359,6 +359,41 @@ const EmergencyOrgDetail = () => {
                     className="flex items-center gap-2 w-full border border-blue-300 text-blue-700 font-semibold py-2.5 px-4 rounded-xl text-sm hover:bg-blue-100 transition-all"
                   >
                     <Users className="h-4 w-4" />Search Available Donors
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Admin specific — full control actions */}
+            {user?.role === "admin" && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+                <h3 className="font-bold text-red-800 mb-3 text-sm uppercase tracking-wide">
+                  🛡️ Admin Controls
+                </h3>
+                <div className="space-y-2">
+                  <a href={`tel:${emergency.requesterPhone}`}
+                    className="flex items-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all">
+                    <Phone className="h-4 w-4" />Call Requester — {emergency.requesterPhone}
+                  </a>
+                  {emergency.requesterEmail && (
+                    <a href={`mailto:${emergency.requesterEmail}`}
+                      className="flex items-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all">
+                      <Mail className="h-4 w-4" />Email Requester
+                    </a>
+                  )}
+                  {emergency.status === "Active" && (
+                    <button
+                      onClick={handleFulfill}
+                      className="flex items-center gap-2 w-full bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all"
+                    >
+                      <CheckCircle className="h-4 w-4" />Mark as Fulfilled
+                    </button>
+                  )}
+                  <button
+                    onClick={() => navigate("/admin/dashboard")}
+                    className="flex items-center gap-2 w-full border border-red-300 text-red-700 font-semibold py-2.5 px-4 rounded-xl text-sm hover:bg-red-100 transition-all"
+                  >
+                    <ArrowLeft className="h-4 w-4" />Back to Admin Dashboard
                   </button>
                 </div>
               </div>

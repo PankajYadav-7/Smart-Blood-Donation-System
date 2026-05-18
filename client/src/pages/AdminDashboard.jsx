@@ -747,8 +747,9 @@ const AdminDashboard = () => {
                         {em.status}
                       </Badge>
                       <Button size="sm" variant="outline"
-                        onClick={() => navigate(`/emergency/track/${em.trackingCode}`)}>
-                        View Tracking
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        onClick={() => navigate(`/emergency/org-detail/${em.trackingCode}`)}>
+                        View Full Details
                       </Button>
                     </div>
                   </div>

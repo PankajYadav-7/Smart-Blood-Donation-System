@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 import {
   CheckCircle, AlertCircle, Clock, Phone,
   Droplets, MapPin, User, Mail, Loader,
-  RefreshCw,
+  RefreshCw, ArrowLeft,
 } from "lucide-react";
 
 const API = "http://localhost:5000/api";
@@ -91,12 +91,20 @@ const EmergencyTracking = () => {
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Not Found</h2>
           <p className="text-gray-500 mb-6">{error}</p>
-          <button
-            onClick={() => navigate("/emergency")}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl transition-all"
-          >
-            Submit New Emergency
-          </button>
+          <div className="flex flex-col gap-3 items-center">
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium"
+            >
+              <ArrowLeft className="h-4 w-4" />Go Back
+            </button>
+            <button
+              onClick={() => navigate("/emergency")}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl transition-all"
+            >
+              Submit New Emergency
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -107,6 +115,14 @@ const EmergencyTracking = () => {
       <Navbar />
 
       <div className="max-w-2xl mx-auto px-4 py-8">
+
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-6 text-sm font-medium transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />Back
+        </button>
 
         {/* Header */}
         <div className={`rounded-2xl p-6 mb-6 text-white ${
