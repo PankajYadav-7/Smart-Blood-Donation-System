@@ -166,7 +166,11 @@ const NGODashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">🤝 NGO Dashboard</h1>
-            <p className="text-gray-500 mt-1">Welcome, {user?.fullName} — coordinate blood donation drives</p>
+            <p className="text-gray-500 mt-1">
+              {openRequests.length > 0
+                ? `${openRequests.length} active request${openRequests.length > 1 ? "s" : ""} — coordinate donors and blood drives`
+                : "Coordinate blood donation drives and emergency responses"}
+            </p>
           </div>
           <div className="flex gap-3 flex-wrap">
             <Button onClick={() => navigate("/create-request")}><Plus className="h-4 w-4 mr-2" />New Request</Button>
