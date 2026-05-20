@@ -1168,6 +1168,200 @@ async function sendOrgRejectedEmail({ orgEmail, orgName, orgRole, reason }) {
   await send(orgEmail, `Update on your Jeevan Saarthi ${roleLabel} application`, html);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 18 — Recovery Period Started (sent immediately after donation confirmed)
+// Triggered: confirm-donation and mark-donated routes
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendRecoveryStartedEmail({
+  donorEmail, donorName, bloodGroup, rh, hospitalName,
+  donationDate, nextEligibleDate,
+}) {
+  const donated   = new Date(donationDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const eligible  = new Date(nextEligibleDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+  const html = wrap(`
+    <h2 style="margin:0 0 8px;color:#1a1a1a;font-size:20px;">Thank You — Your Recovery Period Has Started 🩸</h2>
+    <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.6;">
+      Dear <strong>${donorName}</strong>, your blood donation of
+      <strong style="color:#991b1b;">${bloodGroup}${rh}</strong> at
+      <strong>${hospitalName}</strong> has been recorded. Thank you for saving a life!
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:2px solid #fecaca;border-radius:10px;margin-bottom:28px;">
+      <tr><td style="padding:24px;">
+        <p style="margin:0 0 12px;color:#991b1b;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;">
+          🏥 Recovery Period Active
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+          <tr>
+            <td style="padding:6px 0;color:#6b7280;width:180px;">Donation Date:</td>
+            <td style="padding:6px 0;font-weight:bold;">${donated}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#6b7280;">Blood Type Donated:</td>
+            <td style="padding:6px 0;font-weight:bold;color:#991b1b;">${bloodGroup}${rh}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#6b7280;">Recovery Period:</td>
+            <td style="padding:6px 0;font-weight:bold;">56 days</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#6b7280;">Next Eligible Date:</td>
+            <td style="padding:6px 0;font-weight:bold;color:#16a34a;">${eligible}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:20px;margin-bottom:24px;">
+      <p style="margin:0 0 8px;color:#166534;font-size:13px;font-weight:bold;">💡 During your recovery period:</p>
+      <ul style="margin:0;padding-left:20px;color:#15803d;font-size:13px;line-height:1.8;">
+        <li>You will not receive new blood requests</li>
+        <li>Your availability has been automatically turned OFF</li>
+        <li>Eat iron-rich foods and stay hydrated to recover faster</li>
+        <li>You can still respond to emergency requests if critically needed</li>
+        <li>We will send you a reminder 3 days before you are eligible again</li>
+      </ul>
+    </div>
+
+    <p style="margin:0 0 24px;color:#555555;font-size:14px;line-height:1.6;">
+      We will email you on <strong>${eligible}</strong> when you are eligible to donate again.
+      Please log in and turn your availability <strong>ON</strong> on that date so you can continue saving lives.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;width:100%;">
+      <tr>
+        <td style="background:#991b1b;border-radius:8px;text-align:center;padding:14px 20px;">
+          <a href="${BASE_URL}/donor/dashboard" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            View My Dashboard →
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;color:#999999;font-size:13px;">
+      Thank you for being a lifesaver. See you again on ${eligible}!
+    </p>
+  `);
+
+  await send(donorEmail, `🩸 Recovery period started — Next eligible: ${eligible}`, html);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 19 — Eligibility Reminder (sent 3 days before eligible)
+// Triggered: daily scheduler
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEligibilityReminderEmail({
+  donorEmail, donorName, bloodGroup, rh, nextEligibleDate,
+}) {
+  const eligible = new Date(nextEligibleDate).toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+
+  const html = wrap(`
+    <h2 style="margin:0 0 8px;color:#1a1a1a;font-size:20px;">You Can Donate Again in 3 Days! 🩸</h2>
+    <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.6;">
+      Dear <strong>${donorName}</strong>, your 56-day recovery period is almost complete.
+      You will be eligible to donate <strong style="color:#991b1b;">${bloodGroup}${rh}</strong>
+      blood again in just <strong>3 days</strong>.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;margin-bottom:28px;text-align:center;">
+      <tr><td style="padding:28px;">
+        <p style="margin:0 0 6px;color:#166534;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;">
+          Your Eligibility Date
+        </p>
+        <p style="margin:0;color:#15803d;font-size:22px;font-weight:bold;">${eligible}</p>
+        <p style="margin:8px 0 0;color:#166534;font-size:13px;">
+          Blood Type: <strong>${bloodGroup}${rh}</strong>
+        </p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;line-height:1.6;">
+      On <strong>${eligible}</strong>, please log in to your Jeevan Saarthi dashboard and
+      turn your <strong>availability ON</strong> so you can start receiving blood requests again.
+      People are waiting for donors like you!
+    </p>
+
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;margin-bottom:24px;">
+      <p style="margin:0;font-size:13px;color:#991b1b;font-weight:bold;">⚠️ Important:</p>
+      <p style="margin:8px 0 0;font-size:13px;color:#7f1d1d;line-height:1.6;">
+        Your availability is currently OFF. Once you are eligible, you must manually
+        turn it ON in your dashboard to start receiving blood requests.
+      </p>
+    </div>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;width:100%;">
+      <tr>
+        <td style="background:#991b1b;border-radius:8px;text-align:center;padding:14px 20px;">
+          <a href="${BASE_URL}/donor/dashboard" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            Go to My Dashboard →
+          </a>
+        </td>
+      </tr>
+    </table>
+  `);
+
+  await send(donorEmail, `⏰ Reminder: You can donate blood again in 3 days — ${eligible}`, html);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 20 — Eligible Now (sent on the day donor becomes eligible)
+// Triggered: daily scheduler
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEligibleNowEmail({
+  donorEmail, donorName, bloodGroup, rh,
+}) {
+  const html = wrap(`
+    <h2 style="margin:0 0 8px;color:#1a1a1a;font-size:20px;">You Are Eligible to Donate Again! 🎉</h2>
+    <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.6;">
+      Dear <strong>${donorName}</strong>, your 56-day recovery period is complete.
+      You are now eligible to donate <strong style="color:#991b1b;">${bloodGroup}${rh}</strong>
+      blood again today!
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;margin-bottom:28px;text-align:center;">
+      <tr><td style="padding:32px;">
+        <p style="margin:0 0 8px;font-size:48px;">✅</p>
+        <p style="margin:0 0 4px;color:#16a34a;font-size:24px;font-weight:bold;">Eligible to Donate</p>
+        <p style="margin:0;color:#15803d;font-size:14px;">
+          Blood Type: <strong>${bloodGroup}${rh}</strong>
+        </p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;line-height:1.6;">
+      To start receiving blood requests again, please log in to your dashboard
+      and turn your <strong>availability ON</strong>. People in Nepal need donors like you right now.
+    </p>
+
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;margin-bottom:24px;">
+      <p style="margin:0;font-size:13px;color:#991b1b;font-weight:bold;">Action Required:</p>
+      <p style="margin:8px 0 0;font-size:13px;color:#7f1d1d;line-height:1.6;">
+        Log in → Go to your Dashboard → Click the <strong>Availability toggle</strong> to turn it ON.
+        You will immediately start receiving matching blood requests.
+      </p>
+    </div>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;width:100%;">
+      <tr>
+        <td style="background:#16a34a;border-radius:8px;text-align:center;padding:14px 20px;">
+          <a href="${BASE_URL}/donor/dashboard" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            🩸 Turn ON Availability Now →
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;color:#999999;font-size:13px;">
+      Thank you for being a regular blood donor. Every donation saves up to 3 lives.
+    </p>
+  `);
+
+  await send(donorEmail, `🎉 You are eligible to donate blood again today — Turn ON availability`, html);
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
@@ -1186,4 +1380,7 @@ module.exports = {
   sendRSVPCancelledEmail,
   sendOrgApprovedEmail,
   sendOrgRejectedEmail,
+  sendRecoveryStartedEmail,
+  sendEligibilityReminderEmail,
+  sendEligibleNowEmail,
 };
