@@ -122,7 +122,8 @@ const NGODashboard = () => {
 
   const openRequests   = requests.filter(r => r.status === "Open");
   const closedRequests = requests.filter(r => r.status === "Closed");
-  const totalLivesImpacted = Object.values(matchData).reduce((sum, m) => sum + (m.donated || 0) * 3, 0);
+  const totalDonated = Object.values(matchData).reduce((sum, m) => sum + (m.donated || 0), 0);
+  const totalLivesImpacted = totalDonated * 3;
 
   const tabs = [
     { id: "requests",  label: "📋 Active Requests"  },
@@ -181,7 +182,7 @@ const NGODashboard = () => {
             { label: "Total Requests",  value: requests.length,       icon: Activity,    color: "text-blue-600 bg-blue-50"   },
             { label: "Active Requests", value: openRequests.length,   icon: AlertCircle, color: "text-red-600 bg-red-50"     },
             { label: "Fulfilled",       value: closedRequests.length, icon: CheckCircle, color: "text-green-600 bg-green-50" },
-            { label: "Lives Impacted",  value: totalLivesImpacted,    icon: Heart,       color: "text-pink-600 bg-pink-50"   },
+            { label: "Lives Impacted",  value: totalLivesImpacted || closedRequests.length * 3, icon: Heart, color: "text-pink-600 bg-pink-50" },
           ].map((stat, i) => (
             <Card key={i} className="border-0 shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="pt-6">
