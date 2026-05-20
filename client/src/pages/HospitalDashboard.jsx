@@ -147,7 +147,11 @@ const HospitalDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">🏥 Hospital Dashboard</h1>
-            <p className="text-gray-500 mt-1">Welcome, {user?.fullName} — manage your blood requests</p>
+            <p className="text-gray-500 mt-1">
+              {openRequests.length > 0
+                ? `${openRequests.length} open request${openRequests.length > 1 ? "s" : ""} — find donors and manage responses`
+                : "Manage blood requests and coordinate with donors"}
+            </p>
           </div>
           <div className="flex gap-3 flex-wrap">
             <Button onClick={() => navigate("/create-request")}>
@@ -165,7 +169,7 @@ const HospitalDashboard = () => {
             { label: "Total Requests",  value: requests.length,       icon: Activity,     color: "text-blue-600 bg-blue-50"    },
             { label: "Open Requests",   value: openRequests.length,   icon: AlertCircle,  color: "text-red-600 bg-red-50"      },
             { label: "Closed Requests", value: closedRequests.length, icon: CheckCircle,  color: "text-green-600 bg-green-50"  },
-            { label: "Organization",    value: user?.role?.toUpperCase(), icon: Building, color: "text-purple-600 bg-purple-50" },
+            { label: "Lives Impacted",  value: closedRequests.length * 3, icon: Heart, color: "text-pink-600 bg-pink-50" },
           ].map((stat, i) => (
             <Card key={i} className="border-0 shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="pt-6">
