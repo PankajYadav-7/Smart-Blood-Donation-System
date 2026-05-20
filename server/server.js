@@ -68,4 +68,8 @@ app.get('/api/stats', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+
+  // Start daily eligibility reminder scheduler
+  const { startEligibilityScheduler } = require("./utils/eligibilityScheduler");
+  startEligibilityScheduler();
 });
