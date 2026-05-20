@@ -465,4 +465,19 @@ router.patch("/:matchId/no-show", protect, async (req, res) => {
   }
 });
 
+// ── DONOR — No-show count ────────────────────────────────────────────────────
+router.get("/my-noshows", protect, async (req, res) => {
+  try {
+    const donorProfile = await DonorProfile.findOne({ userId: req.user.userId });
+    if (!donorProfile) return res.status(200).json({ count: 0 });
+    const count = await Match.countDocuments({
+      donorProfileId: donorProfile._id,
+      status:         "NoShow",
+    });
+    return res.status(200).json({ count });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;

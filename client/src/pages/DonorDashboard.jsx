@@ -28,6 +28,7 @@ const DonorDashboard = () => {
   const [isSnoozed,       setIsSnoozed]       = useState(false);
   const [toast,           setToast]           = useState(null);
   const [eligibilityInfo, setEligibilityInfo] = useState(null);
+  const [noShowCount,     setNoShowCount]     = useState(0);
 
   const [emergencies,      setEmergencies]      = useState([]);
   const [emergencyLoading, setEmergencyLoading] = useState(false);
@@ -43,7 +44,7 @@ const DonorDashboard = () => {
   }, []);
 
   const fetchAll = async () => {
-    await Promise.all([fetchMatches(), fetchDonorProfile(), fetchAcceptedCount()]);
+    await Promise.all([fetchMatches(), fetchDonorProfile(), fetchAcceptedCount(), fetchNoShowCount()]);
     setLoading(false);
   };
 
@@ -87,6 +88,15 @@ const DonorDashboard = () => {
       ).length;
 
       setAcceptedCount(regularCount + emergencyCount);
+    } catch (err) { console.log(err); }
+  };
+
+  const fetchNoShowCount = async () => {
+    try {
+      const res = await axios.get(`${API}/matches/my-noshows`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNoShowCount(res.data.count || 0);
     } catch (err) { console.log(err); }
   };
 
@@ -302,7 +312,20 @@ const DonorDashboard = () => {
           ))}
         </div>
 
-        {/* No profile warning */}
+        {/* Banner — no-show warning */}
+        {noShowCount >= 3 && (
+          <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-800">⚠️ You have {noShowCount} no-shows recorded</p>
+              <p className="text-xs text-red-700 mt-0.5">
+                You accepted {noShowCount} blood requests but did not attend. Please only accept requests you can fulfill.
+                Repeated no-shows affect donor reliability on the platform.
+              </p>
+            </div>
+          </div>
+        )}
+
         {!donorProfile && !loading && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 flex items-center gap-3">
             <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0" />
