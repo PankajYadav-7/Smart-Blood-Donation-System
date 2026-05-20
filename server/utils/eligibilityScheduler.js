@@ -105,6 +105,42 @@ function startEligibilityScheduler() {
         }
       }
 
+      // ── Find matches accepted 7+ days ago with no confirmation ──────────
+      const Match        = require("../models/Match");
+      const BloodRequest = require("../models/BloodRequest");
+      const { sendPendingConfirmationReminder } = require("./emailService");
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const pendingMatches = await Match.find({
+        status:      "Accepted",
+        respondedAt: { $lte: sevenDaysAgo },
+      }).populate("requestId").populate("donorUserId", "fullName");
+
+      console.log(`📧 Pending confirmation reminders: ${pendingMatches.length} matches`);
+
+      for (const match of pendingMatches) {
+        try {
+          if (!match.requestId) continue;
+          const requester = await User.findById(match.requestId.userId).select("fullName email");
+          if (requester?.email) {
+            await sendPendingConfirmationReminder({
+              requesterEmail: requester.email,
+              requesterName:  requester.fullName,
+              donorName:      match.donorUserId?.fullName || "Your donor",
+              bloodGroup:     match.requestId.bloodGroup,
+              rh:             match.requestId.rh,
+              hospitalName:   match.requestId.hospitalName,
+              acceptedDate:   match.respondedAt,
+            });
+            console.log(`📧 Pending confirmation reminder sent → ${requester.email}`);
+          }
+        } catch (err) {
+          console.error("Pending confirmation reminder error:", err.message);
+        }
+      }
+
       console.log("✅ Daily eligibility check complete");
 
     } catch (err) {
