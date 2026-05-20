@@ -507,9 +507,11 @@ const DonorDashboard = () => {
               <h2 className="text-xl font-bold text-gray-900">🔔 Blood Requests Matching You</h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => handleSnooze(4)} className="text-gray-600">
-                  <BellOff className="h-4 w-4 mr-1" />Snooze 4h
+                  <BellOff className="h-4 w-4 mr-1" />Snooze All 4h
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleSnooze(24)} className="text-gray-600">Snooze 24h</Button>
+                <Button variant="outline" size="sm" onClick={() => handleSnooze(24)} className="text-gray-600">
+                  <BellOff className="h-4 w-4 mr-1" />Snooze All 24h
+                </Button>
               </div>
             </div>
 
