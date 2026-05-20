@@ -268,7 +268,6 @@ const DonorDashboard = () => {
               </button>
             </div>
             <Button variant="outline" size="sm" onClick={() => navigate("/donor/profile")}>Edit Profile</Button>
-            <Button variant="outline" size="sm" onClick={handleLogout} className="text-red-600 border-red-200 hover:bg-red-50">Logout</Button>
           </div>
         </div>
 
