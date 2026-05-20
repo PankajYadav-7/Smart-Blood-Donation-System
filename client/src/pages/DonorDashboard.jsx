@@ -314,6 +314,34 @@ const DonorDashboard = () => {
           </div>
         )}
 
+        {/* Banner — availability OFF but eligible and profile complete */}
+        {donorProfile && !loading && !isAvailable && eligibilityInfo?.status !== "cooldown" && (
+          <div className="bg-orange-50 border border-orange-300 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <BellOff className="h-5 w-5 text-orange-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-orange-800">Your availability is OFF</p>
+              <p className="text-xs text-orange-700 mt-0.5">You are eligible to donate but you will not receive blood requests until you turn your availability ON.</p>
+            </div>
+            <Button size="sm" onClick={handleToggleAvailability} className="bg-orange-600 hover:bg-orange-700 text-white flex-shrink-0">
+              Turn ON
+            </Button>
+          </div>
+        )}
+
+        {/* Banner — eligible again after cooldown */}
+        {donorProfile && !loading && eligibilityInfo?.status === "eligible" && !isAvailable && donorProfile?.lastDonationDate && (
+          <div className="bg-green-50 border border-green-400 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-green-800">🎉 You are eligible to donate again!</p>
+              <p className="text-xs text-green-700 mt-0.5">Your 56-day recovery period is complete. Turn your availability ON to start receiving blood requests.</p>
+            </div>
+            <Button size="sm" onClick={handleToggleAvailability} className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0">
+              Turn ON Now
+            </Button>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="mb-6">
           <div className="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-200 overflow-x-auto">
