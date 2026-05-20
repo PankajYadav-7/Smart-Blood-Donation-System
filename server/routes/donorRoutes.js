@@ -126,4 +126,49 @@ router.patch("/availability", protect, async (req, res) => {
   }
 });
 
+// ── Public donor search — safe fields only, no personal contact info ──
+router.get("/search", async (req, res) => {
+  try {
+    const { bloodGroup, rh, location, availability } = req.query;
+
+    // Build filter
+    const filter = {};
+    if (bloodGroup)   filter.bloodGroup   = bloodGroup;
+    if (rh)           filter.rh           = rh;
+    if (availability === "available") filter.availability = "available";
+
+    const profiles = await DonorProfile.find(filter)
+      .select("userId bloodGroup rh locationName availability donationCount lastDonationDate certificatesEarned")
+      .sort({ donationCount: -1 })
+      .limit(50);
+
+    // Get donor names from User model — no phone, no email
+    const enriched = await Promise.all(profiles.map(async (p) => {
+      const user = await User.findById(p.userId).select("fullName");
+      return {
+        _id:             p._id,
+        name:            user?.fullName || "Anonymous Donor",
+        bloodGroup:      p.bloodGroup,
+        rh:              p.rh,
+        locationName:    p.locationName || "Kathmandu",
+        availability:    p.availability,
+        donationCount:   p.donationCount || 0,
+        lastDonationDate: p.lastDonationDate,
+        certLevel:       p.certificatesEarned?.length > 0
+                           ? p.certificatesEarned[p.certificatesEarned.length - 1].level
+                           : null,
+      };
+    }));
+
+    // Filter by location name if provided
+    const result = location
+      ? enriched.filter(d => d.locationName?.toLowerCase().includes(location.toLowerCase()))
+      : enriched;
+
+    return res.status(200).json({ donors: result, total: result.length });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;
