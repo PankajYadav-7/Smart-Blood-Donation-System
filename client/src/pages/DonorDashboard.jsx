@@ -501,6 +501,12 @@ const DonorDashboard = () => {
                             ✅ Accepted — Go to details to mark as donated
                           </p>
                         </div>
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                          <p className="text-xs text-yellow-800 font-medium">
+                            ⚠️ Did you donate? Click "View Full Details" above and mark as donated.
+                            This updates your donation count, starts your 56-day recovery and awards your certificate.
+                          </p>
+                        </div>
                       </div>
                     ) : (
                       <button
