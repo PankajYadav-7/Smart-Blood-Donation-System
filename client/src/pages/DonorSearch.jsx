@@ -41,7 +41,7 @@ const DonorSearch = () => {
       if (location)                    params.location     = location;
       if (availability === "available") params.availability = "available";
 
-      const res = await axios.get(`${API}/donors/search`, { params });
+      const res = await axios.get(`${API}/donor/search`, { params });
       setDonors(res.data.donors || []);
     } catch (err) {
       console.log(err);

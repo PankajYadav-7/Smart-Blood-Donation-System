@@ -126,43 +126,64 @@ router.patch("/availability", protect, async (req, res) => {
   }
 });
 
-// ── Public donor search — safe fields only, no personal contact info ──
+// ── Public donor search — safe fields only, consent-first privacy ──────────
 router.get("/search", async (req, res) => {
   try {
     const { bloodGroup, rh, location, availability } = req.query;
 
-    // Build filter
+    // Build filter using correct boolean type
     const filter = {};
-    if (bloodGroup)   filter.bloodGroup   = bloodGroup;
-    if (rh)           filter.rh           = rh;
-    if (availability === "available") filter.availability = "available";
+    if (bloodGroup) filter.bloodGroup = bloodGroup;
+    if (rh)         filter.rh         = rh;
+    if (availability === "available") filter.availability = true;
 
     const profiles = await DonorProfile.find(filter)
-      .select("userId bloodGroup rh locationName availability donationCount lastDonationDate certificatesEarned")
-      .sort({ donationCount: -1 })
+      .select("userId bloodGroup rh locationName availability lastDonationDate certificatesEarned")
+      .sort({ createdAt: -1 })
       .limit(50);
 
-    // Get donor names from User model — no phone, no email
+    // Enrich with name (first name + last initial only) and donation count
+    const Match = require("../models/Match");
+
     const enriched = await Promise.all(profiles.map(async (p) => {
       const user = await User.findById(p.userId).select("fullName");
+
+      // Privacy — show first name + last initial only e.g. "Pankaj Y."
+      const fullName  = user?.fullName || "Anonymous";
+      const parts     = fullName.trim().split(" ");
+      const safeName  = parts.length > 1
+        ? `${parts[0]} ${parts[parts.length - 1][0]}.`
+        : parts[0];
+
+      // Count confirmed donations
+      const donationCount = await Match.countDocuments({
+        donorUserId: p.userId,
+        status:      "Donated",
+      });
+
+      // Get highest certificate level
+      const certLevel = p.certificatesEarned?.length > 0
+        ? p.certificatesEarned[p.certificatesEarned.length - 1].level
+        : null;
+
       return {
-        _id:             p._id,
-        name:            user?.fullName || "Anonymous Donor",
-        bloodGroup:      p.bloodGroup,
-        rh:              p.rh,
-        locationName:    p.locationName || "Kathmandu",
-        availability:    p.availability,
-        donationCount:   p.donationCount || 0,
+        _id:              p._id,
+        name:             safeName,
+        bloodGroup:       p.bloodGroup,
+        rh:               p.rh,
+        locationName:     p.locationName || "Nepal",
+        availability:     p.availability,
+        donationCount,
         lastDonationDate: p.lastDonationDate,
-        certLevel:       p.certificatesEarned?.length > 0
-                           ? p.certificatesEarned[p.certificatesEarned.length - 1].level
-                           : null,
+        certLevel,
       };
     }));
 
     // Filter by location name if provided
     const result = location
-      ? enriched.filter(d => d.locationName?.toLowerCase().includes(location.toLowerCase()))
+      ? enriched.filter(d =>
+          d.locationName?.toLowerCase().includes(location.toLowerCase())
+        )
       : enriched;
 
     return res.status(200).json({ donors: result, total: result.length });
