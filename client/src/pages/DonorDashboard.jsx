@@ -252,7 +252,14 @@ const DonorDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.fullName?.split(" ")[0]}! 👋</h1>
-            <p className="text-gray-500 mt-1">You are making a difference — keep saving lives!</p>
+            <p className="text-gray-500 mt-1">
+              {acceptedCount === 0
+                ? "Complete your profile and make your first donation to start saving lives!"
+                : acceptedCount < 3
+                ? `You have donated ${acceptedCount} time${acceptedCount > 1 ? "s" : ""} — keep going, you are making a difference!`
+                : `${acceptedCount} donations completed — you are a life saver! 🩸`
+              }
+            </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
