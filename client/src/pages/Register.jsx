@@ -171,6 +171,8 @@ const Register = () => {
     firstName: "", lastName: "", email: "", phone: "",
     password: "", confirmPassword: "",
     bloodType: "", age: "", location: "", lastDonation: "",
+    hasDonatedBefore: "no",
+    lastDonationDate: "",
     // Donor fields
     gender: "male", dateOfBirth: "", weight: "",
     hasIllness: "no", illnessDetails: "",
@@ -682,6 +684,46 @@ const Register = () => {
 
                       </div>
                     )}
+
+                    {/* Previous donation question */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+                          <p className="text-xs font-semibold text-blue-800">
+                            🩸 Have you donated blood before joining Jeevan Saarthi?
+                          </p>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { value: "no",  label: "🆕 No — First time donor" },
+                              { value: "yes", label: "✅ Yes — I have donated before" },
+                            ].map(opt => (
+                              <button key={opt.value} type="button"
+                                onClick={() => set("hasDonatedBefore", opt.value)}
+                                className={`py-2.5 px-3 rounded-xl text-xs font-semibold border-2 transition-all ${
+                                  formData.hasDonatedBefore === opt.value
+                                    ? "border-blue-500 bg-blue-100 text-blue-700"
+                                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                          {formData.hasDonatedBefore === "yes" && (
+                            <div>
+                              <label className={labelCls}>When was your last donation? *</label>
+                              <input
+                                className={inputCls}
+                                type="date"
+                                max={new Date().toISOString().split("T")[0]}
+                                value={formData.lastDonationDate}
+                                onChange={e => set("lastDonationDate", e.target.value)}
+                              />
+                              <p className="text-xs text-blue-600 mt-1">
+                                This helps us enforce the 56-day recovery rule to protect your health.
+                                You will not receive requests until 56 days after your last donation.
+                              </p>
+                            </div>
+                          )}
+                        </div>
 
                     <div>
                       <label className={labelCls}>Location *</label>
