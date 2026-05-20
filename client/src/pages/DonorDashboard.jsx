@@ -621,6 +621,9 @@ const DonorDashboard = () => {
                           <h3 className="text-lg font-bold text-gray-900">
                             {match.requestId?.bloodGroup}{match.requestId?.rh} Blood Needed
                           </h3>
+                          <p className="text-xs text-green-600 font-medium">
+                            ✅ Your {bloodType} blood is compatible with this request
+                          </p>
                           <Badge className={match.requestId?.urgency === "Emergency" ? "bg-red-100 text-red-700 border-red-200" : "bg-gray-100 text-gray-700 border-gray-200"}>
                             {match.requestId?.urgency}
                           </Badge>
