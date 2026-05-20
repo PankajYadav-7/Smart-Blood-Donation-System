@@ -1362,6 +1362,79 @@ async function sendEligibleNowEmail({
   await send(donorEmail, `🎉 You are eligible to donate blood again today — Turn ON availability`, html);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EMAIL 21 — Pending Confirmation Reminder to Patient (sent after 7 days)
+// Triggered: daily scheduler
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendPendingConfirmationReminder({
+  requesterEmail, requesterName, donorName,
+  bloodGroup, rh, hospitalName, acceptedDate,
+}) {
+  const accepted = new Date(acceptedDate).toLocaleDateString("en-GB", {
+    day: "numeric", month: "long", year: "numeric",
+  });
+
+  const html = wrap(`
+    <h2 style="margin:0 0 8px;color:#1a1a1a;font-size:20px;">Did You Receive Your Blood Donation?</h2>
+    <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.6;">
+      Dear <strong>${requesterName}</strong>, a donor accepted your blood request for
+      <strong style="color:#991b1b;">${bloodGroup}${rh}</strong> at <strong>${hospitalName}</strong>
+      on <strong>${accepted}</strong>. Please confirm whether you received the donation.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:2px solid #fecaca;border-radius:10px;margin-bottom:28px;">
+      <tr><td style="padding:24px;">
+        <p style="margin:0 0 12px;color:#991b1b;font-size:13px;font-weight:bold;text-transform:uppercase;">Action Required</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;width:160px;">Donor:</td>
+            <td style="padding:5px 0;font-weight:bold;">${donorName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Blood Type:</td>
+            <td style="padding:5px 0;font-weight:bold;color:#991b1b;">${bloodGroup}${rh}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Hospital:</td>
+            <td style="padding:5px 0;font-weight:bold;">${hospitalName}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6b7280;">Accepted On:</td>
+            <td style="padding:5px 0;font-weight:bold;">${accepted}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#555555;font-size:14px;line-height:1.6;">
+      Please log in to your dashboard and confirm whether <strong>${donorName}</strong>
+      donated blood. This is important because:
+    </p>
+    <ul style="margin:0 0 24px;padding-left:20px;color:#555555;font-size:14px;line-height:1.8;">
+      <li>The donor deserves credit for their life-saving contribution</li>
+      <li>Confirming starts their 56-day recovery protection period</li>
+      <li>If the donor did not come, we can find another donor for you</li>
+    </ul>
+
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;width:100%;">
+      <tr>
+        <td style="background:#991b1b;border-radius:8px;text-align:center;padding:14px 20px;">
+          <a href="${BASE_URL}/patient/dashboard" style="color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">
+            Go to My Dashboard — Confirm Now →
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;color:#999999;font-size:13px;">
+      If you no longer need this blood request, please close it from your dashboard
+      so the donor can continue helping others.
+    </p>
+  `);
+
+  await send(requesterEmail, `⏰ Please confirm — Did ${donorName} donate ${bloodGroup}${rh} blood for you?`, html);
+}
+
 module.exports = {
   notifyDonorOfRequest,
   notifyRequesterOfAcceptance,
@@ -1383,4 +1456,5 @@ module.exports = {
   sendRecoveryStartedEmail,
   sendEligibilityReminderEmail,
   sendEligibleNowEmail,
+  sendPendingConfirmationReminder,
 };
