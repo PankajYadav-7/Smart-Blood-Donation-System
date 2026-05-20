@@ -253,7 +253,8 @@ const Register = () => {
         dateOfBirth:    formData.dateOfBirth,
         weight:         formData.weight,
         hasIllness:     formData.hasIllness,
-        illnessDetails: formData.illnessDetails,
+        illnessDetails:   formData.illnessDetails,
+        lastDonationDate: formData.hasDonatedBefore === "yes" ? formData.lastDonationDate : null,
         // Patient specific
         bloodGroupNeeded:      formData.bloodGroupNeeded,
         rhNeeded:              formData.rhNeeded,
