@@ -178,7 +178,7 @@ const DonorDashboard = () => {
   };
 
   const getEligibility = () => {
-    if (!donorProfile?.lastDonationDate) return { label: "Available", color: "text-green-600 bg-green-50" };
+    if (!donorProfile?.lastDonationDate) return { label: "Eligible Now", color: "text-green-600 bg-green-50" };
     const next = new Date(donorProfile.lastDonationDate);
     next.setDate(next.getDate() + 56);
     if (next <= new Date()) return { label: "Available Now", color: "text-green-600 bg-green-50" };
