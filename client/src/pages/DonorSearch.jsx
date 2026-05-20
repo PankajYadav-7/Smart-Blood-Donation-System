@@ -40,6 +40,7 @@ const DonorSearch = () => {
       if (rh)                          params.rh           = rh;
       if (location)                    params.location     = location;
       if (availability === "available") params.availability = "available";
+      // availability filter already correct — backend converts to boolean
 
       const res = await axios.get(`${API}/donor/search`, { params });
       setDonors(res.data.donors || []);
@@ -199,11 +200,11 @@ const DonorSearch = () => {
                           {donor.bloodGroup}{donor.rh}
                         </Badge>
                         <Badge className={
-                          donor.availability === "available"
+                          donor.availability === true
                             ? "bg-green-100 text-green-700 border-green-200"
                             : "bg-gray-100 text-gray-600 border-gray-200"
                         }>
-                          {donor.availability === "available" ? "✅ Available" : "⏸ Unavailable"}
+                          {donor.availability === true ? "✅ Available" : "⏸ Unavailable"}
                         </Badge>
                         {certBadge(donor.certLevel)}
                       </div>
@@ -214,13 +215,15 @@ const DonorSearch = () => {
                             {donor.locationName}
                           </p>
                         )}
-                        <p className="text-sm text-gray-600 flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          Last donated: {timeAgo(donor.lastDonationDate)}
-                        </p>
+                        {donor.donationCount > 0 && (
+                          <p className="text-sm text-gray-600 flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            Last donated: {timeAgo(donor.lastDonationDate)}
+                          </p>
+                        )}
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <Heart className="h-4 w-4 text-gray-400" />
-                          {donor.donationCount || 0} total donation{donor.donationCount !== 1 ? "s" : ""}
+                          {donor.donationCount || 0} donation{donor.donationCount !== 1 ? "s" : ""} completed
                         </p>
                         {donor.lastDonationDate && (
                           <p className={`text-xs font-medium flex items-center gap-1 ${
