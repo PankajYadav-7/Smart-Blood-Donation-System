@@ -24,7 +24,7 @@ router.post("/register", async (req, res) => {
       phone, licenseNumber, address, orgDescription,
       // Donor specific fields
       bloodType, location, gender, dateOfBirth, weight,
-      hasIllness, illnessDetails,
+      hasIllness, illnessDetails, lastDonationDate,
       // Patient specific fields
       bloodGroupNeeded, rhNeeded, requestingFor,
       patientName, medicalCondition, hospitalName,
@@ -97,18 +97,25 @@ router.post("/register", async (req, res) => {
           bloodGroup  = bloodType.replace("+", "").replace("-", "").trim();
         }
 
+        // If donor donated before — check 56-day eligibility
+        const lastDonDate = lastDonationDate ? new Date(lastDonationDate) : null;
+        const nextEligible = lastDonDate ? new Date(lastDonDate) : null;
+        if (nextEligible) nextEligible.setDate(nextEligible.getDate() + 56);
+        const isStillInCooldown = nextEligible && nextEligible > new Date();
+
         await DonorProfile.create({
-          userId:       user._id,
+          userId:          user._id,
           bloodGroup,
           rh,
-          locationName: location || "",
-          availability: true,
-          gender:       gender       || "male",
-          dateOfBirth:  dateOfBirth  || null,
-          weight:       weight       || null,
-          hasIllness:   hasIllness   === "yes" ? true : false,
-          illnessDetails: illnessDetails || "",
-          phone:        phone        || "",
+          locationName:    location         || "",
+          availability:    !isStillInCooldown, // OFF if still in 56-day cooldown
+          lastDonationDate: lastDonDate,
+          gender:          gender           || "male",
+          dateOfBirth:     dateOfBirth      || null,
+          weight:          weight           || null,
+          hasIllness:      hasIllness       === "yes" ? true : false,
+          illnessDetails:  illnessDetails   || "",
+          phone:           phone            || "",
         });
       } catch (profileErr) {
         // Profile creation failed — do not block registration
