@@ -214,22 +214,24 @@ router.get("/compatible-requests", protect, async (req, res) => {
     if (!donorProfile) {
       return res.status(200).json({ requests: [], eligibilityStatus: "no_profile" });
     }
-    if (!donorProfile.availability) {
-      return res.status(200).json({ requests: [], eligibilityStatus: "unavailable" });
-    }
-
+    // ── CHECK 56-DAY ELIGIBILITY FIRST — takes priority over availability ──
     if (donorProfile.lastDonationDate) {
       const nextEligible = new Date(donorProfile.lastDonationDate);
       nextEligible.setDate(nextEligible.getDate() + 56);
       if (new Date() < nextEligible) {
         const daysLeft = Math.ceil((nextEligible - new Date()) / (1000 * 60 * 60 * 24));
         return res.status(200).json({
-          requests:        [],
+          requests:          [],
           eligibilityStatus: "cooldown",
           daysLeft,
-          nextEligibleDate: nextEligible,
+          nextEligibleDate:  nextEligible,
         });
       }
+    }
+
+    // ── THEN check availability ──
+    if (!donorProfile.availability) {
+      return res.status(200).json({ requests: [], eligibilityStatus: "unavailable" });
     }
 
     const openRequests = await BloodRequest.find({ status: "Open" });
