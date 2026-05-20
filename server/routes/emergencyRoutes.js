@@ -8,6 +8,7 @@ const {
   sendEmergencyDonorAlert,
   sendEmergencyAcceptedNotification,
   sendEmergencyHospitalAlert,
+  sendRecoveryStartedEmail,
 } = require("../utils/emailService");
 
 // ── Helper: generate tracking code ──────────────────────────────────────────
@@ -372,6 +373,33 @@ router.patch("/:id/mark-donated", protect, async (req, res) => {
     emergency.status = "Fulfilled";
 
     await emergency.save();
+
+    // ── Set donor recovery period ────────────────────────────────────────
+    const nextEligibleDate = new Date();
+    nextEligibleDate.setDate(nextEligibleDate.getDate() + 56);
+
+    await DonorProfile.findOneAndUpdate(
+      { userId: req.user.userId },
+      {
+        lastDonationDate: new Date(),
+        availability:     false,
+      }
+    );
+
+    // EMAIL 18 — Recovery period started
+    try {
+      sendRecoveryStartedEmail({
+        donorEmail:      donorUser.email,
+        donorName:       donorUser.fullName,
+        bloodGroup:      emergency.bloodGroup,
+        rh:              emergency.rh,
+        hospitalName:    emergency.hospitalName,
+        donationDate:    new Date(),
+        nextEligibleDate,
+      });
+    } catch (emailErr) {
+      console.error("Recovery email error:", emailErr.message);
+    }
 
     // ── Check and award certificates ──────────────────────────────────────
     try {
