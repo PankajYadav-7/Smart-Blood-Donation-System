@@ -10,6 +10,7 @@ const {
   notifyRequesterOfAcceptance,
   notifyDonorOfConfirmation,
   notifyRequesterOfNoShow,
+  sendRecoveryStartedEmail,
 } = require("../utils/emailService");
 
 // ── Auth middleware ──────────────────────────────────────────────────────────
@@ -372,6 +373,7 @@ router.patch("/:matchId/confirm-donation", protect, async (req, res) => {
     const donorUser = await User.findById(match.donorUserId).select("fullName email");
 
     if (donorUser && request) {
+      // EMAIL 3 — Donation confirmed
       notifyDonorOfConfirmation({
         donorEmail:   donorUser.email,
         donorName:    donorUser.fullName,
@@ -379,6 +381,19 @@ router.patch("/:matchId/confirm-donation", protect, async (req, res) => {
         rh:           request.rh,
         hospitalName: request.hospitalName || "the hospital",
         confirmedAt:  match.donationConfirmedAt,
+      });
+
+      // EMAIL 18 — Recovery period started
+      const nextEligibleDate = new Date();
+      nextEligibleDate.setDate(nextEligibleDate.getDate() + 56);
+      sendRecoveryStartedEmail({
+        donorEmail:      donorUser.email,
+        donorName:       donorUser.fullName,
+        bloodGroup:      request.bloodGroup,
+        rh:              request.rh,
+        hospitalName:    request.hospitalName || "the hospital",
+        donationDate:    match.donationConfirmedAt,
+        nextEligibleDate,
       });
     }
 
