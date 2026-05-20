@@ -172,7 +172,6 @@ const NGODashboard = () => {
             <Button onClick={() => navigate("/events/create")} className="bg-purple-600 hover:bg-purple-700 text-white">
               <Plus className="h-4 w-4 mr-2" />Create Event
             </Button>
-            <Button variant="outline" onClick={handleLogout} className="text-red-600 border-red-200 hover:bg-red-50">Logout</Button>
           </div>
         </div>
 
