@@ -71,6 +71,8 @@ const DonorProfile = () => {
           bloodGroup:       p.bloodGroup       || "O",
           rh:               p.rh               || "+",
           locationName:     p.locationName     || "",
+          locationLat:      p.locationLat      || null,
+          locationLng:      p.locationLng      || null,
           radiusKm:         p.radiusKm         || 10,
           lastDonationDate: p.lastDonationDate
             ? new Date(p.lastDonationDate).toISOString().split("T")[0]
@@ -110,6 +112,8 @@ const DonorProfile = () => {
           bloodGroup:       formData.bloodGroup,
           rh:               formData.rh,
           locationName:     formData.locationName,
+          locationLat:      formData.locationLat,
+          locationLng:      formData.locationLng,
           radiusKm:         Number(formData.radiusKm),
           lastDonationDate: formData.lastDonationDate || null,
           availability:     formData.availability,
