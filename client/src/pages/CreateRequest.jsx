@@ -20,14 +20,19 @@ const CreateRequest = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState({
-    bloodGroup: "A",
-    rh: "+",
+  const [formData, setFormData]     = useState({
+    bloodGroup:   "A",
+    rh:           "+",
     unitsRequired: 1,
-    urgency: "Normal",
+    urgency:      "Normal",
     hospitalName: "",
-    notes: "",
+    notes:        "",
+    hospitalLat:  null,
+    hospitalLng:  null,
   });
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError,   setGpsError]   = useState("");
+  const [gpsSuccess, setGpsSuccess] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,6 +55,48 @@ const CreateRequest = () => {
       setError(error.response?.data?.message || "Failed to create request");
     }
     setLoading(false);
+  };
+
+  const detectHospitalLocation = () => {
+    setGpsLoading(true);
+    setGpsError("");
+    setGpsSuccess("");
+    if (!navigator.geolocation) {
+      setGpsError("GPS not supported. Donors will still be matched by blood type.");
+      setGpsLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const data = await res.json();
+          const suburb  = data.address?.suburb || data.address?.neighbourhood || "";
+          const city    = data.address?.city   || data.address?.town || "";
+          const readable = [suburb, city].filter(Boolean).join(", ");
+          setFormData(prev => ({
+            ...prev,
+            hospitalLat: lat,
+            hospitalLng: lng,
+            hospitalName: prev.hospitalName || readable,
+          }));
+          setGpsSuccess(`Location pinned: ${readable || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}`);
+        } catch {
+          setFormData(prev => ({ ...prev, hospitalLat: lat, hospitalLng: lng }));
+          setGpsSuccess(`Coordinates saved: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }
+        setGpsLoading(false);
+      },
+      () => {
+        setGpsError("Location access denied. Donors will be matched by blood type only.");
+        setGpsLoading(false);
+      }
+    );
   };
 
   const bloodGroups = ["A", "B", "AB", "O"];
