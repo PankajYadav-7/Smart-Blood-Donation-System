@@ -16,7 +16,9 @@ const DonorProfile = () => {
   const user     = JSON.parse(localStorage.getItem("user") || "null");
 
   const [loading, setLoading] = useState(true);
-  const [saving,  setSaving]  = useState(false);
+  const [saving,      setSaving]      = useState(false);
+  const [gpsLoading,  setGpsLoading]  = useState(false);
+  const [gpsError,    setGpsError]    = useState("");
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
 
@@ -145,6 +147,45 @@ const DonorProfile = () => {
   const daysUntilNext = nextEligible
     ? Math.ceil((nextEligible - new Date()) / (1000 * 60 * 60 * 24))
     : 0;
+  
+    const detectLocation = () => {
+    setGpsLoading(true);
+    setGpsError("");
+    if (!navigator.geolocation) {
+      setGpsError("Your browser does not support GPS. Please type your location manually.");
+      setGpsLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const data = await res.json();
+          const suburb   = data.address?.suburb   || data.address?.neighbourhood || "";
+          const city     = data.address?.city      || data.address?.town || data.address?.county || "";
+          const country  = data.address?.country   || "Nepal";
+          const readable = [suburb, city, country].filter(Boolean).join(", ");
+          set("locationName", readable);
+          set("locationLat",  lat);
+          set("locationLng",  lng);
+        } catch {
+          set("locationLat", lat);
+          set("locationLng", lng);
+          setGpsError("Could not get area name — coordinates saved. You can type your area name manually.");
+        }
+        setGpsLoading(false);
+      },
+      (err) => {
+        setGpsError("Location access denied. Please type your location manually.");
+        setGpsLoading(false);
+      }
+    );
+  };
 
   const inputCls = "w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-white";
   const labelCls = "block text-sm font-medium text-gray-700 mb-1.5";
