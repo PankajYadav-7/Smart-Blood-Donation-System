@@ -574,28 +574,96 @@ const DonorProfile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+
+              {/* GPS detect button */}
               <div>
-                <label className={labelCls}>Your City / Area</label>
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Step 1 — Detect your location automatically
+                </p>
+                <button
+                  type="button"
+                  onClick={detectLocation}
+                  disabled={gpsLoading}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition-all disabled:opacity-50"
+                >
+                  {gpsLoading
+                    ? <><Loader className="h-4 w-4 animate-spin" />Detecting Location...</>
+                    : <><MapPin className="h-4 w-4" />📍 Detect My Location Automatically</>
+                  }
+                </button>
+
+                {/* GPS success */}
+                {formData.locationLat && formData.locationLng && (
+                  <div className="mt-2 bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-green-800">Location detected accurately</p>
+                      <p className="text-xs text-green-700">
+                        {formData.locationLat.toFixed(4)}, {formData.locationLng.toFixed(4)} — {formData.locationName}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* GPS error */}
+                {gpsError && (
+                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                    <p className="text-xs text-yellow-800">{gpsError}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Manual fallback */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-1.5">
+                  Step 2 — Or type your area name manually
+                </p>
                 <input
                   type="text"
                   value={formData.locationName}
                   onChange={e => set("locationName", e.target.value)}
-                  placeholder="e.g. Kathmandu, Lalitpur, Bhaktapur"
+                  placeholder="e.g. Sinamangal, Koteshwor, Kathmandu"
                   className={inputCls}
                 />
+                {!formData.locationLat && (
+                  <p className="text-xs text-orange-500 mt-1">
+                    ⚠️ Manual location is less accurate for matching. Use the GPS button above for best results.
+                  </p>
+                )}
               </div>
+
+              {/* Radius preference */}
               <div>
-                <label className={labelCls}>Preferred Radius (km)</label>
-                <select
-                  value={formData.radiusKm}
-                  onChange={e => set("radiusKm", Number(e.target.value))}
-                  className={inputCls}
-                >
-                  {[5, 10, 15, 20, 30, 50].map(km => (
-                    <option key={km} value={km}>{km} km radius</option>
+                <label className={labelCls}>
+                  How far are you willing to travel to donate?
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { km: 5,  label: "5 km",  desc: "My area" },
+                    { km: 10, label: "10 km", desc: "My city" },
+                    { km: 25, label: "25 km", desc: "Nearby" },
+                    { km: 35, label: "35 km", desc: "District" },
+                    { km: 50, label: "50 km", desc: "Province" },
+                    { km: 100, label: "Any",  desc: "Anywhere" },
+                  ].map(opt => (
+                    <button
+                      key={opt.km}
+                      type="button"
+                      onClick={() => set("radiusKm", opt.km)}
+                      className={`py-2.5 rounded-xl border-2 text-center transition-all ${
+                        formData.radiusKm === opt.km
+                          ? "border-red-600 bg-red-50 text-red-700"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      <p className="text-sm font-bold">{opt.label}</p>
+                      <p className="text-xs text-gray-400">{opt.desc}</p>
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
+
             </CardContent>
           </Card>
 
