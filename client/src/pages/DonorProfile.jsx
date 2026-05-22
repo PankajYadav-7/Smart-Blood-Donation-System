@@ -17,8 +17,8 @@ const DonorProfile = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving,      setSaving]      = useState(false);
-  const [gpsLoading,  setGpsLoading]  = useState(false);
-  const [gpsError,    setGpsError]    = useState("");
+  const [locLoading,  setLocLoading]  = useState(false);
+  const [locVerified, setLocVerified] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
 
@@ -148,43 +148,27 @@ const DonorProfile = () => {
     ? Math.ceil((nextEligible - new Date()) / (1000 * 60 * 60 * 24))
     : 0;
   
-    const detectLocation = () => {
-    setGpsLoading(true);
-    setGpsError("");
-    if (!navigator.geolocation) {
-      setGpsError("Your browser does not support GPS. Please type your location manually.");
-      setGpsLoading(false);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-            { headers: { "Accept-Language": "en" } }
-          );
-          const data = await res.json();
-          const suburb   = data.address?.suburb   || data.address?.neighbourhood || "";
-          const city     = data.address?.city      || data.address?.town || data.address?.county || "";
-          const country  = data.address?.country   || "Nepal";
-          const readable = [suburb, city, country].filter(Boolean).join(", ");
-          set("locationName", readable);
-          set("locationLat",  lat);
-          set("locationLng",  lng);
-        } catch {
-          set("locationLat", lat);
-          set("locationLng", lng);
-          setGpsError("Could not get area name — coordinates saved. You can type your area name manually.");
-        }
-        setGpsLoading(false);
-      },
-      (err) => {
-        setGpsError("Location access denied. Please type your location manually.");
-        setGpsLoading(false);
+    const geocodeLocation = async (locationText) => {
+    if (!locationText || locationText.length < 3) return;
+    setLocLoading(true);
+    setLocVerified(false);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationText + ", Nepal")}&format=json&limit=1`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        set("locationLat", lat);
+        set("locationLng", lng);
+        setLocVerified(true);
       }
-    );
+    } catch {
+      // Silent fail
+    }
+    setLocLoading(false);
   };
 
   const inputCls = "w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-white";
@@ -575,77 +559,63 @@ const DonorProfile = () => {
             </CardHeader>
             <CardContent className="space-y-4">
 
-              {/* GPS detect button */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">
-                  Step 1 — Detect your location automatically
-                </p>
-                <button
-                  type="button"
-                  onClick={detectLocation}
-                  disabled={gpsLoading}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition-all disabled:opacity-50"
-                >
-                  {gpsLoading
-                    ? <><Loader className="h-4 w-4 animate-spin" />Detecting Location...</>
-                    : <><MapPin className="h-4 w-4" />📍 Detect My Location Automatically</>
-                  }
-                </button>
-
-                {/* GPS success */}
-                {formData.locationLat && formData.locationLng && (
-                  <div className="mt-2 bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-green-800">Location detected accurately</p>
-                      <p className="text-xs text-green-700">
-                        {formData.locationLat.toFixed(4)}, {formData.locationLng.toFixed(4)} — {formData.locationName}
-                      </p>
+                <label className={labelCls}>Your Area / City</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.locationName}
+                    onChange={e => {
+                      set("locationName", e.target.value);
+                      setLocVerified(false);
+                      set("locationLat", null);
+                      set("locationLng", null);
+                    }}
+                    onBlur={e => geocodeLocation(e.target.value)}
+                    placeholder="e.g. Sinamangal, Kathmandu"
+                    className={inputCls}
+                  />
+                  {locLoading && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader className="h-4 w-4 text-gray-400 animate-spin" />
                     </div>
-                  </div>
-                )}
-
-                {/* GPS error */}
-                {gpsError && (
-                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
-                    <p className="text-xs text-yellow-800">{gpsError}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Manual fallback */}
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1.5">
-                  Step 2 — Or type your area name manually
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  Type your area name and click outside — coordinates found automatically
                 </p>
-                <input
-                  type="text"
-                  value={formData.locationName}
-                  onChange={e => set("locationName", e.target.value)}
-                  placeholder="e.g. Sinamangal, Koteshwor, Kathmandu"
-                  className={inputCls}
-                />
-                {!formData.locationLat && (
-                  <p className="text-xs text-orange-500 mt-1">
-                    ⚠️ Manual location is less accurate for matching. Use the GPS button above for best results.
-                  </p>
+
+                {locVerified && formData.locationLat && (
+                  <div className="mt-2 bg-green-50 border border-green-200 rounded-xl p-2.5 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <p className="text-xs text-green-800 font-medium">
+                      ✅ Location verified — saved for accurate donor matching
+                    </p>
+                  </div>
+                )}
+
+                {!locVerified && formData.locationName && !locLoading && !formData.locationLat && (
+                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-xl p-2.5 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                    <p className="text-xs text-yellow-800">
+                      Click outside the box to verify your location automatically
+                    </p>
+                  </div>
                 )}
               </div>
 
-              {/* Radius preference */}
               <div>
                 <label className={labelCls}>
                   How far are you willing to travel to donate?
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { km: 5,  label: "5 km",  desc: "My area" },
-                    { km: 10, label: "10 km", desc: "My city" },
-                    { km: 25, label: "25 km", desc: "Nearby" },
-                    { km: 35, label: "35 km", desc: "District" },
-                    { km: 50, label: "50 km", desc: "Province" },
-                    { km: 100, label: "Any",  desc: "Anywhere" },
+                    { km: 5,   label: "5 km",  desc: "My area"  },
+                    { km: 10,  label: "10 km", desc: "My city"  },
+                    { km: 25,  label: "25 km", desc: "Nearby"   },
+                    { km: 35,  label: "35 km", desc: "District" },
+                    { km: 50,  label: "50 km", desc: "Province" },
+                    { km: 100, label: "Any",   desc: "Anywhere" },
                   ].map(opt => (
                     <button
                       key={opt.km}

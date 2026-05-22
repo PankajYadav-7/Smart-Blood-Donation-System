@@ -30,9 +30,8 @@ const CreateRequest = () => {
     hospitalLat:  null,
     hospitalLng:  null,
   });
-  const [gpsLoading, setGpsLoading] = useState(false);
-  const [gpsError,   setGpsError]   = useState("");
-  const [gpsSuccess, setGpsSuccess] = useState("");
+  const [locLoading,  setLocLoading]  = useState(false);
+  const [locVerified, setLocVerified] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -57,46 +56,26 @@ const CreateRequest = () => {
     setLoading(false);
   };
 
-  const detectHospitalLocation = () => {
-    setGpsLoading(true);
-    setGpsError("");
-    setGpsSuccess("");
-    if (!navigator.geolocation) {
-      setGpsError("GPS not supported. Donors will still be matched by blood type.");
-      setGpsLoading(false);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-            { headers: { "Accept-Language": "en" } }
-          );
-          const data = await res.json();
-          const suburb  = data.address?.suburb || data.address?.neighbourhood || "";
-          const city    = data.address?.city   || data.address?.town || "";
-          const readable = [suburb, city].filter(Boolean).join(", ");
-          setFormData(prev => ({
-            ...prev,
-            hospitalLat: lat,
-            hospitalLng: lng,
-            hospitalName: prev.hospitalName || readable,
-          }));
-          setGpsSuccess(`Location pinned: ${readable || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}`);
-        } catch {
-          setFormData(prev => ({ ...prev, hospitalLat: lat, hospitalLng: lng }));
-          setGpsSuccess(`Coordinates saved: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-        }
-        setGpsLoading(false);
-      },
-      () => {
-        setGpsError("Location access denied. Donors will be matched by blood type only.");
-        setGpsLoading(false);
+  const geocodeHospital = async (locationText) => {
+    if (!locationText || locationText.length < 3) return;
+    setLocLoading(true);
+    setLocVerified(false);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationText + ", Nepal")}&format=json&limit=1`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        setFormData(prev => ({ ...prev, hospitalLat: lat, hospitalLng: lng }));
+        setLocVerified(true);
       }
-    );
+    } catch {
+      // Silent fail
+    }
+    setLocLoading(false);
   };
 
   const bloodGroups = ["A", "B", "AB", "O"];
@@ -266,20 +245,44 @@ const CreateRequest = () => {
                 </div>
               </div>
 
-              {/* Hospital Name */}
+              {/* Hospital Location */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Hospital / Location Name
+                  Hospital / Location Name *
                 </label>
-                <input
-                  type="text"
-                  name="hospitalName"
-                  value={formData.hospitalName}
-                  onChange={handleChange}
-                  placeholder="e.g. Bir Hospital, Kathmandu"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="hospitalName"
+                    value={formData.hospitalName}
+                    onChange={e => {
+                      handleChange(e);
+                      setLocVerified(false);
+                      setFormData(prev => ({ ...prev, hospitalLat: null, hospitalLng: null }));
+                    }}
+                    onBlur={e => geocodeHospital(e.target.value)}
+                    placeholder="e.g. Bir Hospital, Kathmandu"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    required
+                  />
+                  {locLoading && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  Type hospital name and click outside — location is found automatically
+                </p>
+
+                {locVerified && formData.hospitalLat && (
+                  <div className="mt-2 bg-green-50 border border-green-200 rounded-xl p-2.5 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <p className="text-xs text-green-800 font-medium">
+                      ✅ Location found — nearby donors will be notified first
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Notes */}
