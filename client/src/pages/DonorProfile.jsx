@@ -35,6 +35,8 @@ const DonorProfile = () => {
     rh:               "+",
     // Location
     locationName:     "",
+    locationLat:      null,
+    locationLng:      null,
     radiusKm:         10,
     // Eligibility
     lastDonationDate: "",
