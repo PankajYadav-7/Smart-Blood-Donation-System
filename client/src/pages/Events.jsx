@@ -197,6 +197,11 @@ const Events = () => {
                     <div className="flex items-center gap-2 text-gray-600">
                       <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
                       <span className="truncate">{event.venueName}, {event.city}</span>
+                      {donorCoords && event.locationLat && event.locationLng && (
+                        <span className="ml-1 text-xs bg-blue-50 text-blue-600 font-semibold px-2 py-0.5 rounded-full flex-shrink-0">
+                          📍 {haversineKm(donorCoords.lat, donorCoords.lng, event.locationLat, event.locationLng).toFixed(1)} km
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Clock className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
