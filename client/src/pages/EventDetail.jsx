@@ -221,9 +221,21 @@ const EventDetail = () => {
               <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                 <MapPin className="h-4 w-4 text-blue-600" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-xs text-gray-400">Address</p>
                 <p className="font-semibold text-gray-900">{event.address}, {event.city}</p>
+                {event.locationLat && event.locationLng && (
+                  <button
+                    onClick={() => window.open(
+                      "https://www.google.com/maps/dir/?api=1&destination=" +
+                      event.locationLat + "," + event.locationLng,
+                      "_blank"
+                    )}
+                    className="mt-2 text-xs text-blue-600 hover:underline flex items-center gap-1 font-medium"
+                  >
+                    <MapPin className="h-3 w-3" />🗺️ Get Directions
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Calendar, Clock, MapPin, Building, Phone, Droplets, ArrowLeft, Loader, CheckCircle, AlertCircle } from "lucide-react";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 
 const API = "http://localhost:5000/api";
 
@@ -24,6 +25,8 @@ const CreateEvent = () => {
     venueName:        "",
     address:          "",
     city:             "Kathmandu",
+    locationLat:      null,
+    locationLng:      null,
     bloodTypesNeeded: [],
     targetDonors:     50,
     whatToBring:      "Valid ID, eat well before donating",
@@ -187,14 +190,13 @@ const CreateEvent = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Address <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
+                <LocationAutocomplete
+                  label="Full Address *"
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(text) => setFormData({ ...formData, address: text, locationLat: null, locationLng: null })}
+                  onLocationSelect={({ lat, lng }) => setFormData(prev => ({ ...prev, locationLat: lat, locationLng: lng }))}
                   placeholder="e.g. New Baneshwor, Kathmandu"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
-                  required
+                  hint="Type address and select from suggestions to save coordinates"
                 />
               </div>
               <div>
