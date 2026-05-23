@@ -22,7 +22,7 @@ const LocationAutocomplete = ({
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
         setShowDropdown(false);
         if (value && !confirmed) {
-          geocodeFallback(value);
+          geocodeSilent(value);
         }
       }
     };
@@ -30,7 +30,9 @@ const LocationAutocomplete = ({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [value, confirmed]);
 
-  const geocodeFallback = async (text) => {
+  // Silent geocode — saves coordinates but does NOT show confirmed name
+  // and does NOT change input text
+  const geocodeSilent = async (text) => {
     if (!text || text.length < 3) return;
     try {
       const res = await fetch(
@@ -41,16 +43,13 @@ const LocationAutocomplete = ({
       if (data && data.length > 0) {
         const lat = parseFloat(data[0].lat);
         const lng = parseFloat(data[0].lon);
-        const shortName = (data[0].display_name || "").split(",").slice(0, 2).join(",").trim();
-        onLocationSelect({ lat, lng, name: text });
-        setConfirmed(true);
-        setConfirmedName(shortName);
+        // Save coordinates silently — no UI change
+        onLocationSelect({ lat, lng });
       } else {
-        onLocationSelect({ lat: null, lng: null, name: text });
-        setConfirmed(false);
+        onLocationSelect({ lat: null, lng: null });
       }
     } catch {
-      onLocationSelect({ lat: null, lng: null, name: text });
+      onLocationSelect({ lat: null, lng: null });
     }
   };
 
@@ -59,7 +58,6 @@ const LocationAutocomplete = ({
     onChange(text);
     setConfirmed(false);
     setConfirmedName("");
-    onLocationSelect({ lat: null, lng: null, name: text });
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (text.length < 2) {
@@ -77,7 +75,7 @@ const LocationAutocomplete = ({
         );
         const data = await res.json();
         setSuggestions(data || []);
-        setShowDropdown(true);
+        setShowDropdown(data && data.length > 0);
       } catch {
         setSuggestions([]);
       }
@@ -90,10 +88,8 @@ const LocationAutocomplete = ({
     const lng       = parseFloat(item.lon);
     const parts     = (item.display_name || "").split(",");
     const shortName = parts.slice(0, 3).join(",").trim();
-    const placeName = parts[0].trim();
 
-    onChange(placeName);
-    onLocationSelect({ lat, lng, name: placeName });
+    onLocationSelect({ lat, lng });
     setConfirmed(true);
     setConfirmedName(shortName);
     setShowDropdown(false);
@@ -114,6 +110,10 @@ const LocationAutocomplete = ({
           placeholder={placeholder}
           className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-white pr-10"
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+          name="location-search-field"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {searching
@@ -125,42 +125,35 @@ const LocationAutocomplete = ({
         </div>
       </div>
 
-      {showDropdown && (
+      {showDropdown && suggestions.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-          {suggestions.length > 0 ? (
-            <>
-              {suggestions.map((item, i) => {
-                const parts   = (item.display_name || "").split(",");
-                const name    = parts[0].trim();
-                const address = parts.slice(1, 3).join(",").trim();
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => handleSelect(item)}
-                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left border-b border-gray-50 last:border-0"
-                  >
-                    <MapPin className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{name}</p>
-                      <p className="text-xs text-gray-400">{address}</p>
-                    </div>
-                  </button>
-                );
-              })}
-              <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
-                <p className="text-xs text-gray-400">
-                  Not in the list? Just keep typing your full address
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="px-4 py-3 text-center">
-              <p className="text-xs text-gray-500">
-                No results — type your full location name and continue
-              </p>
-            </div>
-          )}
+          {suggestions.map((item, i) => {
+            const parts   = (item.display_name || "").split(",");
+            const name    = parts[0].trim();
+            const address = parts.slice(1, 3).join(",").trim();
+            return (
+              <button
+                key={i}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSelect(item);
+                }}
+                className="w-full flex items-start gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left border-b border-gray-50 last:border-0"
+              >
+                <MapPin className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{name}</p>
+                  <p className="text-xs text-gray-400">{address}</p>
+                </div>
+              </button>
+            );
+          })}
+          <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+            <p className="text-xs text-gray-400">
+              Not in the list? Just keep typing your full address
+            </p>
+          </div>
         </div>
       )}
 

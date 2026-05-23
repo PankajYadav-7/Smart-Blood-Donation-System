@@ -227,12 +227,11 @@ const CreateRequest = () => {
                 label="Hospital / Location Name *"
                 value={formData.hospitalName}
                 onChange={(text) => setFormData(prev => ({ ...prev, hospitalName: text }))}
-                onLocationSelect={({ lat, lng, name }) => {
+                onLocationSelect={({ lat, lng }) => {
                   setFormData(prev => ({
                     ...prev,
-                    hospitalName: name || prev.hospitalName,
-                    hospitalLat:  lat,
-                    hospitalLng:  lng,
+                    hospitalLat: lat,
+                    hospitalLng: lng,
                   }));
                 }}
                 placeholder="e.g. Bir Hospital, Kathmandu"

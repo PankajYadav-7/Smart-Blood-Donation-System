@@ -543,8 +543,7 @@ const DonorProfile = () => {
                   set("locationLat", null);
                   set("locationLng", null);
                 }}
-                onLocationSelect={({ lat, lng, name }) => {
-                  if (name) set("locationName", name);
+                onLocationSelect={({ lat, lng }) => {
                   set("locationLat", lat);
                   set("locationLng", lng);
                 }}
