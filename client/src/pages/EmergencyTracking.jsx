@@ -320,9 +320,24 @@ const EmergencyTracking = () => {
               <span className="text-gray-500">Units Required:</span>
               <span className="font-semibold">{emergency.unitsRequired}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-start">
               <span className="text-gray-500">Hospital:</span>
-              <span className="font-semibold text-right">{emergency.hospitalName}</span>
+              <div className="text-right">
+                <span className="font-semibold">{emergency.hospitalName}</span>
+                {emergency.locationLat && emergency.locationLng && (
+                  <button
+                    type="button"
+                    onClick={() => window.open(
+                      "https://www.google.com/maps/dir/?api=1&destination=" +
+                      emergency.locationLat + "," + emergency.locationLng,
+                      "_blank"
+                    )}
+                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1 font-medium justify-end"
+                  >
+                    <MapPin className="h-3 w-3" />🗺️ Get Directions
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Urgency:</span>
