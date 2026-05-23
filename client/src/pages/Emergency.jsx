@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import Navbar from "../components/Navbar";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 import Footer from "../components/Footer";
 import {
   Phone, Droplets, AlertCircle, CheckCircle,
@@ -30,6 +31,8 @@ const Emergency = () => {
     // Location
     hospitalName:   "",
     location:       "",
+    locationLat:    null,
+    locationLng:    null,
     // Urgency
     urgencyLevel:   "Critical",
     // Patient
@@ -413,31 +416,21 @@ const Emergency = () => {
                   <p className="text-sm font-bold text-gray-700 uppercase tracking-wide">Location</p>
                 </div>
                 <div className="space-y-4">
-                  <div>
-                    <label className={labelCls}>Hospital / Medical Centre *</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input
-                        className={inputCls + " pl-10"}
-                        placeholder="e.g. Bir Hospital, Kathmandu"
-                        value={formData.hospitalName}
-                        onChange={e => set("hospitalName", e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelCls}>
-                      Area / District
-                      <span className="text-gray-400 font-normal ml-1">(Optional)</span>
-                    </label>
-                    <input
-                      className={inputCls}
-                      placeholder="e.g. Kathmandu, Lalitpur, Bhaktapur"
-                      value={formData.location}
-                      onChange={e => set("location", e.target.value)}
-                    />
-                  </div>
+                  <LocationAutocomplete
+                    label="Hospital / Medical Centre *"
+                    value={formData.hospitalName}
+                    onChange={(text) => {
+                      set("hospitalName", text);
+                      set("locationLat", null);
+                      set("locationLng", null);
+                    }}
+                    onLocationSelect={({ lat, lng }) => {
+                      set("locationLat", lat);
+                      set("locationLng", lng);
+                    }}
+                    placeholder="e.g. Bir Hospital, Kathmandu"
+                    hint="Type hospital name — select from suggestions or type freely"
+                  />
                 </div>
               </div>
 

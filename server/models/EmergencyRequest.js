@@ -22,6 +22,8 @@ const emergencyRequestSchema = new mongoose.Schema(
     // Location
     hospitalName: { type: String, required: true },
     location:     { type: String, default: "" },
+    locationLat:  { type: Number, default: null },
+    locationLng:  { type: Number, default: null },
 
     // Urgency
     urgencyLevel: {
