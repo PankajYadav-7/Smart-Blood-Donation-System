@@ -236,9 +236,22 @@ const EmergencyDetail = () => {
               <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                 <MapPin className="h-4 w-4 text-blue-600" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-xs text-gray-400">Hospital</p>
                 <p className="font-semibold text-gray-900">{emergency?.hospitalName}</p>
+                {emergency?.locationLat && emergency?.locationLng && (
+                  <button
+                    type="button"
+                    onClick={() => window.open(
+                      "https://www.google.com/maps/dir/?api=1&destination=" +
+                      emergency.locationLat + "," + emergency.locationLng,
+                      "_blank"
+                    )}
+                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1 font-medium"
+                  >
+                    <MapPin className="h-3 w-3" />🗺️ Get Directions
+                  </button>
+                )}
               </div>
             </div>
             {emergency?.medicalCondition && (
