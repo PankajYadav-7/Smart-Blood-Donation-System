@@ -37,6 +37,19 @@ const isCompatible = (donorGroup, donorRh, requestGroup, requestRh) => {
 // HOSPITAL — Find matching donors for a request
 // 📧 EMAIL 1: Each matched donor gets "Someone needs your blood type" email
 // ─────────────────────────────────────────────────────────────────────────────
+// ── Haversine distance calculation ───────────────────────────────────────────
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R    = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a    =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 router.post("/find/:requestId", protect, async (req, res) => {
   try {
     const request = await BloodRequest.findById(req.params.requestId);
@@ -44,6 +57,7 @@ router.post("/find/:requestId", protect, async (req, res) => {
 
     const donors = await DonorProfile.find({ availability: true });
 
+    // ── Filter by blood compatibility ────────────────────────────────────
     const compatibleDonors = donors.filter((donor) =>
       isCompatible(donor.bloodGroup, donor.rh, request.bloodGroup, request.rh)
     );
@@ -52,58 +66,119 @@ router.post("/find/:requestId", protect, async (req, res) => {
       return res.status(200).json({ message: "No compatible donors found", matches: [] });
     }
 
+    // ── Calculate distance for each donor ────────────────────────────────
+    // If hospital has coordinates — calculate real distance
+    // If no coordinates — distance = null, treat as eligible
+    const hasHospitalLocation = !!(request.hospitalLat && request.hospitalLng);
+
+    const donorsWithDistance = compatibleDonors.map((donor) => {
+      let distanceKm = null;
+      if (
+        hasHospitalLocation &&
+        donor.locationLat &&
+        donor.locationLng
+      ) {
+        distanceKm = haversineKm(
+          donor.locationLat,
+          donor.locationLng,
+          request.hospitalLat,
+          request.hospitalLng
+        );
+      }
+      return { donor, distanceKm };
+    });
+
+    // ── Sort by distance — nearest first ─────────────────────────────────
+    // Donors with no coordinates go to the end
+    donorsWithDistance.sort((a, b) => {
+      if (a.distanceKm === null && b.distanceKm === null) return 0;
+      if (a.distanceKm === null) return 1;
+      if (b.distanceKm === null) return -1;
+      return a.distanceKm - b.distanceKm;
+    });
+
+    // ── Phase 1: donors within their radius preference ───────────────────
+    // Phase 2: all other compatible donors
+    const phase1 = donorsWithDistance.filter(
+      ({ donor, distanceKm }) =>
+        distanceKm === null || distanceKm <= (donor.radiusKm || 10)
+    );
+    const phase2 = donorsWithDistance.filter(
+      ({ donor, distanceKm }) =>
+        distanceKm !== null && distanceKm > (donor.radiusKm || 10)
+    );
+
+    // Notify phase1 first then phase2
+    const orderedDonors = [...phase1, ...phase2];
+
+    console.log(`🩸 Request ${request._id}: ${compatibleDonors.length} compatible donors`);
+    console.log(`   Phase 1 (within radius): ${phase1.length} donors`);
+    console.log(`   Phase 2 (outside radius): ${phase2.length} donors`);
+    if (hasHospitalLocation) {
+      console.log(`   Hospital: ${request.hospitalLat}, ${request.hospitalLng}`);
+    } else {
+      console.log(`   No hospital location — all donors notified equally`);
+    }
+
     const matches = [];
 
-    for (const donor of compatibleDonors) {
+    for (const { donor, distanceKm } of orderedDonors) {
       const existingMatch = await Match.findOne({
-        requestId:     request._id,
+        requestId:      request._id,
         donorProfileId: donor._id,
       });
 
-      if (!existingMatch) {
-  // First time — create match and send email
-  const match = await Match.create({
-    requestId:      request._id,
-    donorProfileId: donor._id,
-    donorUserId:    donor.userId,
-    status:         "Notified",
-  });
-  matches.push(match);
+      const donorUser = await User.findById(donor.userId).select("fullName email");
 
-  const donorUser = await User.findById(donor.userId).select("fullName email");
-  if (donorUser) {
-    notifyDonorOfRequest({
-      donorEmail:   donorUser.email,
-      donorName:    donorUser.fullName,
-      bloodGroup:   request.bloodGroup,
-      rh:           request.rh,
-      urgency:      request.urgency      || "Normal",
-      hospitalName: request.hospitalName || "the hospital",
-      requestId:    request._id,
-    });
-  }
-} else if (existingMatch.status === "Notified") {
-  // Match exists but donor has not responded yet — re-send reminder email
-  const donorUser = await User.findById(donor.userId).select("fullName email");
-  if (donorUser) {
-    notifyDonorOfRequest({
-      donorEmail:   donorUser.email,
-      donorName:    donorUser.fullName,
-      bloodGroup:   request.bloodGroup,
-      rh:           request.rh,
-      urgency:      request.urgency      || "Normal",
-      hospitalName: request.hospitalName || "the hospital",
-      requestId:    request._id,
-    });
-  }
-  matches.push(existingMatch);
-}
+      if (!existingMatch) {
+        // First time — create match and send email
+        const match = await Match.create({
+          requestId:      request._id,
+          donorProfileId: donor._id,
+          donorUserId:    donor.userId,
+          status:         "Notified",
+        });
+        matches.push(match);
+
+        if (donorUser) {
+          notifyDonorOfRequest({
+            donorEmail:   donorUser.email,
+            donorName:    donorUser.fullName,
+            bloodGroup:   request.bloodGroup,
+            rh:           request.rh,
+            urgency:      request.urgency      || "Normal",
+            hospitalName: request.hospitalName || "the hospital",
+            requestId:    request._id,
+          });
+          console.log(
+            `   ✅ Notified: ${donorUser.fullName}` +
+            (distanceKm !== null ? ` — ${distanceKm.toFixed(1)} km away` : " — distance unknown")
+          );
+        }
+      } else if (existingMatch.status === "Notified") {
+        // Already notified — re-send reminder
+        if (donorUser) {
+          notifyDonorOfRequest({
+            donorEmail:   donorUser.email,
+            donorName:    donorUser.fullName,
+            bloodGroup:   request.bloodGroup,
+            rh:           request.rh,
+            urgency:      request.urgency      || "Normal",
+            hospitalName: request.hospitalName || "the hospital",
+            requestId:    request._id,
+          });
+        }
+        matches.push(existingMatch);
+      }
     }
 
     return res.status(200).json({
-      message:     `Found ${compatibleDonors.length} compatible donors`,
-      totalMatches: compatibleDonors.length,
-      newMatches:   matches.length,
+      message:      `Found ${compatibleDonors.length} compatible donors — nearest notified first`,
+      totalMatches:  compatibleDonors.length,
+      newMatches:    matches.length,
+      locationBased: hasHospitalLocation,
+      phase1Count:   phase1.length,
+      phase2Count:   phase2.length,
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
