@@ -4,6 +4,7 @@ import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import Navbar from "../components/Navbar";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 import {
   Droplets, User, Building, Users, Eye, EyeOff,
   Upload, CheckCircle, Clock, Mail, Phone,
@@ -170,7 +171,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     password: "", confirmPassword: "",
-    bloodType: "", age: "", location: "", lastDonation: "",
+    bloodType: "", age: "", location: "", locationLat: null, locationLng: null, lastDonation: "",
     hasDonatedBefore: "no",
     lastDonationDate: "",
     // Donor fields
@@ -249,6 +250,8 @@ const Register = () => {
         orgDescription: formData.orgDescription,
         bloodType:      formData.bloodType,
         location:       formData.location,
+        locationLat:    formData.locationLat,
+        locationLng:    formData.locationLng,
         gender:         formData.gender,
         dateOfBirth:    formData.dateOfBirth,
         weight:         formData.weight,
@@ -727,8 +730,21 @@ const Register = () => {
                         </div>
 
                     <div>
-                      <label className={labelCls}>Location *</label>
-                      <input className={inputCls} placeholder="Kathmandu, Nepal" value={formData.location} onChange={e => set("location", e.target.value)} required />
+                      <LocationAutocomplete
+                        label="Your Location *"
+                        value={formData.location}
+                        onChange={(text) => {
+                          set("location", text);
+                          set("locationLat", null);
+                          set("locationLng", null);
+                        }}
+                        onLocationSelect={({ lat, lng }) => {
+                          set("locationLat", lat);
+                          set("locationLng", lng);
+                        }}
+                        placeholder="e.g. Sinamangal, Kathmandu"
+                        hint="Type your area — select from suggestions or type freely"
+                      />
                     </div>
 
                   </div>
