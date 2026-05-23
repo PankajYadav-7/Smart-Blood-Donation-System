@@ -770,8 +770,21 @@ const Register = () => {
                       <input className={inputCls} placeholder="License #12345" value={formData.licenseNumber} onChange={e => set("licenseNumber", e.target.value)} required />
                     </div>
                     <div>
-                      <label className={labelCls}>Hospital Address *</label>
-                      <textarea className={inputCls} rows={2} placeholder="Full hospital address" value={formData.address} onChange={e => set("address", e.target.value)} required />
+                      <LocationAutocomplete
+                        label="Hospital Address *"
+                        value={formData.address}
+                        onChange={(text) => {
+                          set("address", text);
+                          set("locationLat", null);
+                          set("locationLng", null);
+                        }}
+                        onLocationSelect={({ lat, lng }) => {
+                          set("locationLat", lat);
+                          set("locationLng", lng);
+                        }}
+                        placeholder="e.g. Bir Hospital, Mahabauddha, Kathmandu"
+                        hint="Type hospital address — select from suggestions or type freely"
+                      />
                     </div>
                     <div>
                       <label className={labelCls}>About the Hospital</label>
@@ -810,8 +823,21 @@ const Register = () => {
                       <input className={inputCls} placeholder="NGO Registration #" value={formData.licenseNumber} onChange={e => set("licenseNumber", e.target.value)} required />
                     </div>
                     <div>
-                      <label className={labelCls}>Organisation Address *</label>
-                      <textarea className={inputCls} rows={2} placeholder="Full organisation address" value={formData.address} onChange={e => set("address", e.target.value)} required />
+                      <LocationAutocomplete
+                        label="Organisation Address *"
+                        value={formData.address}
+                        onChange={(text) => {
+                          set("address", text);
+                          set("locationLat", null);
+                          set("locationLng", null);
+                        }}
+                        onLocationSelect={({ lat, lng }) => {
+                          set("locationLat", lat);
+                          set("locationLng", lng);
+                        }}
+                        placeholder="e.g. Nepal Red Cross, Kalimati, Kathmandu"
+                        hint="Type organisation address — select from suggestions or type freely"
+                      />
                     </div>
                     <div>
                       <label className={labelCls}>Mission Statement</label>
