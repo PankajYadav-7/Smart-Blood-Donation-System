@@ -163,6 +163,11 @@ const Hospitals = () => {
                         {org.address && (
                           <span className="flex items-center gap-1">
                             <MapPin className="h-4 w-4 text-gray-400" />{org.address}
+                            {org.locationLat && org.locationLng && (
+                              <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium ml-1">
+                                📍 Location verified
+                              </span>
+                            )}
                           </span>
                         )}
                         <span className="flex items-center gap-1">
@@ -231,7 +236,7 @@ const Hospitals = () => {
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-100 pt-4 flex flex-col sm:flex-row gap-3">
+                  <div className="border-t border-gray-100 pt-4 flex flex-col sm:flex-row gap-3 flex-wrap">
                     <Button className="flex-1 bg-red-600 hover:bg-red-700" asChild>
                       <Link to={localStorage.getItem("token") ? "/create-request" : "/login"}>
                         <Heart className="h-4 w-4 mr-2" />Request Blood
@@ -242,6 +247,18 @@ const Hospitals = () => {
                         <Calendar className="h-4 w-4 mr-2" />View Their Events
                       </Link>
                     </Button>
+                    {org.locationLat && org.locationLng && (
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(
+                          "https://www.google.com/maps/dir/?api=1&destination=" +
+                          org.locationLat + "," + org.locationLng,
+                          "_blank"
+                        )}
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />Get Directions
+                      </Button>
+                    )}
                     {org.phone && !org.email && (
                       <Button variant="outline" asChild>
                         <a href={`tel:${org.phone}`}>
