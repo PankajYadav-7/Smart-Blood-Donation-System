@@ -17,13 +17,10 @@ const LocationAutocomplete = ({
   const debounceRef = useRef(null);
   const wrapperRef  = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClick = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
         setShowDropdown(false);
-        // If user typed but did not select from dropdown
-        // try to geocode what they typed as fallback
         if (value && !confirmed) {
           geocodeFallback(value);
         }
@@ -49,7 +46,6 @@ const LocationAutocomplete = ({
         setConfirmed(true);
         setConfirmedName(shortName);
       } else {
-        // Not found — just pass name with no coordinates
         onLocationSelect({ lat: null, lng: null, name: text });
         setConfirmed(false);
       }
@@ -65,7 +61,6 @@ const LocationAutocomplete = ({
     setConfirmedName("");
     onLocationSelect({ lat: null, lng: null, name: text });
 
-    // Debounce search
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (text.length < 2) {
       setSuggestions([]);
@@ -130,15 +125,14 @@ const LocationAutocomplete = ({
         </div>
       </div>
 
-      {/* Dropdown suggestions */}
       {showDropdown && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {suggestions.length > 0 ? (
             <>
               {suggestions.map((item, i) => {
-                const parts     = (item.display_name || "").split(",");
-                const name      = parts[0].trim();
-                const address   = parts.slice(1, 3).join(",").trim();
+                const parts   = (item.display_name || "").split(",");
+                const name    = parts[0].trim();
+                const address = parts.slice(1, 3).join(",").trim();
                 return (
                   <button
                     key={i}
@@ -163,14 +157,13 @@ const LocationAutocomplete = ({
           ) : (
             <div className="px-4 py-3 text-center">
               <p className="text-xs text-gray-500">
-                No results found — just type your full location name and continue
+                No results — type your full location name and continue
               </p>
             </div>
           )}
         </div>
       )}
 
-      {/* Confirmed location */}
       {confirmed && confirmedName && (
         <p className="text-xs text-green-600 mt-1 font-medium flex items-center gap-1">
           <CheckCircle className="h-3 w-3" />
@@ -178,7 +171,6 @@ const LocationAutocomplete = ({
         </p>
       )}
 
-      {/* Hint text */}
       {!confirmed && (
         <p className="text-xs text-gray-400 mt-1">{hint}</p>
       )}

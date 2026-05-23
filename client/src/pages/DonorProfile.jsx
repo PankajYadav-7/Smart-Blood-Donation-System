@@ -4,6 +4,7 @@ import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 import {
   Droplets, MapPin, ArrowLeft, CheckCircle,
   AlertCircle, Save, Loader, User, Phone,
@@ -17,8 +18,6 @@ const DonorProfile = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving,      setSaving]      = useState(false);
-  const [locLoading,  setLocLoading]  = useState(false);
-  const [locVerified, setLocVerified] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
 
@@ -147,29 +146,6 @@ const DonorProfile = () => {
   const daysUntilNext = nextEligible
     ? Math.ceil((nextEligible - new Date()) / (1000 * 60 * 60 * 24))
     : 0;
-  
-    const geocodeLocation = async (locationText) => {
-    if (!locationText || locationText.length < 3) return;
-    setLocLoading(true);
-    setLocVerified(false);
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationText + ", Nepal")}&format=json&limit=1`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await res.json();
-      if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lng = parseFloat(data[0].lon);
-        set("locationLat", lat);
-        set("locationLng", lng);
-        setLocVerified(true);
-      }
-    } catch {
-      // Silent fail
-    }
-    setLocLoading(false);
-  };
 
   const inputCls = "w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-white";
   const labelCls = "block text-sm font-medium text-gray-700 mb-1.5";
@@ -559,50 +535,22 @@ const DonorProfile = () => {
             </CardHeader>
             <CardContent className="space-y-4">
 
-              <div>
-                <label className={labelCls}>Your Area / City</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={formData.locationName}
-                    onChange={e => {
-                      set("locationName", e.target.value);
-                      setLocVerified(false);
-                      set("locationLat", null);
-                      set("locationLng", null);
-                    }}
-                    onBlur={e => geocodeLocation(e.target.value)}
-                    placeholder="e.g. Sinamangal, Kathmandu"
-                    className={inputCls}
-                  />
-                  {locLoading && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader className="h-4 w-4 text-gray-400 animate-spin" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  Type your area name and click outside — coordinates found automatically
-                </p>
-
-                {locVerified && formData.locationLat && (
-                  <div className="mt-2 bg-green-50 border border-green-200 rounded-xl p-2.5 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    <p className="text-xs text-green-800 font-medium">
-                      ✅ Location verified — saved for accurate donor matching
-                    </p>
-                  </div>
-                )}
-
-                {!locVerified && formData.locationName && !locLoading && !formData.locationLat && (
-                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-xl p-2.5 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
-                    <p className="text-xs text-yellow-800">
-                      Click outside the box to verify your location automatically
-                    </p>
-                  </div>
-                )}
-              </div>
+              <LocationAutocomplete
+                label="Your Area / City"
+                value={formData.locationName}
+                onChange={(text) => {
+                  set("locationName", text);
+                  set("locationLat", null);
+                  set("locationLng", null);
+                }}
+                onLocationSelect={({ lat, lng, name }) => {
+                  if (name) set("locationName", name);
+                  set("locationLat", lat);
+                  set("locationLng", lng);
+                }}
+                placeholder="e.g. Sinamangal, Kathmandu"
+                hint="Type your area — select from suggestions or type freely if not listed"
+              />
 
               <div>
                 <label className={labelCls}>

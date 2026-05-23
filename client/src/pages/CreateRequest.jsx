@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Heart,
 } from "lucide-react";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 
 const CreateRequest = () => {
   const navigate = useNavigate();
@@ -30,8 +31,6 @@ const CreateRequest = () => {
     hospitalLat:  null,
     hospitalLng:  null,
   });
-  const [locLoading,  setLocLoading]  = useState(false);
-  const [locVerified, setLocVerified] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -54,28 +53,6 @@ const CreateRequest = () => {
       setError(error.response?.data?.message || "Failed to create request");
     }
     setLoading(false);
-  };
-
-  const geocodeHospital = async (locationText) => {
-    if (!locationText || locationText.length < 3) return;
-    setLocLoading(true);
-    setLocVerified(false);
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationText + ", Nepal")}&format=json&limit=1`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await res.json();
-      if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lng = parseFloat(data[0].lon);
-        setFormData(prev => ({ ...prev, hospitalLat: lat, hospitalLng: lng }));
-        setLocVerified(true);
-      }
-    } catch {
-      // Silent fail
-    }
-    setLocLoading(false);
   };
 
   const bloodGroups = ["A", "B", "AB", "O"];
@@ -246,44 +223,21 @@ const CreateRequest = () => {
               </div>
 
               {/* Hospital Location */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Hospital / Location Name *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="hospitalName"
-                    value={formData.hospitalName}
-                    onChange={e => {
-                      handleChange(e);
-                      setLocVerified(false);
-                      setFormData(prev => ({ ...prev, hospitalLat: null, hospitalLng: null }));
-                    }}
-                    onBlur={e => geocodeHospital(e.target.value)}
-                    placeholder="e.g. Bir Hospital, Kathmandu"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    required
-                  />
-                  {locLoading && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  Type hospital name and click outside — location is found automatically
-                </p>
-
-                {locVerified && formData.hospitalLat && (
-                  <div className="mt-2 bg-green-50 border border-green-200 rounded-xl p-2.5 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    <p className="text-xs text-green-800 font-medium">
-                      ✅ Location found — nearby donors will be notified first
-                    </p>
-                  </div>
-                )}
-              </div>
+              <LocationAutocomplete
+                label="Hospital / Location Name *"
+                value={formData.hospitalName}
+                onChange={(text) => setFormData(prev => ({ ...prev, hospitalName: text }))}
+                onLocationSelect={({ lat, lng, name }) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    hospitalName: name || prev.hospitalName,
+                    hospitalLat:  lat,
+                    hospitalLng:  lng,
+                  }));
+                }}
+                placeholder="e.g. Bir Hospital, Kathmandu"
+                hint="Type to search — if not found just type full name and continue"
+              />
 
               {/* Notes */}
               <div>
