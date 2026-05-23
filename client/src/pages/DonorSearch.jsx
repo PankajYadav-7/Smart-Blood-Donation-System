@@ -25,11 +25,23 @@ const DonorSearch = () => {
   const [rh,          setRh]          = useState("");
   const [location,    setLocation]    = useState("");
   const [availability,setAvailability]= useState("all");
+  const [userCoords,  setUserCoords]  = useState(null);
 
   const bloodTypes = ["A", "B", "AB", "O"];
 
   useEffect(() => {
     fetchDonors();
+    // Get logged-in donor's coordinates from profile
+    if (token) {
+      axios.get(`${API}/donor/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(res => {
+        const p = res.data.profile;
+        if (p?.locationLat && p?.locationLng) {
+          setUserCoords({ lat: p.locationLat, lng: p.locationLng });
+        }
+      }).catch(() => {});
+    }
   }, []);
 
   const fetchDonors = async () => {
@@ -73,6 +85,18 @@ const DonorSearch = () => {
   const canDonate = (lastDate) => {
     if (!lastDate) return true;
     return Math.floor((new Date() - new Date(lastDate)) / 86400000) >= 56;
+  };
+
+  const haversineKm = (lat1, lng1, lat2, lng2) => {
+    const R    = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a    =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI/180) *
+      Math.cos(lat2 * Math.PI/180) *
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
   };
 
   return (
@@ -210,9 +234,14 @@ const DonorSearch = () => {
                       </div>
                       <div className="space-y-1">
                         {donor.locationName && (
-                          <p className="text-sm text-gray-600 flex items-center gap-2">
+                          <p className="text-sm text-gray-600 flex items-center gap-2 flex-wrap">
                             <MapPin className="h-4 w-4 text-gray-400" />
                             {donor.locationName}
+                            {userCoords && donor.locationLat && donor.locationLng && (
+                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                                📍 {haversineKm(userCoords.lat, userCoords.lng, donor.locationLat, donor.locationLng)} km away
+                              </span>
+                            )}
                           </p>
                         )}
                         {donor.donationCount > 0 && (
