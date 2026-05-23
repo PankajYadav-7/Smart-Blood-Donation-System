@@ -8,15 +8,44 @@ import { Calendar, Clock, MapPin, Building, Loader, Users, Droplets, Search, Arr
 const API = "http://localhost:5000/api";
 
 const Events = () => {
-  const navigate = useNavigate();
-  const [events,    setEvents]    = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [filterCity, setFilterCity] = useState("All");
+  const navigate    = useNavigate();
+  const token       = localStorage.getItem("token");
+  const user        = JSON.parse(localStorage.getItem("user") || "null");
+
+  const [events,      setEvents]      = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [filterCity,  setFilterCity]  = useState("All");
   const [filterBlood, setFilterBlood] = useState("All");
+  const [donorCoords, setDonorCoords] = useState(null);
 
   useEffect(() => {
     fetchEvents();
+    if (token && user?.role === "donor") fetchDonorCoords();
   }, []);
+
+  const fetchDonorCoords = async () => {
+    try {
+      const res = await axios.get(`${API}/donor/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const p = res.data.profile;
+      if (p?.locationLat && p?.locationLng) {
+        setDonorCoords({ lat: p.locationLat, lng: p.locationLng });
+      }
+    } catch (err) { console.log(err); }
+  };
+
+  const haversineKm = (lat1, lng1, lat2, lng2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) *
+      Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
 
   const fetchEvents = async () => {
     setLoading(true);
