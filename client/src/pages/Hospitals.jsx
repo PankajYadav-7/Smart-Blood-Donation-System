@@ -161,13 +161,18 @@ const Hospitals = () => {
                       </div>
                       <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                         {org.address && (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 flex-wrap">
                             <MapPin className="h-4 w-4 text-gray-400" />{org.address}
                             {org.locationLat && org.locationLng && (
                               <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium ml-1">
                                 📍 Location verified
                               </span>
                             )}
+                          </span>
+                        )}
+                        {!org.address && org.fullName && (
+                          <span className="flex items-center gap-1 text-gray-400 text-sm italic">
+                            <MapPin className="h-4 w-4 text-gray-300" />Address not provided
                           </span>
                         )}
                         <span className="flex items-center gap-1">
@@ -247,7 +252,7 @@ const Hospitals = () => {
                         <Calendar className="h-4 w-4 mr-2" />View Their Events
                       </Link>
                     </Button>
-                    {org.locationLat && org.locationLng && (
+                    {org.locationLat && org.locationLng ? (
                       <Button
                         variant="outline"
                         onClick={() => window.open(
@@ -258,7 +263,18 @@ const Hospitals = () => {
                       >
                         <MapPin className="h-4 w-4 mr-2" />Get Directions
                       </Button>
-                    )}
+                    ) : (org.address || org.fullName) ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(
+                          "https://www.google.com/maps/search/?api=1&query=" +
+                          encodeURIComponent((org.address || org.fullName) + " Nepal"),
+                          "_blank"
+                        )}
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />Find on Map
+                      </Button>
+                    ) : null}
                     {org.phone && !org.email && (
                       <Button variant="outline" asChild>
                         <a href={`tel:${org.phone}`}>
