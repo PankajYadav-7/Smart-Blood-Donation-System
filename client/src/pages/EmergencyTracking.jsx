@@ -8,6 +8,16 @@ import {
   Droplets, MapPin, User, Mail, Loader,
   RefreshCw, ArrowLeft,
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl:       "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl:     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
 
 const API = "http://localhost:5000/api";
 
@@ -305,6 +315,46 @@ const EmergencyTracking = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Hospital Location Map */}
+        {emergency.locationLat && emergency.locationLng && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-5">
+            <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-red-600" />
+                <p className="text-sm font-bold text-gray-900">Hospital Location</p>
+              </div>
+              <button
+                onClick={() => window.open(
+                  "https://www.google.com/maps/dir/?api=1&destination=" +
+                  emergency.locationLat + "," + emergency.locationLng,
+                  "_blank"
+                )}
+                className="text-xs text-blue-600 hover:underline font-semibold flex items-center gap-1"
+              >
+                <MapPin className="h-3 w-3" />🗺️ Get Directions
+              </button>
+            </div>
+            <MapContainer
+              center={[emergency.locationLat, emergency.locationLng]}
+              zoom={15}
+              style={{ height: "220px", width: "100%" }}
+              scrollWheelZoom={false}
+              zoomControl={false}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[emergency.locationLat, emergency.locationLng]}>
+                <Popup>
+                  <p className="font-bold text-sm">{emergency.hospitalName}</p>
+                  <p className="text-xs text-gray-500 mt-1">🩸 Emergency Blood Request</p>
+                </Popup>
+              </Marker>
+            </MapContainer>
           </div>
         )}
 
