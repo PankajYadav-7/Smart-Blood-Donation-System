@@ -10,6 +10,17 @@ import {
   Building2, MapPin, Phone, Clock, Users, Heart,
   Shield, Award, CheckCircle, Search, Mail, Calendar,
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default marker icon
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl:       "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl:     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
 
 const API = "http://localhost:5000/api";
 
@@ -103,6 +114,57 @@ const Hospitals = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Interactive Map */}
+            {!loading && hospitals.filter(h => h.locationLat && h.locationLng).length > 0 && (
+              <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100 mb-6">
+                <div className="bg-white px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-red-600" />
+                    <p className="text-sm font-bold text-gray-900">Verified Organisations on Map</p>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    {hospitals.filter(h => h.locationLat && h.locationLng).length} of {hospitals.length} have verified locations
+                  </p>
+                </div>
+                <MapContainer
+                  center={[27.7172, 85.3240]}
+                  zoom={12}
+                  style={{ height: "340px", width: "100%" }}
+                  scrollWheelZoom={false}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {hospitals.filter(h => h.locationLat && h.locationLng).map((org) => (
+                    <Marker key={org._id} position={[org.locationLat, org.locationLng]}>
+                      <Popup>
+                        <div className="text-center" style={{ minWidth: "160px" }}>
+                          <p className="font-bold text-gray-900 text-sm">{org.fullName}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {org.role === "hospital" ? "🏥 Hospital" : "🤝 NGO"}
+                          </p>
+                          {org.address && (
+                            <p className="text-xs text-gray-500 mt-1">{org.address}</p>
+                          )}
+                          <button
+                            onClick={() => window.open(
+                              "https://www.google.com/maps/dir/?api=1&destination=" +
+                              org.locationLat + "," + org.locationLng,
+                              "_blank"
+                            )}
+                            className="mt-2 text-xs text-blue-600 hover:underline font-semibold"
+                          >
+                            🗺️ Get Directions
+                          </button>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+            )}
 
             {/* Count */}
             {!loading && hospitals.length > 0 && (

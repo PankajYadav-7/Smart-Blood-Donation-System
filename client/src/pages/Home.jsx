@@ -49,7 +49,7 @@ const [stats, setStats] = useState([
   }, []);
 
   const features = [
-    { icon: Clock,      title: "Real-time Matching",            description: "Instant donor matching based on blood type and location" },
+    { icon: Clock,      title: "Location-Based Matching",       description: "Nearest donors notified first using GPS-based distance calculation. Donors within your radius get priority alerts before anyone further away." },
     { icon: Shield,     title: "Verified Requests",             description: "Only verified hospitals and NGOs can post emergency requests" },
     { icon: UserCheck,  title: "Consent-First Contact Sharing", description: "Donor contact shared only after consent is given" },
     { icon: ToggleLeft, title: "Donor Availability Control",    description: "Toggle availability and control when you can donate" },

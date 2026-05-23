@@ -28,7 +28,7 @@ const Help = () => {
     },
     {
       question: "How does the blood matching system work?",
-      answer: "When a hospital or patient posts a blood request, our system automatically finds donors with compatible blood types within a certain radius. Compatible donors receive instant notifications and can choose to accept or decline."
+      answer: "When a hospital creates a blood request, our system automatically finds compatible donors using blood type matching and location. Donors nearest to the hospital are notified first using GPS coordinates and the Haversine distance formula. If no nearby donor responds within the search radius, the system expands to notify donors further away. Your contact details are only shared after you explicitly accept a request."
     },
     {
       question: "Is my personal information safe?",
