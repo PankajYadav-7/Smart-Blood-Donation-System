@@ -320,12 +320,30 @@ router.get("/compatible-requests", protect, async (req, res) => {
           requestId:      request._id,
           donorProfileId: donorProfile._id,
         });
+
+        // Calculate distance if both donor and hospital have coordinates
+        let distanceKm = null;
+        if (
+          donorProfile.locationLat &&
+          donorProfile.locationLng &&
+          request.hospitalLat &&
+          request.hospitalLng
+        ) {
+          distanceKm = haversineKm(
+            donorProfile.locationLat,
+            donorProfile.locationLng,
+            request.hospitalLat,
+            request.hospitalLng
+          );
+        }
+
         return {
           _id:             existing?._id || null,
           requestId:       request,
           status:          existing?.status || "New",
           matchExists:     !!existing,
           contactRevealed: existing?.contactRevealed || false,
+          distanceKm:      distanceKm ? parseFloat(distanceKm.toFixed(1)) : null,
         };
       })
     );

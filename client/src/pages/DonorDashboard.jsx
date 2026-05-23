@@ -690,7 +690,29 @@ const DonorDashboard = () => {
                         {match.status === "New" && (
                           <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium mb-1">🔵 New Request</span>
                         )}
-                        <p className="text-sm text-gray-600 flex items-center gap-2"><MapPin className="h-4 w-4 text-gray-400" />{match.requestId?.hospitalName}</p>
+                        <p className="text-sm text-gray-600 flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-gray-400" />
+                          {match.requestId?.hospitalName}
+                          {match.distanceKm !== null && match.distanceKm !== undefined && (
+                            <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                              📍 {match.distanceKm} km away
+                            </span>
+                          )}
+                        </p>
+                        {match.requestId?.hospitalLat && match.requestId?.hospitalLng && (
+                          <button
+                            type="button"
+                            onClick={() => window.open(
+                              "https://www.google.com/maps/dir/?api=1&destination=" +
+                              match.requestId.hospitalLat + "," +
+                              match.requestId.hospitalLng,
+                              "_blank"
+                            )}
+                            className="text-xs text-blue-600 hover:underline flex items-center gap-1 ml-1 bg-transparent border-0 p-0 cursor-pointer"
+                          >
+                            <MapPin className="h-3 w-3" />🗺️ Get Directions
+                          </button>
+                        )}
                         <p className="text-sm text-gray-600 flex items-center gap-2"><Droplets className="h-4 w-4 text-gray-400" />Units Required: {match.requestId?.unitsRequired}</p>
                         {match.requestId?.notes && (
                           <p className="text-sm text-gray-500 flex items-center gap-2"><Clock className="h-4 w-4 text-gray-400" />{match.requestId?.notes}</p>
