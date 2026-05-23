@@ -792,9 +792,17 @@ const DonorDashboard = () => {
                                   <Building className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
                                   <span className="truncate">{event.organizerName}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
                                   <span className="truncate">{event.venueName}, {event.city}</span>
+                                  {donorProfile?.locationLat && donorProfile?.locationLng && event.locationLat && event.locationLng && (() => {
+                                    const R = 6371;
+                                    const dLat = (event.locationLat - donorProfile.locationLat) * Math.PI / 180;
+                                    const dLng = (event.locationLng - donorProfile.locationLng) * Math.PI / 180;
+                                    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(donorProfile.locationLat * Math.PI/180) * Math.cos(event.locationLat * Math.PI/180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+                                    const km = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
+                                    return <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">📍 {km} km</span>;
+                                  })()}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Clock className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
@@ -870,9 +878,17 @@ const DonorDashboard = () => {
                                     <Building className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
                                     <span className="truncate">{event.organizerName}</span>
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
                                     <span className="truncate">{event.venueName}, {event.city}</span>
+                                    {donorProfile?.locationLat && donorProfile?.locationLng && event.locationLat && event.locationLng && (() => {
+                                      const R = 6371;
+                                      const dLat = (event.locationLat - donorProfile.locationLat) * Math.PI / 180;
+                                      const dLng = (event.locationLng - donorProfile.locationLng) * Math.PI / 180;
+                                      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(donorProfile.locationLat * Math.PI/180) * Math.cos(event.locationLat * Math.PI/180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+                                      const km = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
+                                      return <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">📍 {km} km</span>;
+                                    })()}
                                   </div>
                                 </div>
                                 <div className="flex flex-wrap gap-1 mt-2">
