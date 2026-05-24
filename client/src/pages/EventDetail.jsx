@@ -8,7 +8,7 @@ import {
   Droplets, Loader, AlertCircle, CheckCircle, ArrowLeft, Heart, Info,
 } from "lucide-react";
 
-const API = "https://jeevansaarthi-api.onrender.com/api";
+import API from "../config";
 
 const EventDetail = () => {
   const { id }   = useParams();

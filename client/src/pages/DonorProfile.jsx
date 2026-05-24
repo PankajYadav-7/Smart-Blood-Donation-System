@@ -63,7 +63,7 @@ const DonorProfile = () => {
   const fetchProfile = async () => {
     try {
       const res = await axios.get(
-        "https://jeevansaarthi-api.onrender.com/api/donor/profile",
+        "http://localhost:5000/api/donor/profile",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const p = res.data.profile;
@@ -108,7 +108,7 @@ const DonorProfile = () => {
 
     try {
       await axios.post(
-        "https://jeevansaarthi-api.onrender.com/api/donor/profile",
+        "http://localhost:5000/api/donor/profile",
         {
           bloodGroup:       formData.bloodGroup,
           rh:               formData.rh,
@@ -328,7 +328,7 @@ const DonorProfile = () => {
                             setEmailLoading(true);
                             setEmailError("");
                             try {
-                              await axios.post("https://jeevansaarthi-api.onrender.com/api/auth/change-email/request", {
+                              await axios.post("http://localhost:5000/api/auth/change-email/request", {
                                 currentEmail: user?.email,
                                 newEmail,
                               });
@@ -363,7 +363,7 @@ const DonorProfile = () => {
                             setEmailLoading(true);
                             setEmailError("");
                             try {
-                              await axios.post("https://jeevansaarthi-api.onrender.com/api/auth/change-email/verify", {
+                              await axios.post("http://localhost:5000/api/auth/change-email/verify", {
                                 currentEmail: user?.email,
                                 newEmail,
                                 otp: emailOtp,

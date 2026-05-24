@@ -5,7 +5,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { CheckCircle, AlertCircle, Heart, Loader } from "lucide-react";
 
-const API = "https://jeevansaarthi-api.onrender.com/api";
+import API from "../config";
 
 const EmergencyFeedback = () => {
   const { emergencyId, donorEntryId } = useParams();

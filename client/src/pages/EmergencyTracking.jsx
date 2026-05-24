@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-const API = "https://jeevansaarthi-api.onrender.com/api";
+import API from "../config";
 
 const EmergencyTracking = () => {
   const { trackingCode } = useParams();

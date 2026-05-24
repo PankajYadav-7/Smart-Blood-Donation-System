@@ -10,7 +10,7 @@ import {
   Heart, Clock, MapPin, User, Mail, Copy,
 } from "lucide-react";
 
-const API = "https://jeevansaarthi-api.onrender.com/api";
+import API from "../config";
 
 const Emergency = () => {
   const navigate = useNavigate();

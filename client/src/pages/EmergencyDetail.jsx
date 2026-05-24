@@ -9,7 +9,7 @@ import {
   Heart, ArrowLeft, Shield,
 } from "lucide-react";
 
-const API = "https://jeevansaarthi-api.onrender.com/api";
+import API from "../config";
 
 const EmergencyDetail = () => {
   const { emergencyId } = useParams();

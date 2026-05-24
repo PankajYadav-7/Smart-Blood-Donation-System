@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 import { Calendar, Clock, MapPin, Building, Phone, Droplets, ArrowLeft, Loader, CheckCircle, AlertCircle } from "lucide-react";
 import LocationAutocomplete from "../components/LocationAutocomplete";
 
-const API = "https://jeevansaarthi-api.onrender.com/api";
+import API from "../config";
 
 const CreateEvent = () => {
   const navigate = useNavigate();

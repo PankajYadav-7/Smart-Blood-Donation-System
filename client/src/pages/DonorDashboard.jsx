@@ -13,7 +13,7 @@ import {
   ChevronDown, ChevronUp, ThumbsUp, Mail, Phone,
 } from "lucide-react";
 
-const API = "https://jeevansaarthi-api.onrender.com/api";
+import API from "../config";
 
 const DonorDashboard = () => {
   const navigate  = useNavigate();
@@ -1302,9 +1302,9 @@ const HistoryTab = ({ token }) => {
     const fetchAll = async () => {
       try {
         const [confirmedRes, pendingRes, emergencyRes] = await Promise.all([
-          axios.get("https://jeevansaarthi-api.onrender.com/api/matches/my-accepted",          { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get("https://jeevansaarthi-api.onrender.com/api/matches/pending-confirmation", { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get("https://jeevansaarthi-api.onrender.com/api/emergency/my-accepted",        { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get("http://localhost:5000/api/matches/my-accepted",          { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get("http://localhost:5000/api/matches/pending-confirmation", { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get("http://localhost:5000/api/emergency/my-accepted",        { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         setConfirmed(confirmedRes.data.matches       || []);
         setPending(pendingRes.data.matches           || []);

@@ -50,7 +50,7 @@ const About = () => {
   ]);
 
   useEffect(() => {
-    axios.get("https://jeevansaarthi-api.onrender.com/api/stats")
+    axios.get("http://localhost:5000/api/stats")
       .then(res => {
         setStats([
           { number: res.data.donors,                       label: "Registered Donors"     },
