@@ -525,7 +525,7 @@ router.get("/hospitals", async (req, res) => {
       role:       { $in: ["hospital", "ngo"] },
       isVerified: true,
       status:     "active",
-    }).select("fullName email phone address role createdAt").sort({ fullName: 1 });
+    }).select("fullName email phone address locationLat locationLng role createdAt").sort({ fullName: 1 });
 
     return res.status(200).json({ hospitals });
   } catch (error) {
