@@ -83,6 +83,14 @@ const Events = () => {
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-red-600 to-red-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {window.history.length > 1 && (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-white/70 hover:text-white text-sm font-medium mb-6 transition-colors"
+            >
+              <ArrowRight className="h-4 w-4 rotate-180" />Back
+            </button>
+          )}
           <div className="text-center">
             <span className="inline-block bg-white/20 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-wider">
               Community Blood Drives
