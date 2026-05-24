@@ -300,6 +300,33 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
+                {/* Location Coordinates Status */}
+                <div className="bg-gray-50 rounded-xl p-3 md:col-span-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Map Location Status</p>
+                  </div>
+                  {org.locationLat && org.locationLng ? (
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                        ✅ GPS Coordinates Verified
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {org.locationLat.toFixed(4)}, {org.locationLng.toFixed(4)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-semibold">
+                        ⚠️ No GPS Coordinates
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        This organisation will not appear on the Hospitals map. Ask them to update their profile with a precise address.
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Description / Mission */}
                 {org.orgDescription && (
                   <div className="bg-gray-50 rounded-xl p-3 md:col-span-2">
@@ -505,6 +532,11 @@ const AdminDashboard = () => {
                           {u.role === "donor" && u.bloodGroup && (
                             <p className="text-xs text-red-600 font-semibold">
                               🩸 {u.bloodGroup}{u.rh}
+                            </p>
+                          )}
+                          {(u.role === "hospital" || u.role === "ngo") && (
+                            <p className={`text-xs font-semibold ${u.locationLat ? "text-green-600" : "text-orange-500"}`}>
+                              {u.locationLat ? "📍 Location verified" : "⚠️ No location data"}
                             </p>
                           )}
                         </div>
