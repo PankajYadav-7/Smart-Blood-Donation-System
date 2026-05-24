@@ -24,7 +24,7 @@ const [stats, setStats] = useState([
 ]);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/stats")
+    axios.get("https://jeevansaarthi-api.onrender.com/api/stats")
       .then(res => {
         setStats([
           { number: res.data.donors,        label: "Registered Donors",      sub: ""                   },
@@ -36,7 +36,7 @@ const [stats, setStats] = useState([
       .catch(() => {});
 
     // Fetch real upcoming events
-    axios.get("http://localhost:5000/api/events/upcoming")
+    axios.get("https://jeevansaarthi-api.onrender.com/api/events/upcoming")
       .then(res => {
         setUpcomingEvents(res.data.events || []);
 
