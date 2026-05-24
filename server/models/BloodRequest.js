@@ -36,6 +36,9 @@ const bloodRequestSchema = new mongoose.Schema(
     hospitalLng: {
       type: Number,
     },
+    hospitalCity: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ["Open", "In Progress", "Fulfilled", "Closed"],

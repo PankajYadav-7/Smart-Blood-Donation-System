@@ -241,17 +241,26 @@ const FindBlood = () => {
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <Building className="h-4 w-4 text-gray-400" />{request.hospitalName}
                         </p>
-                        {request.hospitalCity && (
-                          <p className="text-sm text-gray-600 flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-gray-400" />
-                            {request.hospitalCity}
-                            {donorCoords && request.hospitalLat && request.hospitalLng && (
-                              <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-2 py-0.5 rounded-full">
-                                📍 {haversineKm(donorCoords.lat, donorCoords.lng, request.hospitalLat, request.hospitalLng).toFixed(1)} km away
-                              </span>
-                            )}
-                          </p>
-                        )}
+                        <p className="text-sm text-gray-600 flex items-center gap-2 flex-wrap">
+                          <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <span>{request.hospitalCity || ""}</span>
+                          {donorCoords && request.hospitalLat && request.hospitalLng && (
+                            <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-2 py-0.5 rounded-full flex-shrink-0">
+                              {(() => {
+                                const km = haversineKm(donorCoords.lat, donorCoords.lng, request.hospitalLat, request.hospitalLng);
+                                return "📍 " + (km < 1 ? "< 1" : km.toFixed(1)) + " km away";
+                              })()}
+                            </span>
+                          )}
+                          {request.hospitalLat && request.hospitalLng && (
+                            <button
+                              onClick={() => window.open("https://www.google.com/maps/dir/?api=1&destination=" + request.hospitalLat + "," + request.hospitalLng, "_blank")}
+                              className="text-xs text-blue-600 hover:underline font-semibold flex-shrink-0"
+                            >
+                              🗺️ Directions
+                            </button>
+                          )}
+                        </p>
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <Droplets className="h-4 w-4 text-gray-400" />
                           {request.unitsRequired} unit{request.unitsRequired > 1 ? "s" : ""} needed
