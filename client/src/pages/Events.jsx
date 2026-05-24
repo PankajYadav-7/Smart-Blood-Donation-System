@@ -11,6 +11,8 @@ const Events = () => {
   const navigate    = useNavigate();
   const token       = localStorage.getItem("token");
   const user        = JSON.parse(localStorage.getItem("user") || "null");
+  const params      = new URLSearchParams(window.location.search);
+  const orgFilter   = params.get("organizer") || "";
 
   const [events,      setEvents]      = useState([]);
   const [loading,     setLoading]     = useState(true);
@@ -61,6 +63,7 @@ const Events = () => {
   const filtered = events.filter(e => {
     if (filterCity !== "All" && e.city !== filterCity) return false;
     if (filterBlood !== "All" && !e.bloodTypesNeeded?.includes(filterBlood)) return false;
+    if (orgFilter && e.organizerName !== orgFilter) return false;
     return true;
   });
 
@@ -104,6 +107,21 @@ const Events = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        {/* Organizer filter banner */}
+        {orgFilter && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 flex items-center justify-between">
+            <p className="text-sm font-semibold text-blue-800">
+              Showing events by: <span className="text-blue-600">{orgFilter}</span>
+            </p>
+            <button
+              onClick={() => navigate("/events")}
+              className="text-xs text-blue-600 hover:underline font-semibold"
+            >
+              Show All Events
+            </button>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-gray-100">
@@ -154,7 +172,9 @@ const Events = () => {
             <Calendar className="h-16 w-16 text-gray-200 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-gray-700 mb-2">No upcoming events</h3>
             <p className="text-gray-500 text-sm max-w-md mx-auto mb-6">
-              {filterCity !== "All" || filterBlood !== "All"
+              {orgFilter
+                ? `${orgFilter} has no upcoming events scheduled right now. Check back later.`
+                : filterCity !== "All" || filterBlood !== "All"
                 ? "No events match your filters. Try changing them or check back later."
                 : "There are no upcoming blood donation events right now. Hospitals and NGOs will post events here as they are scheduled."}
             </p>

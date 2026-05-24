@@ -310,7 +310,7 @@ const Hospitals = () => {
                       </Link>
                     </Button>
                     <Button variant="outline" asChild>
-                      <Link to="/events">
+                      <Link to={"/events?organizer=" + encodeURIComponent(org.fullName)}>
                         <Calendar className="h-4 w-4 mr-2" />View Their Events
                       </Link>
                     </Button>
