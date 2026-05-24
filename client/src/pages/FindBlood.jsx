@@ -24,10 +24,37 @@ const FindBlood = () => {
   const [selectedBloodGroup, setSelectedBloodGroup] = useState("all");
   const [selectedRh,         setSelectedRh]         = useState("all");
   const [selectedUrgency,    setSelectedUrgency]    = useState("all");
+  const [selectedCity,       setSelectedCity]       = useState("all");
+  const [donorCoords,        setDonorCoords]        = useState(null);
 
   useEffect(() => {
     fetchRequests();
+    if (token && user?.role === "donor") fetchDonorCoords();
   }, []);
+
+  const fetchDonorCoords = async () => {
+    try {
+      const res = await axios.get(`${API}/donor/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const p = res.data.profile;
+      if (p?.locationLat && p?.locationLng) {
+        setDonorCoords({ lat: p.locationLat, lng: p.locationLng });
+      }
+    } catch (err) { console.log(err); }
+  };
+
+  const haversineKm = (lat1, lng1, lat2, lng2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) *
+      Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
 
   const fetchRequests = async () => {
     try {

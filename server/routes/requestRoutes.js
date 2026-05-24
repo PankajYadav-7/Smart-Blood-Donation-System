@@ -62,7 +62,7 @@ router.post("/", protect, async (req, res) => {
 router.get("/open-public", async (req, res) => {
   try {
     const requests = await BloodRequest.find({ status: "Open" })
-      .select("bloodGroup rh unitsRequired urgency hospitalName createdAt status")
+      .select("bloodGroup rh unitsRequired urgency hospitalName hospitalCity hospitalLat hospitalLng createdAt status")
       .sort({ createdAt: -1 });
     return res.status(200).json({ requests });
   } catch (error) {
