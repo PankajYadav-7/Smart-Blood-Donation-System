@@ -304,11 +304,48 @@ const Hospitals = () => {
                   </div>
 
                   <div className="border-t border-gray-100 pt-4 flex flex-col sm:flex-row gap-3 flex-wrap">
-                    <Button className="flex-1 bg-red-600 hover:bg-red-700" asChild>
-                      <Link to={localStorage.getItem("token") ? "/create-request" : "/login"}>
-                        <Heart className="h-4 w-4 mr-2" />Request Blood
-                      </Link>
-                    </Button>
+                    {(() => {
+                      const t    = localStorage.getItem("token");
+                      const role = JSON.parse(localStorage.getItem("user") || "null")?.role;
+
+                      if (!t) {
+                        return (
+                          <Button className="flex-1 bg-red-600 hover:bg-red-700" asChild>
+                            <Link to="/login">
+                              <Heart className="h-4 w-4 mr-2" />Request Blood
+                            </Link>
+                          </Button>
+                        );
+                      }
+                      if (role === "donor") {
+                        return (
+                          <Button className="flex-1 bg-blue-600 hover:bg-blue-700" asChild>
+                            <Link to="/donor/dashboard">
+                              <Heart className="h-4 w-4 mr-2" />Respond to Requests
+                            </Link>
+                          </Button>
+                        );
+                      }
+                      if (role === "hospital" || role === "ngo") {
+                        return (
+                          <Button className="flex-1 bg-red-600 hover:bg-red-700" asChild>
+                            <Link to="/create-request">
+                              <Heart className="h-4 w-4 mr-2" />Create Blood Request
+                            </Link>
+                          </Button>
+                        );
+                      }
+                      if (role === "requester") {
+                        return (
+                          <Button className="flex-1 bg-red-600 hover:bg-red-700" asChild>
+                            <Link to="/create-request">
+                              <Heart className="h-4 w-4 mr-2" />Request Blood
+                            </Link>
+                          </Button>
+                        );
+                      }
+                      return null;
+                    })()}
                     <Button variant="outline" asChild>
                       <Link to={"/events?organizer=" + encodeURIComponent(org.fullName)}>
                         <Calendar className="h-4 w-4 mr-2" />View Their Events
