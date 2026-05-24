@@ -12,7 +12,7 @@ import {
   Phone, MapPin, Clock, Loader, Heart,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const HospitalDashboard = () => {
   const navigate  = useNavigate();

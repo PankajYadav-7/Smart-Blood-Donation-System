@@ -11,7 +11,7 @@ import {
   Building, Heart, Users, CheckCircle, ArrowRight,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const FindBlood = () => {
   const navigate  = useNavigate();

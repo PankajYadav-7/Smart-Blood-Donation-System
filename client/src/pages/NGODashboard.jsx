@@ -12,7 +12,7 @@ import {
   Calendar, MapPin, Award, Clock, Loader, Phone,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const NGODashboard = () => {
   const navigate = useNavigate();

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "../components/ui/card";
 import Navbar from "../components/Navbar";
 import { Droplets, Mail, ArrowLeft, CheckCircle, Eye, EyeOff, Lock } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();

@@ -12,7 +12,7 @@ import {
   ThumbsUp, ThumbsDown, Loader, Calendar,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const PatientDashboard = () => {
   const navigate  = useNavigate();

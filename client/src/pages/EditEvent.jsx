@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 import { Calendar, Clock, MapPin, Phone, Droplets, ArrowLeft, Loader, CheckCircle, AlertCircle } from "lucide-react";
 import LocationAutocomplete from "../components/LocationAutocomplete";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const EditEvent = () => {
   const { id }   = useParams();

@@ -10,7 +10,7 @@ import {
   MapPin, Heart, Droplets, Shield,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const PatientProfile = () => {
   const navigate = useNavigate();

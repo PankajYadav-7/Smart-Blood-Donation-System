@@ -10,7 +10,7 @@ import {
   Building, ExternalLink, Copy,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const EmergencyOrgDetail = () => {
   const { trackingCode } = useParams();

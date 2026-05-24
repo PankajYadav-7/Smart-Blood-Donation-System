@@ -33,7 +33,7 @@ const OTPScreen = ({ email, onSuccess, onChangeEmail }) => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("http://localhost:5000/api/auth/verify-otp", { email, otp });
+      await axios.post("https://jeevansaarthi-api.onrender.com/api/auth/verify-otp", { email, otp });
       setSuccess("Email verified successfully! Redirecting to login...");
       setTimeout(() => onSuccess(), 2000);
     } catch (err) {
@@ -45,7 +45,7 @@ const OTPScreen = ({ email, onSuccess, onChangeEmail }) => {
   const handleResend = async () => {
     if (resendTimer > 0) return;
     try {
-      await axios.post("http://localhost:5000/api/auth/resend-otp", { email });
+      await axios.post("https://jeevansaarthi-api.onrender.com/api/auth/resend-otp", { email });
       setSuccess("New verification code sent to your email!");
       setResendTimer(60);
       setError("");
@@ -239,7 +239,7 @@ const Register = () => {
       : `${formData.firstName} ${formData.lastName}`.trim();
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/register", {
+      const response = await axios.post("https://jeevansaarthi-api.onrender.com/api/auth/register", {
         fullName,
         email:          formData.email,
         password:       formData.password,

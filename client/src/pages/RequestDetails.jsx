@@ -14,7 +14,7 @@ import {
   ThumbsUp, ThumbsDown, Loader, Hash,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const RequestDetails = () => {
   const { id }   = useParams();

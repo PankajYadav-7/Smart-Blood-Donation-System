@@ -5,7 +5,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Calendar, Clock, MapPin, Building, Loader, Users, Droplets, Search, ArrowRight } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const Events = () => {
   const navigate    = useNavigate();

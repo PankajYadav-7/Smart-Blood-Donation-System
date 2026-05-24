@@ -12,7 +12,7 @@ import {
   Heart,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "https://jeevansaarthi-api.onrender.com/api";
 
 const DonorSearch = () => {
   const navigate = useNavigate();
