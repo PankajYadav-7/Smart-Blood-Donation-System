@@ -579,6 +579,40 @@ const DonorProfile = () => {
                     </button>
                   ))}
                 </div>
+
+                {/* Radius explanation */}
+                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold text-blue-800">
+                        How location matching works
+                      </p>
+                      <p className="text-xs text-blue-700 mt-0.5 leading-relaxed">
+                        When a blood request is posted, our system calculates the distance between
+                        your location and the hospital using GPS coordinates. Donors within
+                        <strong> {formData.radiusKm === 100 ? "any distance" : `${formData.radiusKm} km`}</strong> are
+                        notified first — nearest donors get priority alerts before donors further away.
+                        Keeping your location accurate ensures you never miss a request near you.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Location status */}
+                {formData.locationLat ? (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" /> GPS coordinates saved — you will appear on distance matching
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-1 rounded-full flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> No GPS coordinates — type your location above and select from the dropdown suggestions
+                    </span>
+                  </div>
+                )}
               </div>
 
             </CardContent>
