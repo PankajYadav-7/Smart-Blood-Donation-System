@@ -74,12 +74,15 @@ const FindBlood = () => {
     setLoading(false);
   };
 
+  const cities = ["all", ...new Set(requests.map(r => r.hospitalCity).filter(Boolean))];
+
   const filtered = requests.filter(r => {
     const matchSearch  = !searchTerm || r.hospitalName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchBlood   = selectedBloodGroup === "all" || r.bloodGroup === selectedBloodGroup;
     const matchRh      = selectedRh === "all" || r.rh === selectedRh;
     const matchUrgency = selectedUrgency === "all" || r.urgency === selectedUrgency;
-    return matchSearch && matchBlood && matchRh && matchUrgency;
+    const matchCity    = selectedCity === "all" || r.hospitalCity === selectedCity;
+    return matchSearch && matchBlood && matchRh && matchUrgency && matchCity;
   });
 
   const timeAgo = (date) => {
@@ -159,6 +162,12 @@ const FindBlood = () => {
                 <option value="Emergency">🚨 Emergency</option>
                 <option value="Normal">Normal</option>
               </select>
+              <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)}
+                className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white">
+                {cities.map(c => (
+                  <option key={c} value={c}>{c === "all" ? "All Cities" : c}</option>
+                ))}
+              </select>
             </div>
           </CardContent>
         </Card>
@@ -232,6 +241,17 @@ const FindBlood = () => {
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <Building className="h-4 w-4 text-gray-400" />{request.hospitalName}
                         </p>
+                        {request.hospitalCity && (
+                          <p className="text-sm text-gray-600 flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            {request.hospitalCity}
+                            {donorCoords && request.hospitalLat && request.hospitalLng && (
+                              <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-2 py-0.5 rounded-full">
+                                📍 {haversineKm(donorCoords.lat, donorCoords.lng, request.hospitalLat, request.hospitalLng).toFixed(1)} km away
+                              </span>
+                            )}
+                          </p>
+                        )}
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <Droplets className="h-4 w-4 text-gray-400" />
                           {request.unitsRequired} unit{request.unitsRequired > 1 ? "s" : ""} needed
