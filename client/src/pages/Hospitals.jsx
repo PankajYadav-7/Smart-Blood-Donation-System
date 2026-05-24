@@ -130,7 +130,7 @@ const Hospitals = () => {
                 <MapContainer
                   center={[27.7172, 85.3240]}
                   zoom={12}
-                  style={{ height: "340px", width: "100%" }}
+                  style={{ height: "340px", width: "100%", zIndex: 0 }}
                   scrollWheelZoom={false}
                 >
                   <TileLayer
