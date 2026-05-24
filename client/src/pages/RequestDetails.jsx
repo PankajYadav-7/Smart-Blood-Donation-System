@@ -6,6 +6,7 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 import {
   Droplets, MapPin, Clock, Building, User, Users,
   Phone, Mail, MessageCircle, Calendar, AlertCircle,
@@ -56,6 +57,9 @@ const RequestDetails = () => {
           unitsRequired: found.unitsRequired,
           urgency:       found.urgency,
           hospitalName:  found.hospitalName,
+          hospitalCity:  found.hospitalCity  || "",
+          hospitalLat:   found.hospitalLat   || null,
+          hospitalLng:   found.hospitalLng   || null,
           notes:         found.notes || "",
         });
       }
@@ -404,9 +408,37 @@ const RequestDetails = () => {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Hospital Name</label>
-                  <input type="text" className={inputCls} value={editData.hospitalName}
-                    onChange={e => setEditData({...editData, hospitalName: e.target.value})} />
+                  <LocationAutocomplete
+                    label="Hospital Name & Location"
+                    value={editData.hospitalName}
+                    onChange={(text) => setEditData({
+                      ...editData,
+                      hospitalName: text,
+                      hospitalLat:  null,
+                      hospitalLng:  null,
+                      hospitalCity: "",
+                    })}
+                    onLocationSelect={({ lat, lng, displayName }) => {
+                      const city = displayName?.split(",").slice(-3, -2)[0]?.trim() || "";
+                      setEditData({
+                        ...editData,
+                        hospitalLat:  lat,
+                        hospitalLng:  lng,
+                        hospitalCity: city,
+                      });
+                    }}
+                    placeholder="e.g. Bir Hospital, Kathmandu"
+                    hint="Select from suggestions to save GPS coordinates for distance matching"
+                  />
+                  {editData.hospitalLat ? (
+                    <p className="text-xs text-green-600 font-semibold mt-1 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" /> GPS coordinates saved — distance matching enabled
+                    </p>
+                  ) : (
+                    <p className="text-xs text-orange-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> Select from dropdown to enable distance matching
+                    </p>
+                  )}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Additional Notes</label>
