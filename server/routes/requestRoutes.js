@@ -112,10 +112,15 @@ router.patch("/:id/close", protect, async (req, res) => {
 // Edit a request
 router.patch("/:requestId", protect, async (req, res) => {
   try {
-    const { bloodGroup, rh, unitsRequired, urgency, hospitalName, notes } = req.body;
+    const { bloodGroup, rh, unitsRequired, urgency, hospitalName, hospitalCity, hospitalLat, hospitalLng, notes } = req.body;
     const request = await BloodRequest.findByIdAndUpdate(
       req.params.requestId,
-      { bloodGroup, rh, unitsRequired, urgency, hospitalName, notes },
+      {
+        bloodGroup, rh, unitsRequired, urgency, hospitalName, notes,
+        ...(hospitalCity && { hospitalCity }),
+        ...(hospitalLat  && { hospitalLat  }),
+        ...(hospitalLng  && { hospitalLng  }),
+      },
       { new: true }
     );
     if (!request) return res.status(404).json({ message: "Request not found" });
