@@ -29,7 +29,7 @@ const ForgotPassword = () => {
 
   const inputCls = "w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all bg-white";
 
-  // ── STEP 1 — Send reset code ───────────────────────────────────────────
+  // -- STEP 1 - Send reset code ------------------------------------------
   const handleSendCode = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -51,7 +51,7 @@ const ForgotPassword = () => {
     setLoading(false);
   };
 
-  // ── STEP 2 — Verify OTP ───────────────────────────────────────────────
+  // -- STEP 2 - Verify OTP -----------------------------------------------
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) { setError("Please enter the complete 6-digit code."); return; }
     setLoading(true);
@@ -62,7 +62,7 @@ const ForgotPassword = () => {
     setLoading(false);
   };
 
-  // ── STEP 2 — Resend code ──────────────────────────────────────────────
+  // -- STEP 2 - Resend code -----------------------------------------------
   const handleResend = async () => {
     if (resendTimer > 0) return;
     setLoading(true);
@@ -82,7 +82,7 @@ const ForgotPassword = () => {
     setLoading(false);
   };
 
-  // ── STEP 3 — Reset password ───────────────────────────────────────────
+  // -- STEP 3 - Reset password --------------------------------------------
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPass) { setError("Passwords do not match."); return; }
@@ -115,7 +115,7 @@ const ForgotPassword = () => {
         <div className="w-full max-w-md">
           <Card className="shadow-xl border-0">
 
-            {/* ── STEP 1 — Enter Email ── */}
+            {/* -- STEP 1 - Enter Email -- */}
             {step === 1 && (
               <>
                 <CardHeader className="text-center pb-0 pt-8">
@@ -174,7 +174,7 @@ const ForgotPassword = () => {
               </>
             )}
 
-            {/* ── STEP 2 — Enter OTP ── */}
+            {/* -- STEP 2 - Enter OTP -- */}
             {step === 2 && (
               <>
                 <CardHeader className="text-center pb-0 pt-8">
@@ -238,7 +238,7 @@ const ForgotPassword = () => {
               </>
             )}
 
-            {/* ── STEP 3 — New Password ── */}
+            {/* -- STEP 3 - New Password -- */}
             {step === 3 && (
               <>
                 <CardHeader className="text-center pb-0 pt-8">
@@ -344,7 +344,7 @@ const ForgotPassword = () => {
               </>
             )}
 
-            {/* ── STEP 4 — Success ── */}
+            {/* -- STEP 4 - Success -- */}
             {step === 4 && (
               <>
                 <CardHeader className="text-center pb-0 pt-8">

@@ -11,14 +11,14 @@ const {
   sendRecoveryStartedEmail,
 } = require("../utils/emailService");
 
-// ── Helper: generate tracking code ──────────────────────────────────────────
+// -- Helper: generate tracking code -------------------------------------------
 function generateTrackingCode() {
   const year = new Date().getFullYear();
   const num  = Math.floor(1000 + Math.random() * 9000);
   return `EM-${year}-${num}`;
 }
 
-// ── Blood compatibility ──────────────────────────────────────────────────────
+// -- Blood compatibility ------------------------------------------------------
 const isCompatible = (donorGroup, donorRh, requestGroup, requestRh) => {
   if (donorRh === "+" && requestRh === "-") return false;
   if (requestGroup === "AB") return true;
@@ -26,7 +26,7 @@ const isCompatible = (donorGroup, donorRh, requestGroup, requestRh) => {
   return donorGroup === requestGroup;
 };
 
-// ── Optional auth middleware ─────────────────────────────────────────────────
+// -- Optional auth middleware -------------------------------------------------
 const optionalAuth = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (token) {
@@ -48,9 +48,9 @@ const protect = (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/emergency — Submit emergency request (no login required)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// POST /api/emergency - Submit emergency request (no login required)
+// -----------------------------------------------------------------------------
 router.post("/", optionalAuth, async (req, res) => {
   try {
     const {
@@ -88,7 +88,7 @@ router.post("/", optionalAuth, async (req, res) => {
       medicalCondition: medicalCondition || "",
     });
 
-    // ── Notify compatible donors ─────────────────────────────────────────
+    // -- Notify compatible donors ---------------------------------------------
     const allDonors = await DonorProfile.find({ availability: true });
     const compatible = allDonors.filter(d =>
       isCompatible(d.bloodGroup, d.rh, bloodGroup, rh)
@@ -121,7 +121,7 @@ router.post("/", optionalAuth, async (req, res) => {
       }
     }
 
-    // ── Notify hospitals ─────────────────────────────────────────────────
+    // -- Notify hospitals -----------------------------------------------------
     const hospitals = await User.find({ role: "hospital", isVerified: true })
       .select("fullName email");
     let hospitalsNotified = 0;
@@ -141,7 +141,7 @@ router.post("/", optionalAuth, async (req, res) => {
       }
     }
 
-    // ── Notify NGOs ──────────────────────────────────────────────────────
+    // -- Notify NGOs ----------------------------------------------------------
     const ngos = await User.find({ role: "ngo", isVerified: true })
       .select("fullName email");
     let ngosNotified = 0;
@@ -183,9 +183,9 @@ router.post("/", optionalAuth, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/emergency/track/:trackingCode — Track by code (public)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// GET /api/emergency/track/:trackingCode - Track by code (public)
+// -----------------------------------------------------------------------------
 router.get("/track/:trackingCode", async (req, res) => {
   try {
     const emergency = await EmergencyRequest.findOne({
@@ -200,9 +200,9 @@ router.get("/track/:trackingCode", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // GET /api/emergency/active — All active emergencies (for hospital/ngo/donor)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 router.get("/active", protect, async (req, res) => {
   try {
     const emergencies = await EmergencyRequest.find({ status: "Active" })
@@ -214,10 +214,10 @@ router.get("/active", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // GET /api/emergency/my-accepted — donor's emergency history
-// ── MUST be before /:id to avoid route conflict ──────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
+// -- MUST be before /:id to avoid route conflict ------------------------------
+// -----------------------------------------------------------------------------
 router.get("/my-accepted", protect, async (req, res) => {
   try {
     const donorUser = await User.findById(req.user.userId).select("email");
@@ -257,9 +257,9 @@ router.get("/my-accepted", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // GET /api/emergency/:id — Get single emergency by ID (for detail page)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 router.get("/:id", protect, async (req, res) => {
   try {
     const emergency = await EmergencyRequest.findById(req.params.id);
@@ -270,9 +270,9 @@ router.get("/:id", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/emergency/:id/accept — Donor accepts emergency
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// POST /api/emergency/:id/accept - Donor accepts emergency
+// -----------------------------------------------------------------------------
 router.post("/:id/accept", protect, async (req, res) => {
   try {
     const emergency = await EmergencyRequest.findById(req.params.id);
@@ -329,9 +329,9 @@ router.post("/:id/accept", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/emergency/:id/fulfill — Mark as fulfilled
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// PATCH /api/emergency/:id/fulfill - Mark as fulfilled
+// -----------------------------------------------------------------------------
 router.patch("/:id/fulfill", protect, async (req, res) => {
   try {
     const emergency = await EmergencyRequest.findById(req.params.id);
@@ -344,9 +344,9 @@ router.patch("/:id/fulfill", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/emergency/:id/mark-donated — donor self-confirms donation
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// PATCH /api/emergency/:id/mark-donated - donor self-confirms donation
+// -----------------------------------------------------------------------------
 router.patch("/:id/mark-donated", protect, async (req, res) => {
   try {
     const emergency = await EmergencyRequest.findById(req.params.id);
@@ -374,7 +374,7 @@ router.patch("/:id/mark-donated", protect, async (req, res) => {
 
     await emergency.save();
 
-    // ── Set donor recovery period ────────────────────────────────────────
+    // -- Set donor recovery period --------------------------------------------
     const nextEligibleDate = new Date();
     nextEligibleDate.setDate(nextEligibleDate.getDate() + 56);
 
@@ -386,7 +386,7 @@ router.patch("/:id/mark-donated", protect, async (req, res) => {
       }
     );
 
-    // EMAIL 18 — Recovery period started
+    // EMAIL 18 - Recovery period started
     try {
       sendRecoveryStartedEmail({
         donorEmail:      donorUser.email,
@@ -401,7 +401,7 @@ router.patch("/:id/mark-donated", protect, async (req, res) => {
       console.error("Recovery email error:", emailErr.message);
     }
 
-    // ── Check and award certificates ──────────────────────────────────────
+    // -- Check and award certificates -----------------------------------------
     try {
       const { checkAndAwardCertificates } = require("../utils/certificateService");
       const Match        = require("../models/Match");
@@ -448,9 +448,9 @@ router.patch("/:id/mark-donated", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // POST /api/emergency/:id/thank-donor/:donorEntryId — requester sends thanks (no login)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 router.post("/:id/thank-donor/:donorEntryId", async (req, res) => {
   try {
     const { message } = req.body;
@@ -470,9 +470,9 @@ router.post("/:id/thank-donor/:donorEntryId", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // POST /api/emergency/:id/report-issue/:donorEntryId — requester reports issue (no login)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 router.post("/:id/report-issue/:donorEntryId", async (req, res) => {
   try {
     const { complaintText } = req.body;

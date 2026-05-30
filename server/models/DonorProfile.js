@@ -26,7 +26,7 @@ const donorProfileSchema = new mongoose.Schema(
     snoozeUntil:  { type: Date },
     lastDonationDate: { type: Date },
 
-    // ── New fields added during registration ──────────────────────────────
+    // -- New fields added during registration -------------------------------
     gender: {
       type: String,
       enum: ["male", "female", "other"],
@@ -51,7 +51,7 @@ const donorProfileSchema = new mongoose.Schema(
       default: "",
     },
 
-    // ── Certificate milestones — stored permanently when earned ───────────
+    // -- Certificate milestones - stored permanently when earned ------------
     // Each entry records the exact moment a milestone was achieved
     // This ensures certificates always show correct historical data
     certificatesEarned: [

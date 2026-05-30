@@ -15,7 +15,7 @@ import {
 
 const Home = () => {
 
-  // ── Live stats from database ──
+  // -- Live stats from database --
 const [stats, setStats] = useState([
   { number: "...",  label: "Registered Donors",      sub: ""                   },
   { number: "24/7", label: "Active Donor Network",   sub: ""                   },
@@ -111,7 +111,7 @@ const [stats, setStats] = useState([
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* ── HERO ── */}
+      {/* - HERO - */}
       <section className="relative overflow-hidden">
         <div
           className="relative bg-cover bg-center bg-no-repeat min-h-[85vh] flex items-center"
@@ -125,7 +125,7 @@ const [stats, setStats] = useState([
                 Connecting Donors, Patients and Hospitals Across Nepal
               </Badge>
 
-              {/* ── NEW HEADLINE ── */}
+              {/* - NEW HEADLINE - */}
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl leading-tight">
                 <span className="text-white">Your Blood.</span>
                 <span className="block hero-highlight mt-2">Their Tomorrow.</span>
@@ -153,7 +153,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── LIVE STATS ── */}
+      {/* -- LIVE STATS -- */}
       <section className="py-12 -mt-16 relative z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-2xl overflow-hidden shadow-2xl" style={{background: 'linear-gradient(145deg, #b91c1c 0%, #991b1b 100%)'}}>
@@ -184,7 +184,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── NEPAL BLOOD CRISIS ── */}
+      {/* -- NEPAL BLOOD CRISIS -- */}
       <section className="py-20 bg-gray-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5 pointer-events-none">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -220,7 +220,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
+      {/* - FEATURES - */}
       <section className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
@@ -246,7 +246,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── BLOOD COMPATIBILITY CHART ── */}
+      {/* - BLOOD COMPATIBILITY CHART - */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-12">
@@ -318,7 +318,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── EVENTS ── */}
+      {/* - EVENTS - */}
       <section className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
@@ -421,7 +421,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
+      {/* - HOW IT WORKS - */}
       <section className="py-24 bg-gradient-to-b from-gray-50 via-gray-50/50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
@@ -443,7 +443,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
+      {/* - TESTIMONIALS - */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
@@ -497,7 +497,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── JOIN AS DONOR ── */}
+      {/* - JOIN AS DONOR - */}
       <section className="relative py-28 lg:py-36 overflow-hidden bg-gradient-to-br from-white via-gray-50/30 to-red-50/20">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-red-600/5 rounded-full blur-3xl" />
@@ -531,7 +531,7 @@ const [stats, setStats] = useState([
         </div>
       </section>
 
-      {/* ── FINAL CTA ── */}
+      {/* - FINAL CTA - */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-gray-900 via-gray-900/95 to-gray-900 shadow-2xl">

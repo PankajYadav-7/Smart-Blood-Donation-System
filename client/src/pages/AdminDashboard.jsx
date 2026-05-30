@@ -158,7 +158,7 @@ const AdminDashboard = () => {
     { id: "overview",   label: "📊 Overview" },
   ];
 
-  // ── Org Detail Card (expandable) ──
+  // - Org Detail Card (expandable) -
   const OrgDetailCard = ({ org, isPending }) => {
     const isExpanded = expandedOrg === org._id;
 
@@ -465,7 +465,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* ── ALL USERS TAB ── */}
+        {/* - ALL USERS TAB - */}
         {activeTab === "users" && (
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
@@ -575,7 +575,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* ── VERIFY ORGS TAB ── */}
+        {/* -- VERIFY ORGS TAB -- */}
         {activeTab === "verify" && (
           <div className="space-y-6">
 
@@ -628,7 +628,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* ── REQUESTS TAB ── */}
+        {/* - REQUESTS TAB - */}
         {activeTab === "requests" && (
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
@@ -709,7 +709,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* ── EVENTS TAB ── */}
+        {/* - EVENTS TAB - */}
         {activeTab === "events" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
@@ -771,7 +771,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* ── EMERGENCY TAB ── */}
+        {/* - EMERGENCY TAB - */}
         {activeTab === "emergency" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
@@ -824,7 +824,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* ── OVERVIEW TAB ── */}
+        {/* - OVERVIEW TAB - */}
         {activeTab === "overview" && (
           <div className="space-y-6">
             {/* Platform summary */}

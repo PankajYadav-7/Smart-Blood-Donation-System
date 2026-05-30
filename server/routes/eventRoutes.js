@@ -5,7 +5,7 @@ const User     = require("../models/User");
 const DonorProfile = require("../models/DonorProfile");
 const jwt      = require("jsonwebtoken");
 
-// ── Auth middleware ──
+// -- Auth middleware --
 const protect = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Not authorized" });
@@ -17,16 +17,16 @@ const protect = (req, res, next) => {
   }
 };
 
-// ── Generate unique event code ──
+// -- Generate unique event code --
 function generateEventCode() {
   const year = new Date().getFullYear();
   const num  = Math.floor(1000 + Math.random() * 9000);
   return `EV-${year}-${num}`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // POST /api/events — Create new event (hospital/ngo only)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 router.post("/", protect, async (req, res) => {
   try {
     const organizer = await User.findById(req.user.userId).select("fullName email phone role isVerified");
@@ -93,9 +93,9 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/events/upcoming — Public, all upcoming events
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// GET /api/events/upcoming - Public, all upcoming events
+// -----------------------------------------------------------------------------
 router.get("/upcoming", async (req, res) => {
   try {
     const today = new Date();
@@ -114,9 +114,9 @@ router.get("/upcoming", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/events/my-events — Organizer's own events
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// GET /api/events/my-events - Organizer's own events
+// -----------------------------------------------------------------------------
 router.get("/my-events", protect, async (req, res) => {
   try {
     const events = await Event.find({ organizerId: req.user.userId }).sort({ eventDate: -1 });
@@ -126,9 +126,9 @@ router.get("/my-events", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/events/my-rsvps — Donor's RSVP'd events
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// GET /api/events/my-rsvps - Donor's RSVP'd events
+// -----------------------------------------------------------------------------
 router.get("/my-rsvps", protect, async (req, res) => {
   try {
     const donorUser = await User.findById(req.user.userId).select("email");
@@ -144,9 +144,9 @@ router.get("/my-rsvps", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/events/all — All events including past and cancelled — Admin
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// GET /api/events/all - All events including past and cancelled - Admin
+// -----------------------------------------------------------------------------
 router.get("/all", protect, async (req, res) => {
   try {
     const events = await Event.find()
@@ -157,9 +157,9 @@ router.get("/all", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/events/:id — Single event detail
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// GET /api/events/:id - Single event detail
+// -----------------------------------------------------------------------------
 router.get("/:id", async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -170,9 +170,9 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/events/:id/rsvp — Donor RSVP to event
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// POST /api/events/:id/rsvp - Donor RSVP to event
+// -----------------------------------------------------------------------------
 router.post("/:id/rsvp", protect, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -238,9 +238,9 @@ router.post("/:id/rsvp", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DELETE /api/events/:id/rsvp — Donor cancels RSVP
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// DELETE /api/events/:id/rsvp - Donor cancels RSVP
+// -----------------------------------------------------------------------------
 router.delete("/:id/rsvp", protect, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -279,9 +279,9 @@ router.delete("/:id/rsvp", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/events/:id — Update event (organizer only)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// PATCH /api/events/:id - Update event (organizer only)
+// -----------------------------------------------------------------------------
 router.patch("/:id", protect, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -339,9 +339,9 @@ router.patch("/:id", protect, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/events/:id/cancel — Cancel event (organizer only)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// PATCH /api/events/:id/cancel - Cancel event (organizer only)
+// -----------------------------------------------------------------------------
 router.patch("/:id/cancel", protect, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);

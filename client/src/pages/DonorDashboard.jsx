@@ -312,7 +312,7 @@ const DonorDashboard = () => {
           ))}
         </div>
 
-        {/* Banner — no-show warning */}
+        {/* Banner - no-show warning */}
         {noShowCount >= 3 && (
           <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-6 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -337,7 +337,7 @@ const DonorDashboard = () => {
           </div>
         )}
 
-        {/* Banner — availability OFF but eligible and profile complete */}
+        {/* Banner - availability OFF but eligible and profile complete */}
         {donorProfile && !loading && !isAvailable && eligibilityInfo?.status !== "cooldown" && (
           <div className="bg-orange-50 border border-orange-300 rounded-xl p-4 mb-6 flex items-center gap-3">
             <BellOff className="h-5 w-5 text-orange-600 flex-shrink-0" />
@@ -351,7 +351,7 @@ const DonorDashboard = () => {
           </div>
         )}
 
-        {/* Banner — eligible again after cooldown */}
+        {/* Banner - eligible again after cooldown */}
         {donorProfile && !loading && eligibilityInfo?.status === "eligible" && !isAvailable && donorProfile?.lastDonationDate && (
           <div className="bg-green-50 border border-green-400 rounded-xl p-4 mb-6 flex items-center gap-3">
             <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -382,7 +382,7 @@ const DonorDashboard = () => {
           </div>
         </div>
 
-        {/* ── EMERGENCY TAB ── */}
+        {/* - EMERGENCY TAB - */}
         {activeTab === "emergency" && (
           <div className="space-y-4">
 
@@ -430,7 +430,7 @@ const DonorDashboard = () => {
                 <Card key={emergency._id} className="border-0 shadow-md border-l-4 border-l-red-500">
                   <CardContent className="pt-5 pb-4">
 
-                    {/* Header — title is clickable */}
+                    {/* Header - title is clickable */}
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3">
                         <div
@@ -441,7 +441,7 @@ const DonorDashboard = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            {/* ── CLICKABLE TITLE ── */}
+                            {/* -- CLICKABLE TITLE -- */}
                             <h3
                               className="text-lg font-bold text-gray-900 hover:text-red-600 cursor-pointer transition-colors hover:underline underline-offset-2"
                               onClick={() => navigate(`/emergency/detail/${emergency._id}`)}
@@ -557,7 +557,7 @@ const DonorDashboard = () => {
           </div>
         )}
 
-        {/* ── REQUESTS TAB ── */}
+        {/* - REQUESTS TAB - */}
         {activeTab === "requests" && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -734,7 +734,7 @@ const DonorDashboard = () => {
           </div>
         )}
 
-        {/* ── EVENTS TAB ── */}
+        {/* - EVENTS TAB - */}
         {activeTab === "events" && (
           <div className="space-y-4">
 
@@ -910,7 +910,7 @@ const DonorDashboard = () => {
           </div>
         )}
 
-        {/* ── HISTORY TAB ── */}
+        {/* - HISTORY TAB - */}
         {activeTab === "history" && (
           <Card className="border-0 shadow-md">
             <CardHeader>
@@ -922,7 +922,7 @@ const DonorDashboard = () => {
           </Card>
         )}
 
-        {/* ── PROFILE & BADGES TAB ── */}
+        {/* - PROFILE & BADGES TAB - */}
         {activeTab === "profile" && (
           <div className="space-y-6">
 
@@ -1048,7 +1048,7 @@ const DonorDashboard = () => {
           </div>
         )}
 
-        {/* ── CERTIFICATES TAB ── */}
+        {/* - CERTIFICATES TAB - */}
         {activeTab === "certificates" && (
           <div className="space-y-6">
 
@@ -1334,7 +1334,7 @@ const HistoryTab = ({ token }) => {
   return (
     <div className="space-y-6">
 
-      {/* ── AWAITING CONFIRMATION ── */}
+      {/* - AWAITING CONFIRMATION - */}
       {pending.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -1446,7 +1446,7 @@ const HistoryTab = ({ token }) => {
         </div>
       )}
 
-      {/* ── CONFIRMED DONATIONS ── */}
+      {/* -- CONFIRMED DONATIONS -- */}
       {confirmed.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -1563,7 +1563,7 @@ const HistoryTab = ({ token }) => {
         </div>
       )}
 
-      {/* ── EMERGENCY DONATIONS ── */}
+      {/* -- EMERGENCY DONATIONS -- */}
       {emergencyDonations.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">

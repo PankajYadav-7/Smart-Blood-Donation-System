@@ -164,7 +164,7 @@ const PatientProfile = () => {
 
         <form onSubmit={handleSave} className="space-y-6">
 
-          {/* ── PERSONAL INFORMATION ── */}
+          {/* -- PERSONAL INFORMATION -- */}
           <Card className="border-0 shadow-md">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
