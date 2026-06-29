@@ -56,7 +56,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://jeevansaarthi-api.onrender.com/api/auth/login",
+        "http://localhost:5000/api/auth/login",
         { email, password }
       );
 
@@ -99,7 +99,7 @@ const Login = () => {
     setOtpError("");
     setResendSuccess("");
     try {
-      await axios.post("https://jeevansaarthi-api.onrender.com/api/auth/resend-otp", { email });
+      await axios.post("http://localhost:5000/api/auth/resend-otp", { email });
       setResendSuccess("✅ New verification code sent! Check your email inbox.");
     } catch (err) {
       setOtpError(err.response?.data?.message || "Failed to resend. Please try again.");
@@ -116,7 +116,7 @@ const Login = () => {
     setOtpLoading(true);
     setOtpError("");
     try {
-      await axios.post("https://jeevansaarthi-api.onrender.com/api/auth/verify-otp", { email, otp });
+      await axios.post("http://localhost:5000/api/auth/verify-otp", { email, otp });
       setOtpSuccess("✅ Email verified! You can now click Sign In to login.");
       setShowOTPBox(false);
       setError("");

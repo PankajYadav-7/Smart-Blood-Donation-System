@@ -33,7 +33,7 @@ const ViewRequests = () => {
   const fetchRequests = async () => {
     try {
       const res = await axios.get(
-        "https://jeevansaarthi-api.onrender.com/api/requests",
+        "http://localhost:5000/api/requests",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setRequests(res.data.requests);

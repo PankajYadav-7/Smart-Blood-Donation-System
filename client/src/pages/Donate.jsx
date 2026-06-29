@@ -27,7 +27,7 @@ const Donate = () => {
   const user  = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
-    axios.get("https://jeevansaarthi-api.onrender.com/api/events/upcoming")
+    axios.get("http://localhost:5000/api/events/upcoming")
       .then(res => setUpcomingEvents(res.data.events || []))
       .catch(() => {})
       .finally(() => setEventsLoading(false));

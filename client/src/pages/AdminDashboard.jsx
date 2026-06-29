@@ -40,7 +40,7 @@ const AdminDashboard = () => {
   const fetchUsers = async () => {
     try {
       const res = await axios.get(
-        "https://jeevansaarthi-api.onrender.com/api/admin/users",
+        "http://localhost:5000/api/admin/users",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(res.data.users);
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
   const fetchRequests = async () => {
     try {
       const res = await axios.get(
-        "https://jeevansaarthi-api.onrender.com/api/requests/all",
+        "http://localhost:5000/api/requests/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setRequests(res.data.requests);
@@ -62,7 +62,7 @@ const AdminDashboard = () => {
   const fetchEvents = async () => {
     try {
       const res = await axios.get(
-        "https://jeevansaarthi-api.onrender.com/api/events/all",
+        "http://localhost:5000/api/events/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEvents(res.data.events || []);
@@ -72,7 +72,7 @@ const AdminDashboard = () => {
   const fetchEmergencies = async () => {
     try {
       const res = await axios.get(
-        "https://jeevansaarthi-api.onrender.com/api/emergency",
+        "http://localhost:5000/api/emergency",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEmergencies(res.data.emergencies || []);
@@ -82,7 +82,7 @@ const AdminDashboard = () => {
   const handleSuspend = async (userId, currentStatus) => {
     try {
       await axios.patch(
-        `https://jeevansaarthi-api.onrender.com/api/admin/users/${userId}/status`,
+        `http://localhost:5000/api/admin/users/${userId}/status`,
         { status: currentStatus === "active" ? "suspended" : "active" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -93,7 +93,7 @@ const AdminDashboard = () => {
   const handleVerify = async (userId, currentVerified) => {
     try {
       await axios.patch(
-        `https://jeevansaarthi-api.onrender.com/api/admin/users/${userId}/verify`,
+        `http://localhost:5000/api/admin/users/${userId}/verify`,
         { verified: !currentVerified },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -110,7 +110,7 @@ const AdminDashboard = () => {
     if (reason === null) return; // cancelled
     try {
       await axios.patch(
-        `https://jeevansaarthi-api.onrender.com/api/admin/users/${userId}/reject`,
+        `http://localhost:5000/api/admin/users/${userId}/reject`,
         { reason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -689,7 +689,7 @@ const AdminDashboard = () => {
                             if (window.confirm("Close this blood request?")) {
                               try {
                                 await axios.patch(
-                                  `https://jeevansaarthi-api.onrender.com/api/requests/${r._id}/close`,
+                                  `http://localhost:5000/api/requests/${r._id}/close`,
                                   {},
                                   { headers: { Authorization: `Bearer ${token}` } }
                                 );
